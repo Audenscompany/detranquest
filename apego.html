@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Apego Evitativo · Estudo Pessoal</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background: #080814; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ⚠️ Uso pessoal. Em repo público, qualquer um vê o código-fonte.
+    const AUTH = { email: "gugupimenta3@gmail.com", password: "gustap16", name: "Gustavo" };
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    const catColors = {
+      evitativo:    { bg:"#12103A", border:"#7C6FFF", text:"#A89EFF", label:"APEGO EVITATIVO" },
+      comunicação:  { bg:"#0D2D1A", border:"#48BB8C", text:"#7DD9B0", label:"COMUNICAÇÃO" },
+      autocontrole: { bg:"#2D1A0D", border:"#FF8C47", text:"#FFB380", label:"AUTOCONTROLE" },
+      persuasão:    { bg:"#1A1A0D", border:"#C4A24A", text:"#E8D07A", label:"PERSUASÃO" },
+      mindset:      { bg:"#1A0D1A", border:"#CC77CC", text:"#E0A0E0", label:"MINDSET" },
+    };
+
+    const CONCEPTS = [
+      { id:1, icon:"🔮", cat:"evitativo", title:"A Essência do Apego Evitativo",
+        body:"A evitativa não se afasta porque não gosta de você. Ela se afasta porque a INTIMIDADE AUMENTOU. Para o apego evitativo, proximidade = risco de perder independência. É uma resposta automática do sistema nervoso, não uma escolha consciente contra você.",
+        insight:"O afastamento após um momento íntimo confirma que o momento foi real e intenso." },
+      { id:2, icon:"⚡", cat:"evitativo", title:"O Ciclo que Você Precisa Quebrar",
+        body:"Ansioso busca contato → Evitativo recua → Ansioso pressiona mais → Evitativo some. Você tem apego ansioso. Cada vez que você pressiona, ela se fecha mais. Cada vez que você resiste ao impulso de pressionar, você interrompe o ciclo.",
+        insight:"A melhor coisa que você pode fazer quando sentir vontade de checar: não checar." },
+      { id:3, icon:"🤐", cat:"evitativo", title:"Por que ela não conta tudo",
+        body:"A evitativa não está acostumada a depender de outra pessoa para processar. Não é segredo nem falta de confiança em você especificamente. É um padrão aprendido: processar tudo internamente. Quando ela conta algo, é muito — mesmo que pareça pouco.",
+        insight:"Valorize o que ela conta sem pedir mais. Cada coisa compartilhada é um passo grande pra ela." },
+      { id:4, icon:"🌊", cat:"evitativo", title:"O Silêncio Não é Rejeição",
+        body:"Quando ela some, vai monossilábica ou para de responder: na maioria das vezes não é raiva de você. É o sistema nervoso dela regulando após sobrecarga emocional. O silêncio dela é processamento, não punição.",
+        insight:"No silêncio dela: não preencha, não mande 'está tudo bem?'. Simplesmente deixe." },
+      { id:5, icon:"💥", cat:"evitativo", title:"O que Fecha o Evitativo",
+        body:"Emoção muito intensa, cobrança, 'precisamos conversar', perguntas em sequência, insistência, mensagens emotivas sem contexto. Tudo isso ativa o mecanismo de defesa. Quanto mais pressão emocional da sua parte, mais ela recua.",
+        insight:"Menos intensidade emocional sua = mais abertura dela. Paradoxal, mas é o padrão." },
+      { id:6, icon:"🎯", cat:"comunicação", title:"A Pergunta que Muda Tudo",
+        body:"'Você quer que eu te ajude a pensar ou quer só falar?' Esta pergunta devolve o controle para ela. E o evitativo precisa de controle para se abrir. Remove a pressão de ter que responder emocionalmente antes de estar pronta.",
+        insight:"Nunca assuma o que ela precisa. Sempre pergunte primeiro." },
+      { id:7, icon:"🌱", cat:"evitativo", title:"'No Seu Tempo' — Por que Funciona",
+        body:"Para o evitativo, não ter prazo para se abrir é fundamental. 'No seu tempo' remove o maior obstáculo: a pressão de ter que responder emocionalmente antes de estar pronta. É literalmente um alívio fisiológico para esse estilo.",
+        insight:"Use 'no seu tempo' com frequência e sem ironia. Para ela, é alívio de verdade." },
+      { id:8, icon:"💌", cat:"evitativo", title:"Gestos que Chegam de Verdade",
+        body:"Cartas e presentes funcionam com o evitativo porque não exigem resposta imediata. Ela pode processar sozinha, sentir sem ter que demonstrar na hora. O 'nuuu' espontâneo que veio depois é a prova: o gesto chegou quando ela estava sozinha com o sentimento.",
+        insight:"Prefira gestos que ela receba sozinha a declarações que exigem reação imediata." },
+      { id:9, icon:"🧠", cat:"autocontrole", title:"Autocontrole é a Sua Principal Ferramenta",
+        body:"Seu trabalho principal não é controlar ela — é controlar você. Cada vez que você segura um 'tá tudo bem?', cada vez que não manda mensagem quando sentiu vontade, você constrói o tipo de presença que a evitativa consegue se aproximar sem medo.",
+        insight:"Autocontrole com o evitativo não é passividade. É estratégia consciente de conexão." },
+      { id:10, icon:"🔁", cat:"evitativo", title:"Quanto Menos, Mais",
+        body:"Quanto mais você busca atenção de uma evitativa, menos ela dá. Quanto menos você pressiona, mais ela vem naturalmente em direção a você. É contraintuitivo para quem tem apego ansioso, mas é o padrão mais consistente da teoria do apego.",
+        insight:"Sua ausência calculada é mais atraente para ela do que sua presença constante." },
+      { id:11, icon:"📡", cat:"comunicação", title:"Calibrar o Receptor",
+        body:"Da Maytê Carvalho: cada pessoa tem um modo de receber mensagem. Para comunicar com o evitativo, o código precisa chegar sem ruído emocional. Mensagens diretas, sem drama, sem cobrança implícita — chegam. Mensagens carregadas de emoção intensa — são bloqueadas pelo receptor.",
+        insight:"Adapte o código ao receptor, não à forma como você quer expressar." },
+      { id:12, icon:"🪬", cat:"mindset", title:"Drifting vs. Intenção",
+        body:"A maioria das pessoas age em 'drifting' — sem intenção clara, reagindo a cada emoção. No relacionamento com evitativo, isso é fatal. Saber o padrão dela permite que você aja com INTENÇÃO em vez de só por impulso ansioso.",
+        insight:"Saber o padrão transforma reação emocional em ação estratégica." },
+      { id:13, icon:"⚖️", cat:"autocontrole", title:"Dominar o Impulso",
+        body:"Autocontrole não é reprimir emoções, é dominar o impulso de agir sobre elas imediatamente. Você vai sentir ansiedade, ciúme, insegurança. Sentir é inevitável. Agir impulsivamente sobre cada sentimento é o que quebra a conexão com o evitativo.",
+        insight:"Sinta. Processe. Depois, se necessário, fale — com calma e intenção." },
+      { id:14, icon:"🎭", cat:"persuasão", title:"Ethos: Consistência que Constrói Confiança",
+        body:"Para a evitativa, palavras têm pouco peso — ações consistentes têm tudo. Cada vez que você dá espaço quando disse que ia dar, cada vez que não pressiona quando prometeu que não ia: você constrói credibilidade real com ela.",
+        insight:"Com o evitativo, consistência de ação vale mais que declarações de intenção." },
+      { id:15, icon:"🔋", cat:"autocontrole", title:"Não Transfira Sua Ansiedade",
+        body:"Você tem apego ansioso. Quando está ansioso, o impulso é buscar reasseguramento do parceiro. Mas transferir sua ansiedade para ela aumenta a pressão que ela já sente. Regule sua própria ansiedade antes de interagir.",
+        insight:"Quando estiver ansioso: primeiro cuide de você. Depois interaja com ela." },
+    ];
+
+    const QUESTIONS = [
+      { id:1, cat:"evitativo",
+        situation:"Vocês tiveram uma conversa muito íntima. No dia seguinte ela está quieta e quase não responde. O que está acontecendo?",
+        options:[
+          {text:"Ela se arrependeu de ter se aberto", correct:false},
+          {text:"A intimidade aumentou e ela precisa de espaço para processar", correct:true},
+          {text:"Ela está perdendo interesse", correct:false},
+          {text:"Você falou algo errado", correct:false},
+        ],
+        explanation:"O evitativo se afasta DEPOIS de momentos intensos. É automático. Não é rejeição — é processamento. A melhor reação: dar espaço sem drama." },
+      { id:2, cat:"evitativo",
+        situation:"Você mandou mensagem às 19h e ela não respondeu até meia-noite. O que fazer?",
+        options:[
+          {text:"Mandar 'oi, tá bem?' depois de 2 horas", correct:false},
+          {text:"Ligar para saber se recebeu", correct:false},
+          {text:"Não fazer nada. Esperar no tempo dela", correct:true},
+          {text:"Mandar uma segunda mensagem mais leve", correct:false},
+        ],
+        explanation:"Qualquer contato adicional quando ela ainda não respondeu aumenta a pressão. Para a evitativa, isso ativa o mecanismo de defesa. Espere — ela vai responder." },
+      { id:3, cat:"evitativo",
+        situation:"Ela diz: 'Não tô acostumada a contar tudo pra outra pessoa, mas tô tentando mudar.' Como responder?",
+        options:[
+          {text:"'Preciso que você me conte mais, isso me preocupa'", correct:false},
+          {text:"'Que ótimo! Pode me contar tudo agora'", correct:false},
+          {text:"'Eu valorizo isso muito. No seu tempo.'", correct:true},
+          {text:"'Por que é difícil pra você?'", correct:false},
+        ],
+        explanation:"Ela está sinalizando esforço e vulnerabilidade. A resposta certa valida sem pressionar. Não faça mais perguntas. Valorize o que ela deu." },
+      { id:4, cat:"evitativo",
+        situation:"Vocês não se veem há dias por causa do pai dela. Você está ansioso. O que fazer?",
+        options:[
+          {text:"Contar pra ela que está com saudade e ansioso", correct:false},
+          {text:"Perguntar quando vocês vão se ver", correct:false},
+          {text:"Fazer algo produtivo sozinho e deixar o tempo passar", correct:true},
+          {text:"Sugerir um encontro rápido para aliviar a ansiedade", correct:false},
+        ],
+        explanation:"Transferir sua ansiedade para ela aumenta a pressão que ela já sente. O evitativo sob pressão externa se fecha mais quando o parceiro também pressiona." },
+      { id:5, cat:"evitativo",
+        situation:"Você entregou carta e buquê. Ela respondeu só 'obrigada mb'. Esperava mais. Como lida?",
+        options:[
+          {text:"Pergunta se ela gostou de verdade", correct:false},
+          {text:"Comenta que esperava mais reação", correct:false},
+          {text:"Reconhece que 'obrigada mb' de uma evitativa já é muito", correct:true},
+          {text:"Faz outro gesto logo em seguida", correct:false},
+        ],
+        explanation:"Para a evitativa, 'obrigada mb' é genuíno. Ela não dramatiza sentimentos em tempo real. O gesto ainda está sendo processado — a resposta emocional real vem depois, sozinha." },
+      { id:6, cat:"evitativo",
+        situation:"Depois de receber a carta ela manda 'nuuu', depois 'eu amei' e 'te amo mb'. O que isso significa?",
+        options:[
+          {text:"Ela estava com saudade e usou a carta como desculpa", correct:false},
+          {text:"O gesto chegou de verdade e ela respondeu de forma espontânea, sem filtro", correct:true},
+          {text:"Ela está sendo educada", correct:false},
+          {text:"Ela quer que você faça isso toda semana", correct:false},
+        ],
+        explanation:"'Nuuu' é reação não calculada — simplesmente saiu. É exatamente o tipo de resposta que prova que o gesto foi recebido de verdade, sem pressão de responder." },
+      { id:7, cat:"comunicação",
+        situation:"Você quer conversar sobre como ela está se sentindo. Qual é a abertura certa?",
+        options:[
+          {text:"'Preciso saber como você tá de verdade'", correct:false},
+          {text:"'Tô preocupado com você, me conta'", correct:false},
+          {text:"'O que está acontecendo?' — simples, sem carga emocional prévia", correct:true},
+          {text:"'Acho que você tá me escondendo alguma coisa'", correct:false},
+        ],
+        explanation:"Perguntas simples e abertas, sem intensidade emocional prévia, são mais fáceis para o evitativo responder. Qualquer carga antes da pergunta já fecha o canal." },
+      { id:8, cat:"comunicação",
+        situation:"Ela está ansiosa e você não sabe o que fazer. Qual é a primeira coisa a perguntar?",
+        options:[
+          {text:"'O que posso fazer para te ajudar?'", correct:false},
+          {text:"'Você quer que eu te ajude a pensar ou quer só falar?'", correct:true},
+          {text:"'Fica calma, não é tão grave assim'", correct:false},
+          {text:"'Por que você está assim?'", correct:false},
+        ],
+        explanation:"Esta pergunta devolve o controle para ela. O evitativo precisa sentir que tem controle para se abrir. Você só oferece presença — ela decide o que precisa." },
+      { id:9, cat:"autocontrole",
+        situation:"Você está com vontade de mandar 'tá tudo bem?' depois de um dia sem notícias. O que fazer?",
+        options:[
+          {text:"Mandar — mostrar que se importa é importante", correct:false},
+          {text:"Resistir e fazer algo produtivo para tirar o foco", correct:true},
+          {text:"Mandar uma mensagem neutra sobre outro assunto", correct:false},
+          {text:"Ligar rapidinho só para checar", correct:false},
+        ],
+        explanation:"Cada vez que você resiste a esse impulso, você treina o autocontrole que a evitativa precisa que você tenha. E você quebra o ciclo ansioso-evitativo." },
+      { id:10, cat:"autocontrole",
+        situation:"Depois de um momento muito bonito, você quer enviar mais uma mensagem para 'garantir'. O que fazer?",
+        options:[
+          {text:"Mandar algo curto para não perder o momentum", correct:false},
+          {text:"Não mandar nada. O momento foi ótimo, deixa assim", correct:true},
+          {text:"Mandar 'foi bom hoje' para confirmar", correct:false},
+          {text:"Perguntar se ela curtiu", correct:false},
+        ],
+        explanation:"Um momento bonito que termina bem não precisa de confirmação. Para a evitativa, a ausência de pressão após um bom momento consolida a memória positiva." },
+      { id:11, cat:"evitativo",
+        situation:"O pai está bravo com o relacionamento e ela está carregando isso. Como você ajuda?",
+        options:[
+          {text:"Sugerir que ela resolve logo a situação com o pai", correct:false},
+          {text:"Dizer que pode falar com o pai dela", correct:false},
+          {text:"Ser presença leve e não adicionar mais peso à situação", correct:true},
+          {text:"Perguntar o que ela pretende fazer", correct:false},
+        ],
+        explanation:"Ela já está sob pressão externa. Qualquer cobrança adicional do parceiro — mesmo bem-intencionada — aumenta a sobrecarga. Sua função: ser a parte que NÃO pressiona." },
+      { id:12, cat:"evitativo",
+        situation:"Ela diz 'vamos conseguir, aos poucos vamos saber lidar'. O que isso sinaliza numa evitativa?",
+        options:[
+          {text:"Ela está adiando uma conversa difícil", correct:false},
+          {text:"Ela está investindo no relacionamento e acredita no processo", correct:true},
+          {text:"Ela não sabe o que quer", correct:false},
+          {text:"Ela está frustranda mas sendo educada", correct:false},
+        ],
+        explanation:"Para a evitativa que não se abre facilmente, falar em 'vamos' e te incluir no processo é uma declaração significativa. Ela está te colocando no futuro dela." },
+      { id:13, cat:"comunicação",
+        situation:"Qual formato de gesto afetivo funciona melhor para uma pessoa com apego evitativo?",
+        options:[
+          {text:"Surpresa na frente de outras pessoas — mais impactante", correct:false},
+          {text:"Mensagem longa de texto explicando seus sentimentos", correct:false},
+          {text:"Gesto físico entregue sem expectativa de reação imediata", correct:true},
+          {text:"Declaração verbal íntima exigindo resposta agora", correct:false},
+        ],
+        explanation:"O evitativo precisa processar emoções em privado. Um gesto que ela recebe sozinha, sem audiência e sem exigir reação imediata, tem muito mais chance de ser genuinamente sentido." },
+      { id:14, cat:"autocontrole",
+        situation:"Você sente ciúme de uma situação e quer falar sobre isso. Quando e como?",
+        options:[
+          {text:"Na hora que o sentimento apareceu, para não acumular", correct:false},
+          {text:"Nunca — evitativo não aguenta ouvir ciúme", correct:false},
+          {text:"Quando você estiver calmo, em momento leve, de forma simples sem drama", correct:true},
+          {text:"Por mensagem, para ela ter tempo de processar", correct:false},
+        ],
+        explanation:"Ciúme comunicado no pico da emoção ativa defesa no evitativo. Dito com calma, em momento neutro, como observação e não como acusação, tem chance real de ser ouvido." },
+      { id:15, cat:"evitativo",
+        situation:"Ela estava mal o dia todo mas à noite começa a mandar memes e rir. O que fazer?",
+        options:[
+          {text:"Voltar ao assunto grave para garantir que está bem", correct:false},
+          {text:"Perguntar se ela está fingindo que está bem", correct:false},
+          {text:"Acompanhar o humor dela. Se ela está leve, você também fica", correct:true},
+          {text:"Aproveitar para falar de tudo que ficou pendente", correct:false},
+        ],
+        explanation:"Quando o evitativo levanta o clima, ele realmente processou. Não force retorno ao assunto grave. Acompanhe. Você já foi presença o dia todo — foi suficiente." },
+      { id:16, cat:"evitativo",
+        situation:"Ela disse 'obrigada por entender' depois de você respeitar o espaço. O que isso revela?",
+        options:[
+          {text:"Que ela se sentiu mal por não te ver e está se desculpando", correct:false},
+          {text:"Que dar espaço sem drama foi exatamente o que ela precisava — e ela notou", correct:true},
+          {text:"Que ela esperava que você pressionasse mais", correct:false},
+          {text:"Que ela está aliviada que você desistiu de ver ela", correct:false},
+        ],
+        explanation:"'Obrigada por entender' de uma evitativa é uma forma de dizer: 'você agiu certo e eu sinto isso'. É validação real do seu comportamento." },
+      { id:17, cat:"autocontrole",
+        situation:"Você percebe que age impulsivamente toda vez que fica ansioso — mandando mensagens, ligando. O que isso representa?",
+        options:[
+          {text:"Você está muito apaixonado — é normal", correct:false},
+          {text:"É drifting — agir por impulso sem intenção, o que sabota a conexão", correct:true},
+          {text:"É uma estratégia válida para mostrar que se importa", correct:false},
+          {text:"A culpa é dela por não dar atenção suficiente", correct:false},
+        ],
+        explanation:"Agir por impulso ansioso sem intenção é o que sabota o relacionamento com o evitativo. Saber o padrão dela te dá a chance de agir com intenção em vez de reagir por emoção." },
+      { id:18, cat:"comunicação",
+        situation:"Ela está sob pressão do pai e da consciência pesada. O que evitar nas mensagens?",
+        options:[
+          {text:"Frases que exigem dela uma resposta emocional agora", correct:true},
+          {text:"Dizer que está aqui sem pedir nada de volta", correct:false},
+          {text:"Deixar espaço sem sumir completamente", correct:false},
+          {text:"Mensagem curta validando o momento sem dramatizar", correct:false},
+        ],
+        explanation:"Qualquer frase que exige que ela responda emocionalmente agora — mesmo bem-intencionada — é mais peso num momento já pesado. Presenças que não pedem resposta são as mais seguras." },
+      { id:19, cat:"autocontrole",
+        situation:"Você ficou ansioso esperando ela ver o buquê. Estava quase mandando mensagem quando ela respondeu 'nuuu'. Qual é a lição?",
+        options:[
+          {text:"Que você deveria ter mandado mensagem mais cedo", correct:false},
+          {text:"Que quando você aguenta a ansiedade sem agir, o gesto chega com mais força", correct:true},
+          {text:"Que ela precisou de tempo por causa do apego evitativo", correct:false},
+          {text:"Que na próxima vez deve acompanhar de perto", correct:false},
+        ],
+        explanation:"O 'nuuu' espontâneo só foi possível porque você não pressionou. Se você tivesse mandado 'você já viu?' antes, a resposta teria sido calculada, não espontânea." },
+      { id:20, cat:"mindset",
+        situation:"Você entendeu o padrão evitativo dela. Como isso muda sua forma de agir?",
+        options:[
+          {text:"Você passa a esperar menos dela para não sofrer", correct:false},
+          {text:"Você usa o conhecimento para agir com intenção, não por impulso ansioso", correct:true},
+          {text:"Você passa a questionar se o relacionamento é compatível", correct:false},
+          {text:"Você começa a testar ela para ver se ela se aproxima", correct:false},
+        ],
+        explanation:"Conhecer o padrão evitativo não é para diminuir as expectativas — é para agir de forma mais inteligente. Cada reação certa fortalece a confiança que ela deposita em você." },
+    ];
+
+    function App() {
+      const [screen, setScreen] = useState("login");
+      const [form, setForm] = useState({email:"", password:""});
+      const [loginError, setLoginError] = useState("");
+      const [tab, setTab] = useState("conceitos");
+      const [conceptIdx, setConceptIdx] = useState(0);
+      const [flipped, setFlipped] = useState(false);
+      const [quizQ, setQuizQ] = useState(() => shuffle(QUESTIONS));
+      const [qIdx, setQIdx] = useState(0);
+      const [selected, setSelected] = useState(null);
+      const [answered, setAnswered] = useState(false);
+      const [score, setScore] = useState(0);
+      const [quizDone, setQuizDone] = useState(false);
+      const [progress, setProgress] = useState({seen:[], qCorrect:0, qTotal:0});
+
+      useEffect(() => {
+        try { const p = localStorage.getItem("ap_ev"); if(p) setProgress(JSON.parse(p)); } catch(e){}
+      }, []);
+
+      const saveP = (p) => { setProgress(p); try { localStorage.setItem("ap_ev", JSON.stringify(p)); } catch(e){} };
+
+      const doLogin = () => {
+        if (form.email === AUTH.email && form.password === AUTH.password) { setScreen("app"); }
+        else { setLoginError("Email ou senha incorretos."); }
+      };
+
+      const handleSelect = (idx) => {
+        if (answered) return;
+        setSelected(idx);
+        setAnswered(true);
+        const correct = quizQ[qIdx].options[idx].correct;
+        if (correct) setScore(s => s+1);
+        saveP({...progress, qCorrect: progress.qCorrect+(correct?1:0), qTotal: progress.qTotal+1});
+      };
+
+      const nextQ = () => {
+        if (qIdx+1 >= quizQ.length) { setQuizDone(true); return; }
+        setQIdx(i=>i+1); setSelected(null); setAnswered(false);
+      };
+
+      const restartQuiz = () => {
+        setQuizQ(shuffle(QUESTIONS)); setQIdx(0); setSelected(null);
+        setAnswered(false); setScore(0); setQuizDone(false);
+      };
+
+      const navConcept = (dir) => {
+        setFlipped(false);
+        setTimeout(() => {
+          const next = conceptIdx + dir;
+          if (next >= 0 && next < CONCEPTS.length) {
+            setConceptIdx(next);
+            if (!progress.seen.includes(next)) {
+              const p = {...progress, seen:[...progress.seen, next]};
+              saveP(p);
+            }
+          }
+        }, 100);
+      };
+
+      const c = CONCEPTS[conceptIdx];
+      const q = quizQ[qIdx];
+      const acc = progress.qTotal > 0 ? Math.round((progress.qCorrect/progress.qTotal)*100) : 0;
+      const col = catColors[c?.cat] || catColors.evitativo;
+
+      // ── LOGIN ──
+      if (screen === "login") return (
+        <div style={{background:"#080814", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px"}}>
+          <div style={{background:"#0F0F24", border:"1px solid #1E1E3F", borderRadius:"20px", padding:"40px 28px", width:"100%", maxWidth:"360px"}}>
+            <div style={{textAlign:"center", marginBottom:"32px"}}>
+              <div style={{fontSize:"40px", marginBottom:"10px"}}>🔮</div>
+              <div style={{fontSize:"20px", fontWeight:"800", background:"linear-gradient(135deg,#A89EFF,#7C6FFF)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>Apego Evitativo</div>
+              <div style={{fontSize:"12px", color:"#8888AA", marginTop:"4px"}}>Módulo exclusivo · Estudo pessoal</div>
+            </div>
+            {loginError && <div style={{color:"#FF5566", fontSize:"13px", textAlign:"center", marginBottom:"12px"}}>{loginError}</div>}
+            <input style={{width:"100%", background:"#080814", border:"1px solid #1E1E3F", borderRadius:"10px", padding:"12px 14px", color:"#E8E8F5", fontSize:"15px", outline:"none", boxSizing:"border-box", marginBottom:"10px"}}
+              type="email" placeholder="Email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}
+              onKeyDown={e=>e.key==="Enter"&&doLogin()} />
+            <input style={{width:"100%", background:"#080814", border:"1px solid #1E1E3F", borderRadius:"10px", padding:"12px 14px", color:"#E8E8F5", fontSize:"15px", outline:"none", boxSizing:"border-box", marginBottom:"18px"}}
+              type="password" placeholder="Senha" value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))}
+              onKeyDown={e=>e.key==="Enter"&&doLogin()} />
+            <button onClick={doLogin} style={{width:"100%", background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)", border:"none", borderRadius:"10px", padding:"14px", color:"white", fontWeight:"700", fontSize:"15px", cursor:"pointer"}}>
+              Entrar
+            </button>
+          </div>
+        </div>
+      );
+
+      // ── APP ──
+      return (
+        <div style={{background:"#080814", minHeight:"100vh", color:"#E8E8F5", maxWidth:"440px", margin:"0 auto", display:"flex", flexDirection:"column"}}>
+
+          {/* Header */}
+          <div style={{padding:"18px 16px 10px", borderBottom:"1px solid #1E1E3F"}}>
+            <div style={{display:"inline-block", background:"rgba(196,162,74,0.12)", border:"1px solid rgba(196,162,74,0.3)", borderRadius:"20px", padding:"3px 10px", fontSize:"10px", fontWeight:"700", color:"#E8D07A", letterSpacing:"1px", marginBottom:"6px"}}>
+              EXCLUSIVO · {AUTH.name.toUpperCase()}
+            </div>
+            <div style={{fontSize:"19px", fontWeight:"800", background:"linear-gradient(135deg,#A89EFF,#7C6FFF)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>Apego Evitativo</div>
+            <div style={{fontSize:"12px", color:"#8888AA"}}>Entender, reconhecer e reagir melhor</div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{display:"flex", padding:"10px 14px", gap:"8px", borderBottom:"1px solid #1E1E3F"}}>
+            {[["conceitos","📚"],["quiz","🎯"],["progresso","📊"]].map(([t,ico]) => (
+              <button key={t} onClick={()=>setTab(t)} style={{flex:1, padding:"8px 4px", borderRadius:"8px", border:"none", fontSize:"11px", fontWeight:"600", cursor:"pointer", background:tab===t?"#1E1E3F":"transparent", color:tab===t?"#A89EFF":"#8888AA", letterSpacing:"0.3px"}}>
+                {ico} {t.charAt(0).toUpperCase()+t.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Body */}
+          <div style={{flex:1, padding:"16px", overflowY:"auto"}}>
+
+            {/* ── CONCEITOS ── */}
+            {tab==="conceitos" && c && (
+              <>
+                <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px", fontSize:"12px", color:"#8888AA"}}>
+                  <span>{conceptIdx+1} / {CONCEPTS.length}</span>
+                  <div style={{flex:1, height:"3px", background:"#1E1E3F", borderRadius:"99px"}}>
+                    <div style={{width:`${((conceptIdx+1)/CONCEPTS.length)*100}%`, height:"100%", background:"#7C6FFF", borderRadius:"99px", transition:"width 0.3s"}} />
+                  </div>
+                </div>
+
+                <div style={{background:col.bg, border:`1px solid ${col.border}`, borderRadius:"16px", padding:"20px", marginBottom:"14px"}}>
+                  <div style={{fontSize:"10px", fontWeight:"700", color:col.text, letterSpacing:"1.5px", marginBottom:"10px"}}>{col.label}</div>
+                  <div style={{fontSize:"28px", marginBottom:"10px"}}>{c.icon}</div>
+                  <div style={{fontSize:"17px", fontWeight:"800", marginBottom:"12px", lineHeight:"1.3"}}>{c.title}</div>
+                  {!flipped ? (
+                    <div style={{fontSize:"14px", lineHeight:"1.65", color:"#CCCCDD"}}>{c.body}</div>
+                  ) : (
+                    <div style={{background:"rgba(124,111,255,0.12)", border:"1px solid rgba(124,111,255,0.3)", borderRadius:"10px", padding:"12px"}}>
+                      <div style={{fontSize:"10px", fontWeight:"700", color:"#7C6FFF", letterSpacing:"1px", marginBottom:"4px"}}>💡 INSIGHT PRÁTICO</div>
+                      <div style={{fontSize:"13px", color:"#C0B8FF", lineHeight:"1.5"}}>{c.insight}</div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{display:"flex", gap:"8px", marginBottom:"20px"}}>
+                  <button disabled={conceptIdx===0} onClick={()=>navConcept(-1)} style={{flex:1, padding:"11px", borderRadius:"10px", border:"1px solid #1E1E3F", background:conceptIdx===0?"#0A0A18":"#1E1E3F", color:conceptIdx===0?"#333366":"#A89EFF", fontWeight:"600", fontSize:"13px", cursor:conceptIdx===0?"default":"pointer"}}>← Ant</button>
+                  <button onClick={()=>setFlipped(f=>!f)} style={{flex:2, padding:"11px", borderRadius:"10px", border:"1px solid #7C6FFF", background:"rgba(124,111,255,0.15)", color:"#A89EFF", fontWeight:"600", fontSize:"13px", cursor:"pointer"}}>{flipped?"📖 Conceito":"💡 Insight"}</button>
+                  <button disabled={conceptIdx===CONCEPTS.length-1} onClick={()=>navConcept(1)} style={{flex:1, padding:"11px", borderRadius:"10px", border:"1px solid #1E1E3F", background:conceptIdx===CONCEPTS.length-1?"#0A0A18":"#1E1E3F", color:conceptIdx===CONCEPTS.length-1?"#333366":"#A89EFF", fontWeight:"600", fontSize:"13px", cursor:conceptIdx===CONCEPTS.length-1?"default":"pointer"}}>Próx →</button>
+                </div>
+
+                <div style={{fontSize:"12px", color:"#8888AA", marginBottom:"10px", fontWeight:"600", letterSpacing:"0.5px"}}>TODOS OS TEMAS</div>
+                {CONCEPTS.map((con, i) => (
+                  <div key={con.id} onClick={()=>{ setConceptIdx(i); setFlipped(false); if(!progress.seen.includes(i)) saveP({...progress,seen:[...progress.seen,i]}); }}
+                    style={{background:i===conceptIdx?"rgba(124,111,255,0.12)":"#0F0F24", border:`1px solid ${i===conceptIdx?"#7C6FFF":"#1E1E3F"}`, borderRadius:"10px", padding:"12px 14px", marginBottom:"8px", cursor:"pointer", display:"flex", alignItems:"center", gap:"10px"}}>
+                    <span style={{fontSize:"18px"}}>{con.icon}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"13px", fontWeight:"600", color:i===conceptIdx?"#A89EFF":"#CCCCDD"}}>{con.title}</div>
+                      <div style={{fontSize:"10px", color:catColors[con.cat]?.text||"#8888AA", marginTop:"2px"}}>{catColors[con.cat]?.label}</div>
+                    </div>
+                    {progress.seen.includes(i) && <span style={{fontSize:"12px", color:"#48BB8C"}}>✓</span>}
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* ── QUIZ ── */}
+            {tab==="quiz" && (
+              <>
+                {quizDone ? (
+                  <div style={{textAlign:"center", padding:"40px 16px"}}>
+                    <div style={{fontSize:"40px", marginBottom:"16px"}}>🎯</div>
+                    <div style={{fontSize:"52px", fontWeight:"900", background:"linear-gradient(135deg,#A89EFF,#7C6FFF)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>{score}/{quizQ.length}</div>
+                    <div style={{fontSize:"14px", color:"#8888AA", marginBottom:"12px"}}>acertos nesta rodada</div>
+                    <div style={{fontSize:"28px", fontWeight:"800", color:score/quizQ.length>=0.8?"#48BB8C":score/quizQ.length>=0.6?"#FF8C47":"#FF5566", marginBottom:"28px"}}>
+                      {score/quizQ.length>=0.8?"Excelente! 🔥":score/quizQ.length>=0.6?"Bom! Continue. 💪":"Pratique mais 📚"}
+                    </div>
+                    <button onClick={restartQuiz} style={{background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)", border:"none", borderRadius:"10px", padding:"14px 40px", color:"white", fontWeight:"700", fontSize:"14px", cursor:"pointer"}}>
+                      Nova Rodada
+                    </button>
+                  </div>
+                ) : q && (
+                  <>
+                    <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"12px", fontSize:"12px", color:"#8888AA"}}>
+                      <span>{qIdx+1}/{quizQ.length}</span>
+                      <div style={{flex:1, height:"3px", background:"#1E1E3F", borderRadius:"99px"}}>
+                        <div style={{width:`${((qIdx+1)/quizQ.length)*100}%`, height:"100%", background:"#7C6FFF", borderRadius:"99px"}} />
+                      </div>
+                      <span style={{color:"#48BB8C", fontWeight:"700"}}>{score} ✓</span>
+                    </div>
+
+                    <div style={{background:"#0F0F24", border:"1px solid #1E1E3F", borderRadius:"14px", padding:"18px", marginBottom:"14px"}}>
+                      <div style={{fontSize:"10px", fontWeight:"700", color:catColors[q.cat]?.text||"#A89EFF", letterSpacing:"1.5px", marginBottom:"8px"}}>{catColors[q.cat]?.label||q.cat.toUpperCase()}</div>
+                      <div style={{fontSize:"15px", lineHeight:"1.55", fontWeight:"600"}}>{q.situation}</div>
+                    </div>
+
+                    {q.options.map((opt, i) => {
+                      let bg="#080814", border="#1E1E3F", color="#CCCCDD";
+                      if(answered) {
+                        if(opt.correct) { bg="rgba(72,187,140,0.12)"; border="#48BB8C"; color="#7DD9B0"; }
+                        else if(i===selected) { bg="rgba(255,85,102,0.12)"; border="#FF5566"; color="#FF8899"; }
+                      } else if(i===selected) { bg="rgba(124,111,255,0.18)"; border="#7C6FFF"; color="#A89EFF"; }
+                      return (
+                        <button key={i} onClick={()=>handleSelect(i)} style={{width:"100%", textAlign:"left", padding:"12px 14px", borderRadius:"10px", border:`1px solid ${border}`, background:bg, color, fontSize:"13.5px", lineHeight:"1.4", fontWeight:"500", cursor:answered?"default":"pointer", marginBottom:"8px", display:"block"}}>
+                          <span style={{fontWeight:"700", marginRight:"6px", color:"#7C6FFF"}}>{String.fromCharCode(65+i)}.</span>{opt.text}
+                        </button>
+                      );
+                    })}
+
+                    {answered && (
+                      <>
+                        <div style={{background:"rgba(124,111,255,0.08)", border:"1px solid rgba(124,111,255,0.25)", borderRadius:"10px", padding:"14px", margin:"4px 0 14px"}}>
+                          <div style={{fontSize:"10px", fontWeight:"700", color:"#7C6FFF", letterSpacing:"1px", marginBottom:"6px"}}>
+                            {q.options[selected]?.correct?"✅ CORRETO":"❌ INCORRETO"}
+                          </div>
+                          <div style={{fontSize:"13px", color:"#C0B8FF", lineHeight:"1.55"}}>{q.explanation}</div>
+                        </div>
+                        <button onClick={nextQ} style={{width:"100%", background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)", border:"none", borderRadius:"10px", padding:"13px", color:"white", fontWeight:"700", fontSize:"14px", cursor:"pointer"}}>
+                          {qIdx+1>=quizQ.length?"Ver Resultado":"Próxima →"}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {/* ── PROGRESSO ── */}
+            {tab==="progresso" && (
+              <>
+                <div style={{display:"flex", gap:"10px", marginBottom:"14px"}}>
+                  {[[progress.seen.length,"conceitos vistos"],[progress.qTotal,"questões feitas"],[`${acc}%`,"precisão"]].map(([v,l],i) => (
+                    <div key={i} style={{flex:1, background:"#0F0F24", border:"1px solid #1E1E3F", borderRadius:"12px", padding:"14px", textAlign:"center"}}>
+                      <div style={{fontSize:"22px", fontWeight:"800", color:i===2?(acc>=70?"#48BB8C":acc>=50?"#FF8C47":"#FF5566"):"#7C6FFF"}}>{v}</div>
+                      <div style={{fontSize:"10px", color:"#8888AA", marginTop:"2px"}}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{background:"#0F0F24", border:"1px solid #1E1E3F", borderRadius:"14px", padding:"18px", marginBottom:"14px"}}>
+                  <div style={{fontSize:"12px", color:"#8888AA", marginBottom:"12px", fontWeight:"600", letterSpacing:"0.5px"}}>COBERTURA POR TEMA</div>
+                  {Object.entries(catColors).map(([cat, col]) => {
+                    const tot = CONCEPTS.filter(c=>c.cat===cat).length;
+                    const seen = progress.seen.filter(i=>CONCEPTS[i]?.cat===cat).length;
+                    const pct = tot>0?(seen/tot)*100:0;
+                    return (
+                      <div key={cat} style={{marginBottom:"12px"}}>
+                        <div style={{display:"flex", justifyContent:"space-between", fontSize:"11px", marginBottom:"4px"}}>
+                          <span style={{color:col.text, fontWeight:"600"}}>{col.label}</span>
+                          <span style={{color:"#8888AA"}}>{seen}/{tot}</span>
+                        </div>
+                        <div style={{height:"4px", background:"#1E1E3F", borderRadius:"99px"}}>
+                          <div style={{width:`${pct}%`, height:"100%", background:col.border, borderRadius:"99px", transition:"width 0.5s"}} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{background:"rgba(196,162,74,0.05)", border:"1px solid rgba(196,162,74,0.2)", borderRadius:"12px", padding:"16px"}}>
+                  <div style={{fontSize:"10px", color:"#C4A24A", fontWeight:"700", letterSpacing:"1px", marginBottom:"8px"}}>📚 LEITURA ESSENCIAL</div>
+                  <div style={{fontSize:"13px", color:"#E8D07A", fontWeight:"700", marginBottom:"4px"}}>Apegados — Amir Levine & Rachel Heller</div>
+                  <div style={{fontSize:"12px", color:"#AAA870", lineHeight:"1.5"}}>Foque nos capítulos sobre o evitante e sobre a combinação ansioso-evitativo. É onde está a base de tudo que você está aprendendo aqui.</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
