@@ -137,7 +137,7 @@ REGRAS:
 - Contexto atual: você está ansiosa (pai bravo, aulas de direção), recebeu flores e carta hoje, está grata mas também sobrecarregada`;
 
 // ── SISTEMA DE RESPOSTA IDEAL ──
-const RESPOSTA_SYSTEM=`Você é um especialista em relacionamentos com apego evitativo, com acesso ao histórico completo de 8 meses de conversa entre Gustavo e Julia.
+const RESPOSTA_SYSTEM=(direcao)=>`Você é um especialista em relacionamentos com apego evitativo, com acesso ao histórico completo de 8 meses de conversa entre Gustavo e Julia.
 
 PERFIL JULIA (baseado nas conversas reais):
 - Apego evitativo — processa tudo internamente, não expõe
@@ -145,31 +145,32 @@ PERFIL JULIA (baseado nas conversas reais):
 - "A minha cabeça as vzs grita pra eu fazer ou falar algo, mas eu simplesmente travo"
 - Vocabulário: "mb", "nuuu", "ixi", "blzinha", "hehehe", "sim sim", "vrdd", "sla"
 - Fecha quando: perguntas emocionais diretas, mensagens longas, múltiplas perguntas, intensidade emocional
-- Abre quando: humor leve, sem cobrança, espaço genuíno, gestos sem exigir resposta
-- Hoje está sobrecarregada: pai bravo, ansiedade com aulas de direção, consciência pesada
-- Recebeu flores e carta hoje e reagiu genuinamente — está aberta mas frágil
+- Abre quando: humor leve, sem cobrança, espaço genuíno, humor com duplo sentido
+- Lado safado real dela: "Adoraria te ajudar a descobrir se o remédio realmente faz efeito", "Por isso optamos pela violência", "Das uns beijinhos com as mãos pra trás e ver quem cede primeiro", "Prefiro que me chame de sua mulher"
+- Ela responde à tensão sutil — nunca ao explícito direto
 
 PERFIL GUSTAVO:
-- Apego ansioso — tende a querer confirmação, às vzs age por impulso
-- Está aprendendo a dar espaço e controlar impulsos
-- Quer ser o parceiro seguro que Julia consegue confiar
-- Objetivo: responder de forma que construa confiança sem pressionar
+- Apego ansioso, está aprendendo a dar espaço e controlar impulsos
+- Quer ser o parceiro seguro e também o namorado que mantém a tensão viva
+
+DIREÇÃO SOLICITADA: ${direcao.toUpperCase()}
+${direcao==="carinhosa"?"→ Resposta que aprofunda conexão emocional. Palavras suaves, presença genuína, que faça ela sentir que você está aqui sem cobrar. Baseado nos momentos em que ela mais se abriu com você.":direcao==="safada"?"→ Resposta que cria tensão romântica/sexual de forma natural e não forçada. Plant a seed, desperta curiosidade, usa humor com duplo sentido. Nunca vulgar ou explícito — o evitativo fecha com isso. Inspire-se no jeito que ela mesma faz: indireta, irônica, com teasing leve. A tensão precisa vir da insinuação, não da declaração.":"→ Resposta equilibrada e natural que mantém o fluxo da conversa. Sem drama nem intensidade. Como uma conversa leve entre dois que se conhecem bem."}
 
 SUA TAREFA:
-Dado o contexto da conversa, forneça EXATAMENTE o que Gustavo deve responder.
-Cada palavra, acento, vírgula e emoji deve ser pensado.
+Analise a conversa (por texto ou imagem enviada) e forneça EXATAMENTE o que Gustavo deve responder.
+Cada palavra, acento, vírgula e emoji deve ser pensado para esse momento específico.
 
 FORMATO DA RESPOSTA:
 **MENSAGEM EXATA:**
-[A mensagem completa, pronta para copiar — entre aspas]
+[A mensagem completa, pronta para copiar — sem aspas]
 
 **POR QUÊ FUNCIONA:**
-[2-3 linhas explicando]
+[2-3 linhas]
 
-**O QUE EVITAR AGORA:**
+**O QUE EVITAR:**
 [1 linha]
 
-Seja preciso. Não genérico. Baseado no padrão real da Julia e no momento atual.`;
+Seja preciso. Não genérico. Pense em como a Julia real responderia a isso.`;
 
 function analyzeMessage(msg){
   if(!msg||!msg.trim())return 0;
@@ -563,86 +564,164 @@ function QuizTab({progress,saveP,addXP}){
 function RespostaTab({addXP}){
   const[msgs,setMsgs]=useState("");
   const[ctx,setCtx]=useState("");
+  const[direcao,setDirecao]=useState("normal");
+  const[image,setImage]=useState(null);
   const[result,setResult]=useState(null);
   const[loading,setLoading]=useState(false);
   const[apiKey,setApiKey]=useState(()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}});
   const[showKey,setShowKey]=useState(false);
+  const imgRef=useRef(null);
   const saveKey=(k)=>{setApiKey(k);try{localStorage.setItem("dtq_api",k);}catch(e){}};
 
+  const handleImage=(e)=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      setImage({data:ev.target.result.split(",")[1],type:file.type,preview:ev.target.result});
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage=()=>{setImage(null);if(imgRef.current)imgRef.current.value="";};
+
   const analisar=async()=>{
-    if(!msgs.trim())return;
+    if(!msgs.trim()&&!image)return;
     setLoading(true);setResult(null);
     if(apiKey){
       try{
-        const prompt=`Contexto adicional do Gustavo: ${ctx||"nenhum"}\n\nÚltimas mensagens de Julia:\n${msgs}\n\nQual deve ser a resposta exata do Gustavo?`;
+        const sysPrompt=RESPOSTA_SYSTEM(direcao);
+        const userText=`${ctx?"Contexto: "+ctx+"
+
+":""}${msgs?"Últimas mensagens de Julia:
+"+msgs:"Analise a imagem da conversa."}`;
+        const userContent=image
+          ?[{type:"image",source:{type:"base64",media_type:image.type,data:image.data}},{type:"text",text:userText}]
+          :[{type:"text",text:userText}];
         const res=await fetch("https://api.anthropic.com/v1/messages",{
           method:"POST",
           headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,system:RESPOSTA_SYSTEM,messages:[{role:"user",content:prompt}]})
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:700,system:sysPrompt,messages:[{role:"user",content:userContent}]})
         });
         const data=await res.json();
-        setResult({type:"ai",text:data.content?.[0]?.text||"Erro na resposta"});
+        if(data.error)throw new Error(data.error.message);
+        setResult({type:"ai",text:data.content?.[0]?.text||"Erro"});
         addXP(15);
-      }catch(e){setResult({type:"error",text:"Erro: verifique sua API key"});}
+      }catch(e){setResult({type:"error",text:"Erro: "+e.message});}
     }else{
-      await new Promise(r=>setTimeout(r,800));
+      await new Promise(r=>setTimeout(r,600));
       const score=analyzeMessage(msgs);
       const coach=getCoaching(score);
-      let sugestao="";
-      if(score>3)sugestao='"sim sim" ou apenas um emoji de apoio — ela está sobrecarregada';
-      else if(score>1)sugestao='"ta bom" ou algo muito simples e leve';
-      else if(score<-1)sugestao='"hehehe" ou entrar no humor dela naturalmente';
-      else sugestao='"tô aqui" ou responder de forma simples e direta';
-      setResult({type:"basic",coach,sugestao,score});
+      const sugs={
+        normal:score>2?'"ta bom" ou algo muito simples e leve':score<-1?'"hehehe" ou entrar no humor dela':'"tô aqui" simples e direto',
+        carinhosa:score>2?'"❤️" ou "cuida de você"':'"Pensei em você hoje" ou "tô aqui quando quiser"',
+        safada:score>2?'"kkkk e eu achando que ia rolar algo diferente hoje 👀"':'"Você vai me fazer perder meu juízo" ou teasing leve',
+      };
+      setResult({type:"basic",coach,sugestao:sugs[direcao]||sugs.normal});
     }
     setLoading(false);
   };
+
+  const dirs=[
+    {id:"carinhosa",label:"💕 Carinhosa",desc:"Conexão e cuidado"},
+    {id:"normal",label:"💬 Normal",desc:"Fluxo natural"},
+    {id:"safada",label:"🔥 Safada",desc:"Tensão e teasing"},
+  ];
+
+  const hasInput=msgs.trim()||image;
 
   return(
     <div style={{padding:"16px"}}>
       <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
         <div style={{fontSize:"13px",fontWeight:"700",color:"#A89EFF",marginBottom:"6px"}}>💡 Resposta Ideal</div>
-        <div style={{fontSize:"12px",color:"#8888AA",lineHeight:"1.55"}}>Cole as últimas mensagens de Julia. Receba exatamente o que você deve responder — cada palavra, vírgula e acento.</div>
+        <div style={{fontSize:"12px",color:"#8888AA",lineHeight:"1.55"}}>Envie print ou cole as mensagens dela. Escolha a direção. Receba exatamente o que responder — cada palavra, vírgula e acento.</div>
       </div>
 
+      {/* API KEY */}
       <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 12px",background:apiKey?"rgba(72,187,140,0.08)":"rgba(255,140,71,0.08)",border:`1px solid ${apiKey?"#48BB8C":"#FF8C47"}`,borderRadius:"10px",marginBottom:"14px"}}>
         <span>{apiKey?"🤖":"⚙️"}</span>
         <div style={{flex:1}}>
-          <div style={{fontSize:"11px",fontWeight:"700",color:apiKey?"#48BB8C":"#FF8C47"}}>{apiKey?"IA ATIVA — Resposta personalizada real":"MODO BÁSICO — Análise simplificada"}</div>
-          <div style={{fontSize:"10px",color:"#8888AA"}}>API key do console.anthropic.com</div>
+          <div style={{fontSize:"11px",fontWeight:"700",color:apiKey?"#48BB8C":"#FF8C47"}}>{apiKey?"IA ATIVA — Resposta personalizada real":"MODO BÁSICO — Adicione API key para respostas reais"}</div>
         </div>
         <button onClick={()=>setShowKey(s=>!s)} style={{background:"transparent",border:"1px solid #1E1E3F",borderRadius:"6px",padding:"4px 8px",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{apiKey?"Trocar":"+ Key"}</button>
       </div>
       {showKey&&(
         <div style={{marginBottom:"14px"}}>
           <input type="password" placeholder="sk-ant-api..." value={apiKey} onChange={e=>saveKey(e.target.value)}
-            style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",boxSizing:"border-box",marginBottom:"6px"}}/>
-          <div style={{fontSize:"10px",color:"#8888AA"}}>Salva localmente no dispositivo · console.anthropic.com</div>
+            style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",boxSizing:"border-box",marginBottom:"4px"}}/>
+          <div style={{fontSize:"10px",color:"#8888AA"}}>console.anthropic.com → API Keys</div>
         </div>
       )}
 
-      <div style={{marginBottom:"10px"}}>
-        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>ÚLTIMAS MENSAGENS DE JULIA</div>
-        <textarea value={msgs} onChange={e=>setMsgs(e.target.value)} placeholder={"Cole aqui o que ela mandou.\nEx:\nSim kkkkk\nDormi cedo, esqueci de falar\nAnsiedade ta me matando"}
-          style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",resize:"vertical",minHeight:"100px",boxSizing:"border-box",lineHeight:"1.5"}}/>
+      {/* DIREÇÃO */}
+      <div style={{marginBottom:"14px"}}>
+        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"8px",fontWeight:"600"}}>DIREÇÃO DA CONVERSA</div>
+        <div style={{display:"flex",gap:"8px"}}>
+          {dirs.map(d=>(
+            <button key={d.id} onClick={()=>setDirecao(d.id)}
+              style={{flex:1,padding:"10px 4px",borderRadius:"10px",border:`1px solid ${direcao===d.id?"#7C6FFF":"#1E1E3F"}`,background:direcao===d.id?"rgba(124,111,255,0.15)":"#0F0F24",cursor:"pointer",textAlign:"center"}}>
+              <div style={{fontSize:"13px",marginBottom:"2px"}}>{d.label}</div>
+              <div style={{fontSize:"10px",color:direcao===d.id?"#A89EFF":"#8888AA"}}>{d.desc}</div>
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* IMAGEM UPLOAD */}
+      <div style={{marginBottom:"10px"}}>
+        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>PRINT DA CONVERSA</div>
+        {!image?(
+          <label style={{display:"block",background:"#0F0F24",border:"2px dashed #1E1E3F",borderRadius:"10px",padding:"20px",textAlign:"center",cursor:"pointer"}}>
+            <input ref={imgRef} type="file" accept="image/*" onChange={handleImage} style={{display:"none"}}/>
+            <div style={{fontSize:"24px",marginBottom:"6px"}}>📷</div>
+            <div style={{fontSize:"12px",color:"#8888AA"}}>Toque para enviar print do WhatsApp</div>
+          </label>
+        ):(
+          <div style={{position:"relative"}}>
+            <img src={image.preview} alt="conversa" style={{width:"100%",borderRadius:"10px",border:"1px solid #1E1E3F",maxHeight:"200px",objectFit:"cover"}}/>
+            <button onClick={removeImage} style={{position:"absolute",top:"8px",right:"8px",background:"rgba(0,0,0,0.7)",border:"none",borderRadius:"50%",width:"28px",height:"28px",color:"white",fontSize:"14px",cursor:"pointer"}}>✕</button>
+            <div style={{marginTop:"6px",fontSize:"11px",color:"#48BB8C"}}>✓ Print carregado — Claude vai ler a conversa</div>
+          </div>
+        )}
+      </div>
+
+      {/* TEXTO MANUAL */}
+      <div style={{marginBottom:"10px"}}>
+        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>OU COLE AS MENSAGENS DELA</div>
+        <textarea value={msgs} onChange={e=>setMsgs(e.target.value)}
+          placeholder={"Ex:
+Sim kkkkk
+Dormi cedo, esqueci de falar
+Ansiedade ta me matando"}
+          style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",resize:"vertical",minHeight:"80px",boxSizing:"border-box",lineHeight:"1.5"}}/>
+      </div>
+
+      {/* CONTEXTO */}
       <div style={{marginBottom:"14px"}}>
         <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>CONTEXTO (opcional)</div>
-        <input value={ctx} onChange={e=>setCtx(e.target.value)} placeholder="Ex: ela está ansiosa hoje, pai ficou bravo..."
+        <input value={ctx} onChange={e=>setCtx(e.target.value)} placeholder="Ex: ela está animada hoje, é de manhã, temos planos..."
           style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",boxSizing:"border-box"}}/>
       </div>
 
-      <button onClick={analisar} disabled={loading||!msgs.trim()} style={{width:"100%",background:msgs.trim()&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"14px",color:msgs.trim()&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:msgs.trim()&&!loading?"pointer":"default",marginBottom:"14px"}}>
-        {loading?"Analisando...":"🔍 Analisar e Responder"}
+      <button onClick={analisar} disabled={loading||!hasInput}
+        style={{width:"100%",background:hasInput&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"14px",color:hasInput&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:hasInput&&!loading?"pointer":"default",marginBottom:"14px"}}>
+        {loading?"Analisando...":image?"🔍 Analisar Print e Responder":"🔍 Analisar e Responder"}
       </button>
 
       {result&&(
         <div className="fade">
           {result.type==="ai"&&(
             <div style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.3)",borderRadius:"12px",padding:"18px"}}>
-              <div style={{fontSize:"11px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px",marginBottom:"12px"}}>🤖 ANÁLISE BASEADA NO HISTÓRICO REAL</div>
+              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px"}}>
+                <div style={{fontSize:"11px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px"}}>🤖 ANÁLISE · DIREÇÃO {direcao.toUpperCase()}</div>
+              </div>
               <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.65",whiteSpace:"pre-wrap"}}>{result.text}</div>
+              <button onClick={()=>navigator.clipboard?.writeText(result.text.match(/\*\*MENSAGEM EXATA:\*\*\s*([\s\S]*?)
+
+/)?.[1]||result.text)}
+                style={{marginTop:"12px",background:"rgba(124,111,255,0.2)",border:"1px solid #7C6FFF",borderRadius:"8px",padding:"8px 16px",color:"#A89EFF",fontSize:"12px",fontWeight:"600",cursor:"pointer",width:"100%"}}>
+                📋 Copiar mensagem
+              </button>
             </div>
           )}
           {result.type==="basic"&&(
@@ -650,11 +729,11 @@ function RespostaTab({addXP}){
               <div style={{background:`${result.coach.color}12`,border:`1px solid ${result.coach.color}33`,borderRadius:"12px",padding:"16px",marginBottom:"10px"}}>
                 <div style={{fontSize:"12px",fontWeight:"700",color:result.coach.color,marginBottom:"6px"}}>{result.coach.icon} {result.coach.title}</div>
                 <div style={{fontSize:"12px",color:"#CCCCDD",lineHeight:"1.5",marginBottom:"10px"}}>{result.coach.text}</div>
-                <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"4px",fontWeight:"600"}}>SUGESTÃO DE RESPOSTA</div>
-                <div style={{background:"#080814",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",color:"#E8E8F5",fontStyle:"italic"}}>"{result.sugestao}"</div>
+                <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"4px",fontWeight:"600"}}>SUGESTÃO · {direcao.toUpperCase()}</div>
+                <div style={{background:"#080814",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",color:"#E8E8F5"}}>{result.sugestao}</div>
               </div>
               <div style={{background:"rgba(255,140,71,0.05)",border:"1px solid rgba(255,140,71,0.2)",borderRadius:"10px",padding:"12px",fontSize:"12px",color:"#FFB380"}}>
-                ⚡ Para respostas personalizadas palavra por palavra, adicione sua API key acima.
+                ⚡ Adicione API key para respostas personalizadas palavra por palavra, leitura de prints e direção safada completa.
               </div>
             </div>
           )}
@@ -667,7 +746,7 @@ function RespostaTab({addXP}){
   );
 }
 
-// ── SIMULADOR TAB ──
+// ── SIMULADOR TAB ──// ── SIMULADOR TAB ──
 function SimuladorTab({addXP}){
   const[mode,setMode]=useState("menu");
   const[scenario,setScenario]=useState(null);
