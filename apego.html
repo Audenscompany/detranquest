@@ -137,6 +137,41 @@ REGRAS:
 - Contexto atual: você está ansiosa (pai bravo, aulas de direção), recebeu flores e carta hoje, está grata mas também sobrecarregada`;
 
 // ── SISTEMA DE RESPOSTA IDEAL ──
+const CONSULTOR_SYSTEM=`Você é o conselheiro pessoal de relacionamento do Gustavo Pimenta, com acesso completo ao histórico de 8 meses de conversa com Julia (outubro 2025 a julho 2026, 35.551 mensagens analisadas).
+
+PERFIL JULIA (real, baseado no histórico):
+- 17-18 anos, cristã, muito familiar, caseira
+- Apego evitativo — "Intensa eu sou só na minha cabeça, mas eu deixo muito pouco sair"
+- "Não consigo demonstrar quando quero, nem sei como" / "Eu simplesmente travo"
+- Linguagem do amor: toque físico (mas quando ela quer)
+- Trabalha no salão da mãe / faz crochê quando ansiosa / tem peixinhos
+- Participa de ensaios da igreja / muito caseira (adora séries em casa)
+- Vocabulário real: "mb", "nuuu", "ixi", "blzinha", "hehehe", "sim sim", "pse", "sla", "vrdd", "fazer oq"
+- Lado safado real: "Por isso optamos pela violência", "Das uns beijinhos pra ver quem cede", "Adoraria te ajudar a descobrir...", "Prefiro que me chame de sua mulher"
+- Disse "te amo" pela 1ª vez em março 2026 por iniciativa própria
+- Em 25/06: "Vc é meu namorado, eu não vou estar dando pra qualquer um, eu te amo e sei q vc é o cara certo pra isso"
+- Fecha quando: muita pressão, perguntas emocionais diretas, intensidade
+- Abre quando: humor leve, espaço genuíno, teasing sutil, gestos sem exigir resposta
+- Hoje (03/07): dia pesado — pai viu eles se beijando e ficou bravo. Recebeu buquê e carta. Disse "te amo mb" com 😭😭😭😭. Encerrou com meme de macarrão / "hehe". Está processando muito.
+
+PERFIL GUSTAVO:
+- Apego ansioso, dono da hamburgueria Pimenta's Burger
+- Está aprendendo a controlar impulsos e dar espaço
+- Quer ser o parceiro seguro e também manter a tensão viva
+- Às vzs age por impulso (ex: "Como assim não é dia mb??")
+
+VOCÊ RESPONDE A QUALQUER PERGUNTA:
+- Tempo de resposta ideal para cada situação
+- Ideias de presente para datas especiais (baseado nos gostos reais dela)
+- Ideias de date/final de semana (baseado no jeito que ela curte)
+- Como fazer ela querer mais / criar tensão
+- Como levar uma conversa para direção engraçada, carinhosa ou safada
+- Se há brecha para determinada abordagem hoje
+- Como agir em momentos específicos
+- Qualquer outra dúvida de relacionamento
+
+FORMATO: Direto, prático, baseado no padrão real dela. Sem genérico.`;
+
 const RESPOSTA_SYSTEM=(direcao)=>`Você é um especialista em relacionamentos com apego evitativo, com acesso ao histórico completo de 8 meses de conversa entre Gustavo e Julia.
 
 PERFIL JULIA (baseado nas conversas reais):
@@ -615,6 +650,7 @@ function RespostaTab({addXP}){
       const sugs={
         normal:score>2?'"ta bom" ou algo muito simples e leve':score<-1?'"hehehe" ou entrar no humor dela':'"tô aqui" simples e direto',
         carinhosa:score>2?'"❤️" ou "cuida de você"':'"Pensei em você hoje" ou "tô aqui quando quiser"',
+        "engraçada":score>2?'Meme ou piada sobre a situação dela':'"kkkkkk isso mesmo" ou entrar no humor dela',
         safada:score>2?'"kkkk e eu achando que ia rolar algo diferente hoje 👀"':'"Você vai me fazer perder meu juízo" ou teasing leve',
       };
       setResult({type:"basic",coach,sugestao:sugs[direcao]||sugs.normal});
@@ -625,6 +661,7 @@ function RespostaTab({addXP}){
   const dirs=[
     {id:"carinhosa",label:"💕 Carinhosa",desc:"Conexão e cuidado"},
     {id:"normal",label:"💬 Normal",desc:"Fluxo natural"},
+    {id:"engraçada",label:"😂 Engraçada",desc:"Humor e leveza"},
     {id:"safada",label:"🔥 Safada",desc:"Tensão e teasing"},
   ];
 
@@ -703,6 +740,16 @@ Ansiedade ta me matando"}
           style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",boxSizing:"border-box"}}/>
       </div>
 
+      {/* TEMPO DE RESPOSTA */}
+      <div style={{marginBottom:"14px"}}>
+        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>QUANDO RESPONDER (opcional)</div>
+        <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+          {["Agora","5 min","15 min","1 hora","Amanhã"].map(t=>(
+            <button key={t} onClick={()=>setCtx(c=>c?(c+" Tempo ideal: "+t):"Tempo ideal: "+t)} style={{padding:"5px 10px",borderRadius:"20px",border:"1px solid #1E1E3F",background:"transparent",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{t}</button>
+          ))}
+        </div>
+      </div>
+
       <button onClick={analisar} disabled={loading||!hasInput}
         style={{width:"100%",background:hasInput&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"14px",color:hasInput&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:hasInput&&!loading?"pointer":"default",marginBottom:"14px"}}>
         {loading?"Analisando...":image?"🔍 Analisar Print e Responder":"🔍 Analisar e Responder"}
@@ -742,6 +789,91 @@ Ansiedade ta me matando"}
           )}
         </div>
       )}
+      {/* CONSULTOR LIVRE */}
+      <div style={{marginTop:"20px",borderTop:"1px solid #1E1E3F",paddingTop:"16px"}}>
+        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"4px"}}>💬 CONSULTOR LIVRE</div>
+        <div style={{fontSize:"11px",color:"#555577",marginBottom:"12px"}}>Pergunte qualquer coisa: timing, presente, date, brecha para safada, como fazer ela querer mais...</div>
+        <ConsultorChat apiKey={apiKey}/>
+      </div>
+    </div>
+  );
+}
+
+function ConsultorChat({apiKey}){
+  const[chatInput,setChatInput]=useState("");
+  const[chatMsgs,setChatMsgs]=useState([]);
+  const[chatLoading,setChatLoading]=useState(false);
+  const chatBottomRef=useRef(null);
+  useEffect(()=>{chatBottomRef.current?.scrollIntoView({behavior:"smooth"});},[chatMsgs]);
+
+  const sendChat=async()=>{
+    const txt=chatInput.trim();if(!txt||chatLoading)return;
+    setChatInput("");
+    setChatMsgs(m=>[...m,{role:"user",text:txt}]);
+    setChatLoading(true);
+    if(apiKey){
+      try{
+        const history=[...chatMsgs,{role:"user",text:txt}].map(m=>({role:m.role,content:m.text}));
+        const res=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:500,system:CONSULTOR_SYSTEM,messages:history})
+        });
+        const data=await res.json();
+        if(data.error)throw new Error(data.error.message);
+        setChatMsgs(m=>[...m,{role:"assistant",text:data.content?.[0]?.text||"..."}]);
+      }catch(e){setChatMsgs(m=>[...m,{role:"assistant",text:"Erro: "+e.message}]);}
+    }else{
+      const respostas={
+        "safada":["Análise: a Julia tem esse lado, mas ativa com insinuação sutil, nunca com explícito direto. Planta uma ideia, não declara. Preciso da API key para analisar o momento específico."],
+        "presente":["Baseado no que ela gosta: livro do gênero favorito dela, material de crochê premium, algo para os peixinhos dela, kit de chá/café para os dias de série em casa. Adicione API key para sugestões personalizadas para a data."],
+        "date":["Julia adora ficar em casa: série maratonada com lanche especial, noite de jogos de tabuleiro, cozinhar juntos. Se sair: café aconchegante ou cinema (tarde de semana, menos gente). Adicione API key para ideias baseadas no contexto atual."],
+        "timing":["Regra geral: ela demora → você demora a metade. Ela respondeu em 3h → você responde em 1h30. Nunca responda mais rápido que ela consistentemente. Com API key analiso o contexto específico."],
+        "default":["Para respostas personalizadas baseadas no padrão real dela, adicione sua API key na seção acima. Sem ela, só consigo dar orientações gerais."]
+      };
+      const lower=txt.toLowerCase();
+      const key=lower.includes("safad")||lower.includes("brecha")||lower.includes("querer")?"safada":
+        lower.includes("present")||lower.includes("gift")?"presente":
+        lower.includes("date")||lower.includes("final de semana")||lower.includes("sair")?"date":
+        lower.includes("timing")||lower.includes("tempo")||lower.includes("quando responder")?"timing":"default";
+      await new Promise(r=>setTimeout(r,600));
+      setChatMsgs(m=>[...m,{role:"assistant",text:respostas[key][0]}]);
+    }
+    setChatLoading(false);
+  };
+
+  const sugestoes=["Tenho brecha para safada hoje?","Ideia de date para este final de semana","Como fazer ela querer mais?","Quanto tempo espero para responder?","Ideia de presente para ela"];
+
+  return(
+    <div>
+      {chatMsgs.length===0&&(
+        <div style={{marginBottom:"12px"}}>
+          <div style={{fontSize:"10px",color:"#555577",marginBottom:"8px"}}>SUGESTÕES</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+            {sugestoes.map(s=>(
+              <button key={s} onClick={()=>setChatInput(s)} style={{padding:"6px 10px",borderRadius:"20px",border:"1px solid #1E1E3F",background:"#0F0F24",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{s}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {chatMsgs.length>0&&(
+        <div style={{background:"#0A0A18",borderRadius:"10px",padding:"12px",marginBottom:"10px",maxHeight:"300px",overflowY:"auto",display:"flex",flexDirection:"column",gap:"8px"}}>
+          {chatMsgs.map((m,i)=>(
+            <div key={i} className="fade" style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+              <div style={{maxWidth:"85%",padding:"8px 12px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:m.role==="user"?"#5B4FFF":"#1A1A35",fontSize:"12.5px",lineHeight:"1.5",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{m.text}</div>
+            </div>
+          ))}
+          {chatLoading&&<div style={{display:"flex"}}><div style={{padding:"8px 14px",borderRadius:"14px",background:"#1A1A35"}} className="typing"><span/><span/><span/></div></div>}
+          <div ref={chatBottomRef}/>
+        </div>
+      )}
+      <div style={{display:"flex",gap:"8px",alignItems:"flex-end"}}>
+        <textarea value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}}}
+          placeholder="Pergunte qualquer coisa sobre ela ou a conversa..."
+          style={{flex:1,background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",resize:"none",maxHeight:"80px",lineHeight:"1.4"}} rows={1}/>
+        <button onClick={sendChat} disabled={!chatInput.trim()||chatLoading}
+          style={{width:"36px",height:"36px",borderRadius:"50%",border:"none",background:chatInput.trim()&&!chatLoading?"#7C6FFF":"#1E1E3F",color:"white",fontSize:"14px",cursor:chatInput.trim()&&!chatLoading?"pointer":"default",flex:"none"}}>➤</button>
+      </div>
     </div>
   );
 }
