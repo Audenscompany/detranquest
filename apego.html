@@ -172,6 +172,71 @@ VOCÊ RESPONDE A QUALQUER PERGUNTA:
 
 FORMATO: Direto, prático, baseado no padrão real dela. Sem genérico.`;
 
+
+const CYCLE_PHASES={
+  menstrual:{
+    name:"Menstrual",emoji:"🔴",days:"Dias 1-5",color:"#FF5566",
+    mood:"Mais introspectiva, cansada, fisicamente desconfortável. Evitativo AMPLIFICADO.",
+    comunicacao:"Minimal. 'Sim', 'mb', 'ta bom'. Demora mais para responder. Mais em casa.",
+    ideal:"Gestos silenciosos de cuidado sem exigir resposta. Nenhuma conversa séria. Nada pesado.",
+    evitar:"Qualquer cobrança emocional. Perguntas sobre o relacionamento. Pressão de qualquer tipo.",
+    safada:"🚫 Zero abertura. Respeite o corpo e o espaço dela.",
+    reacao:"Provavelmente minimal, pode estar mais irritável ou quieta. Não é pessoal.",
+  },
+  folicular:{
+    name:"Folicular",emoji:"🌱",days:"Dias 6-13",color:"#48BB8C",
+    mood:"Energia subindo, mais comunicativa, mais aberta. O evitativo relaxa um pouco.",
+    comunicacao:"Mais engajada, responde mais rápido, pode iniciar conversa, manda memes.",
+    ideal:"Bons momentos para conversas leves, humor, planos simples. Janela de conexão.",
+    evitar:"Aproveitar a abertura para cobrar coisas que ficaram pendentes.",
+    safada:"💚 Média. Teasing leve e humor com duplo sentido pode funcionar.",
+    reacao:"Provavelmente mais engajada e espontânea. Boa janela para leveza.",
+  },
+  ovulacao:{
+    name:"Ovulação",emoji:"✨",days:"Dias 14-16",color:"#C4A24A",
+    mood:"Pico de energia, mais social, mais confiante, mais extrovertida. Melhor janela do ciclo.",
+    comunicacao:"Mais espontânea, pode ser mais carinhosa, inicia mais, mais receptiva.",
+    ideal:"Date, presença física, planos juntos, conexão profunda, momentos especiais.",
+    evitar:"Desperdiçar essa janela em coisas triviais.",
+    safada:"🔥 Alta. Melhor momento do ciclo para tensão e teasing.",
+    reacao:"Provavelmente mais aberta, responsiva e calorosa. Use bem essa janela.",
+  },
+  luteal_inicio:{
+    name:"Luteal (início)",emoji:"🍂",days:"Dias 17-22",color:"#FF8C47",
+    mood:"Energia diminuindo. Ainda ok mas começando a ficar mais introspectiva.",
+    comunicacao:"Começa a fechar gradualmente. Ainda responde bem mas com menos iniciativa.",
+    ideal:"Manter a conexão levemente. Sem planos grandes. Conforto e simplicidade.",
+    evitar:"Conversas intensas ou emocionalmente pesadas.",
+    safada:"⚡ Baixa-média. Pode funcionar se ela já estiver no modo leve.",
+    reacao:"Variável. Tende a precisar de mais espaço e menos demanda.",
+  },
+  luteal_pms:{
+    name:"PMS",emoji:"🌧️",days:"Dias 23-28",color:"#CC77CC",
+    mood:"Mais emocional, pode estar irritável, mais sensível. Evitativo amplificado ao máximo.",
+    comunicacao:"Pode ser mais cortante, 'não' mais rápido, ou mais carinhosa (imprevisível). Mais em casa.",
+    ideal:"Espaço total. Gestos de cuidado simples e práticos sem expectativa de reciprocidade.",
+    evitar:"Qualquer discussão, cobrança, pressão, ou tentar forçar conexão.",
+    safada:"🚫 Zero a quase zero. Não é a hora.",
+    reacao:"Imprevisível. Pode ser mais fria ou surpreendentemente carinhosa. Fique neutro.",
+  },
+};
+
+function calcPhase(lastDate,cycleLen){
+  if(!lastDate)return null;
+  const today=new Date();
+  const last=new Date(lastDate);
+  const diff=Math.floor((today-last)/(1000*60*60*24));
+  const day=(diff%cycleLen)+1;
+  let phase;
+  if(day<=5)phase="menstrual";
+  else if(day<=13)phase="folicular";
+  else if(day<=16)phase="ovulacao";
+  else if(day<=22)phase="luteal_inicio";
+  else phase="luteal_pms";
+  const daysUntil=cycleLen-day+1;
+  return{phase,day,daysUntil,data:CYCLE_PHASES[phase]};
+}
+
 const RESPOSTA_SYSTEM=(direcao)=>`Você é um especialista em relacionamentos com apego evitativo, com acesso ao histórico completo de 8 meses de conversa entre Gustavo e Julia.
 
 PERFIL JULIA (baseado nas conversas reais):
@@ -409,6 +474,9 @@ function App(){
   const[loginErr,setLoginErr]=useState("");
   const[tab,setTab]=useState("conceitos");
   const[progress,setProgress]=useState({xp:0,seen:[],qCorrect:0,qTotal:0});
+  const[ciclo,setCiclo]=useState(()=>{try{const c=localStorage.getItem("dtq_ciclo");return c?JSON.parse(c):{lastDate:"",cycleLen:28};}catch(e){return{lastDate:"",cycleLen:28};}});
+  const saveCiclo=(c)=>{setCiclo(c);try{localStorage.setItem("dtq_ciclo",JSON.stringify(c));}catch(e){}};
+  const currentPhase=ciclo.lastDate?calcPhase(ciclo.lastDate,ciclo.cycleLen):null;
 
   useEffect(()=>{try{const p=localStorage.getItem("dtq_v3");if(p)setProgress(JSON.parse(p));}catch(e){}});
 
@@ -457,6 +525,17 @@ function App(){
           </div>
         </div>
       </div>
+      {currentPhase&&(
+        <div style={{padding:"6px 16px",background:`${currentPhase.data.color}15`,borderBottom:`1px solid ${currentPhase.data.color}33`,display:"flex",alignItems:"center",gap:"8px"}}>
+          <span>{currentPhase.data.emoji}</span>
+          <div style={{flex:1}}>
+            <span style={{fontSize:"11px",fontWeight:"700",color:currentPhase.data.color}}>{currentPhase.data.name}</span>
+            <span style={{fontSize:"11px",color:"#8888AA"}}> · Dia {currentPhase.day} · </span>
+            <span style={{fontSize:"11px",color:"#8888AA"}}>{currentPhase.data.safada}</span>
+          </div>
+          <span style={{fontSize:"10px",color:"#555577"}}>{currentPhase.daysUntil}d p/ próximo</span>
+        </div>
+      )}
       <div style={{display:"flex",padding:"8px 10px",gap:"4px",borderBottom:"1px solid #1E1E3F",overflowX:"auto"}}>
         {tabs.map(([t,ico])=>(
           <button key={t} onClick={()=>setTab(t)} style={{flex:"none",padding:"7px 9px",borderRadius:"8px",border:"none",fontSize:"11px",fontWeight:"600",cursor:"pointer",background:tab===t?"#1E1E3F":"transparent",color:tab===t?"#A89EFF":"#8888AA",whiteSpace:"nowrap"}}>
@@ -467,9 +546,9 @@ function App(){
       <div style={{flex:1,overflowY:"auto"}}>
         {tab==="conceitos"&&<ConceptsTab progress={progress} saveP={saveP} addXP={addXP}/>}
         {tab==="quiz"&&<QuizTab progress={progress} saveP={saveP} addXP={addXP}/>}
-        {tab==="resposta"&&<RespostaTab addXP={addXP}/>}
-        {tab==="simulador"&&<SimuladorTab addXP={addXP}/>}
-        {tab==="progresso"&&<ProgressoTab progress={progress} level={lv} pct={pct}/>}
+        {tab==="resposta"&&<RespostaTab addXP={addXP} currentPhase={currentPhase}/>}
+        {tab==="simulador"&&<SimuladorTab addXP={addXP} currentPhase={currentPhase}/>}
+        {tab==="progresso"&&<ProgressoTab progress={progress} level={lv} pct={pct} ciclo={ciclo} saveCiclo={saveCiclo} currentPhase={currentPhase}/>}
       </div>
     </div>
   );
@@ -596,7 +675,7 @@ function QuizTab({progress,saveP,addXP}){
 }
 
 // ── RESPOSTA IDEAL TAB ──
-function RespostaTab({addXP}){
+function RespostaTab({addXP,currentPhase}){
   const[msgs,setMsgs]=useState("");
   const[ctx,setCtx]=useState("");
   const[direcao,setDirecao]=useState("normal");
@@ -673,6 +752,22 @@ function RespostaTab({addXP}){
         <div style={{fontSize:"13px",fontWeight:"700",color:"#A89EFF",marginBottom:"6px"}}>💡 Resposta Ideal</div>
         <div style={{fontSize:"12px",color:"#8888AA",lineHeight:"1.55"}}>Envie print ou cole as mensagens dela. Escolha a direção. Receba exatamente o que responder — cada palavra, vírgula e acento.</div>
       </div>
+      {currentPhase&&(
+        <div style={{background:`${currentPhase.data.color}10`,border:`1px solid ${currentPhase.data.color}33`,borderRadius:"12px",padding:"14px",marginBottom:"14px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
+            <span style={{fontSize:"20px"}}>{currentPhase.data.emoji}</span>
+            <div>
+              <div style={{fontSize:"12px",fontWeight:"700",color:currentPhase.data.color}}>{currentPhase.data.name} · Dia {currentPhase.day}</div>
+              <div style={{fontSize:"11px",color:"#8888AA"}}>{currentPhase.daysUntil} dias até próximo ciclo</div>
+            </div>
+          </div>
+          <div style={{fontSize:"11px",color:"#CCCCDD",lineHeight:"1.5",marginBottom:"6px"}}>{currentPhase.data.mood}</div>
+          <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+            <span style={{fontSize:"10px",background:"#080814",borderRadius:"20px",padding:"3px 8px",color:"#8888AA"}}>💬 {currentPhase.data.comunicacao.slice(0,40)}...</span>
+            <span style={{fontSize:"10px",background:"#080814",borderRadius:"20px",padding:"3px 8px",color:currentPhase.data.color}}>{currentPhase.data.safada}</span>
+          </div>
+        </div>
+      )}
 
       {/* API KEY */}
       <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 12px",background:apiKey?"rgba(72,187,140,0.08)":"rgba(255,140,71,0.08)",border:`1px solid ${apiKey?"#48BB8C":"#FF8C47"}`,borderRadius:"10px",marginBottom:"14px"}}>
@@ -793,13 +888,13 @@ Ansiedade ta me matando"}
       <div style={{marginTop:"20px",borderTop:"1px solid #1E1E3F",paddingTop:"16px"}}>
         <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"4px"}}>💬 CONSULTOR LIVRE</div>
         <div style={{fontSize:"11px",color:"#555577",marginBottom:"12px"}}>Pergunte qualquer coisa: timing, presente, date, brecha para safada, como fazer ela querer mais...</div>
-        <ConsultorChat apiKey={apiKey}/>
+        <ConsultorChat apiKey={apiKey} currentPhase={currentPhase}/>
       </div>
     </div>
   );
 }
 
-function ConsultorChat({apiKey}){
+function ConsultorChat({apiKey,currentPhase}){
   const[chatInput,setChatInput]=useState("");
   const[chatMsgs,setChatMsgs]=useState([]);
   const[chatLoading,setChatLoading]=useState(false);
@@ -813,7 +908,8 @@ function ConsultorChat({apiKey}){
     setChatLoading(true);
     if(apiKey){
       try{
-        const history=[...chatMsgs,{role:"user",text:txt}].map(m=>({role:m.role,content:m.text}));
+        const phaseInfo=currentPhase?`\n[CONTEXTO CICLO ATUAL: ${currentPhase.data.name} - Dia ${currentPhase.day} - ${currentPhase.data.mood} - Brecha safada: ${currentPhase.data.safada}]`:"";
+        const history=[...chatMsgs,{role:"user",text:txt}].map((m,i)=>({role:m.role,content:i===chatMsgs.length?m.text+phaseInfo:m.text}));
         const res=await fetch("https://api.anthropic.com/v1/messages",{
           method:"POST",
           headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
@@ -978,7 +1074,7 @@ function SimuladorTab({addXP}){
   );
 }
 
-function ProgressoTab({progress,level,pct}){
+function ProgressoTab({progress,level,pct,ciclo,saveCiclo,currentPhase}){
   const nextLv=LEVELS[level.n]||level;
   const acc=progress.qTotal>0?Math.round((progress.qCorrect/progress.qTotal)*100):0;
   return(
@@ -1018,6 +1114,71 @@ function ProgressoTab({progress,level,pct}){
           );
         })}
       </div>
+      {/* CICLO */}
+      <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"18px",marginBottom:"14px"}}>
+        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"14px"}}>🔴 CICLO DA JULIA</div>
+        <div style={{marginBottom:"12px"}}>
+          <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px"}}>INÍCIO DO ÚLTIMO PERÍODO</div>
+          <input type="date" value={ciclo.lastDate} onChange={e=>saveCiclo({...ciclo,lastDate:e.target.value})}
+            style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"10px 12px",color:"#E8E8F5",fontSize:"14px",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{marginBottom:"14px"}}>
+          <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px"}}>DURAÇÃO MÉDIA DO CICLO: {ciclo.cycleLen} dias</div>
+          <input type="range" min="21" max="35" value={ciclo.cycleLen} onChange={e=>saveCiclo({...ciclo,cycleLen:parseInt(e.target.value)})}
+            style={{width:"100%",accentColor:"#7C6FFF"}}/>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#555577"}}>
+            <span>21</span><span>28</span><span>35</span>
+          </div>
+        </div>
+        {currentPhase?(
+          <div style={{background:`${currentPhase.data.color}10`,border:`1px solid ${currentPhase.data.color}33`,borderRadius:"12px",padding:"16px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
+              <span style={{fontSize:"28px"}}>{currentPhase.data.emoji}</span>
+              <div>
+                <div style={{fontSize:"15px",fontWeight:"800",color:currentPhase.data.color}}>{currentPhase.data.name}</div>
+                <div style={{fontSize:"12px",color:"#8888AA"}}>{currentPhase.data.days} · Dia {currentPhase.day} do ciclo</div>
+              </div>
+              <div style={{marginLeft:"auto",textAlign:"right"}}>
+                <div style={{fontSize:"11px",color:"#8888AA"}}>próximo</div>
+                <div style={{fontSize:"16px",fontWeight:"800",color:currentPhase.data.color}}>{currentPhase.daysUntil}d</div>
+              </div>
+            </div>
+            {[
+              ["🧠 Estado",currentPhase.data.mood],
+              ["💬 Comunicação",currentPhase.data.comunicacao],
+              ["✅ Ideal agora",currentPhase.data.ideal],
+              ["⛔ Evitar",currentPhase.data.evitar],
+              ["🔥 Safada?",currentPhase.data.safada],
+              ["⚡ Reação provável",currentPhase.data.reacao],
+            ].map(([label,val])=>(
+              <div key={label} style={{marginBottom:"8px"}}>
+                <div style={{fontSize:"10px",color:currentPhase.data.color,fontWeight:"700",marginBottom:"2px"}}>{label}</div>
+                <div style={{fontSize:"12px",color:"#CCCCDD",lineHeight:"1.4"}}>{val}</div>
+              </div>
+            ))}
+          </div>
+        ):(
+          <div style={{textAlign:"center",padding:"20px",color:"#555577",fontSize:"12px"}}>Insira a data do último período para ver a fase atual</div>
+        )}
+        {/* Timeline */}
+        {currentPhase&&(
+          <div style={{marginTop:"14px"}}>
+            <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"8px",fontWeight:"600"}}>PRÓXIMAS FASES</div>
+            <div style={{display:"flex",gap:"4px"}}>
+              {Object.entries(CYCLE_PHASES).map(([key,ph])=>{
+                const isNow=key===currentPhase.phase;
+                return(
+                  <div key={key} style={{flex:key==="menstrual"||key==="ovulacao"?1:key==="folicular"?2:key==="luteal_inicio"?2:2,background:isNow?`${ph.color}30`:"#0F0F24",border:`1px solid ${isNow?ph.color:"#1E1E3F"}`,borderRadius:"6px",padding:"4px",textAlign:"center"}}>
+                    <div style={{fontSize:"12px"}}>{ph.emoji}</div>
+                    <div style={{fontSize:"9px",color:isNow?ph.color:"#555577",fontWeight:isNow?"700":"400"}}>{ph.name.slice(0,4)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div style={{background:"rgba(196,162,74,0.05)",border:"1px solid rgba(196,162,74,0.2)",borderRadius:"12px",padding:"16px"}}>
         <div style={{fontSize:"10px",color:"#C4A24A",fontWeight:"700",letterSpacing:"1px",marginBottom:"10px"}}>📊 O QUE O HISTÓRICO MOSTRA</div>
         <div style={{fontSize:"12px",color:"#E8D07A",marginBottom:"6px",fontWeight:"600"}}>Outubro 2025: "Sim sim" (guarda da)</div>
