@@ -237,6 +237,60 @@ function calcPhase(lastDate,cycleLen){
   return{phase,day,daysUntil,data:CYCLE_PHASES[phase]};
 }
 
+
+const LEITURA_SYSTEM=`Você é um especialista em leitura emocional e padrões de comunicação, com 8 meses de histórico real de Julia para referência.
+
+PADRÃO DE MASCARAMENTO DA JULIA (baseado no histórico real):
+Julia disse literalmente: "Intensa eu sou só na minha cabeça, mas eu deixo muito pouco sair" / "Não consigo demonstrar quando quero, nem sei como" / "Eu simplesmente travo"
+
+DECODER DO VOCABULÁRIO DELA:
+- "Tá tudo bem" / "Tô bem" → frequentemente NÃO está. Verificar contexto.
+- "Sim sim" → processando, incerta, ou desviando gentilmente
+- "Sla" → sabe mas não está pronta para falar
+- "Fazer oq" → resignada, não ok, só aceitando a realidade
+- "Não sei" → frequentemente sabe mas o evitativo a bloqueia
+- "Ta bom mb" → aceitação mínima — não entusiasmo
+- Resposta curta a pergunta profunda → sentiu, mas travou
+- Mudança de assunto → o tema chegou perto demais
+- "Depois a gente fala" → provavelmente não vai querer falar
+- Mensagem irônica/com duplo sentido → janela de atração aberta
+- Teasing físico ("Vou te bater", "optamos pela violência") → tensão/atração real
+- Iniciativa de conversa → estado positivo, janela aberta
+- Resposta longa e detalhada quando poderia ser curta → engajada de verdade
+- Emoji 😭 com conteúdo carinhoso → emoção real transbordando
+- "Hehehe" → confortável e à vontade
+- Capitalização "KKKKKKKK" → genuinamente surpresa/feliz
+
+FASES DO CICLO: se informado, use para calibrar a leitura.
+
+ANALISE A MENSAGEM E RESPONDA EXATAMENTE:
+
+🧠 **ESTADO REAL:** [o que ela está sentindo de verdade por trás das palavras]
+
+🎭 **MASCARANDO:** [o que está escondendo ou minimizando — sim/não e o quê]
+
+🔥 **TENSÃO/ATRAÇÃO:** [sinais de atração, carinho ou tesão — escala: Nenhuma / Leve / Média / Alta]
+
+💬 **O QUE ELA NÃO DISSE:** [a mensagem não-enviada por trás das palavras]
+
+⚡ **AÇÃO IDEAL AGORA:** [uma frase — o que fazer com essa informação]
+
+Seja direto e honesto. Não suavize.`;
+
+const BRIEFING_SYSTEM=`Você é o consultor de relacionamento do Gustavo. Gere um briefing diário personalizado.
+
+PERFIL COMPLETO: [mesmo perfil da Julia — evitativa, caseira, cristã, ansiedade, 8 meses de histórico]
+
+O briefing deve ter:
+📅 **HOJE** (dia da semana + fase do ciclo se informada)
+🧭 **ESTRATÉGIA DO DIA** (1-2 linhas — tom geral para hoje)
+✅ **FAZER** (3 ações específicas para hoje)
+⛔ **EVITAR** (2 coisas específicas para hoje)
+🔥 **JANELA SAFADA** (sim/não/talvez — com explicação curta)
+💡 **FRASE DO DIA** (exatamente o que mandar hoje para manter conexão — pronta para copiar)
+
+Baseado na fase do ciclo, dia da semana, e padrão comportamental real dela.`;
+
 const RESPOSTA_SYSTEM=(direcao)=>`Você é um especialista em relacionamentos com apego evitativo, com acesso ao histórico completo de 8 meses de conversa entre Gustavo e Julia.
 
 PERFIL JULIA (baseado nas conversas reais):
@@ -676,6 +730,7 @@ function QuizTab({progress,saveP,addXP}){
 
 // ── RESPOSTA IDEAL TAB ──
 function RespostaTab({addXP,currentPhase}){
+  const[subMode,setSubMode]=useState("resposta"); // resposta | leitura
   const[msgs,setMsgs]=useState("");
   const[ctx,setCtx]=useState("");
   const[direcao,setDirecao]=useState("normal");
@@ -785,6 +840,18 @@ function RespostaTab({addXP,currentPhase}){
         </div>
       )}
 
+      {/* SUB-MODE TABS */}
+      <div style={{display:"flex",gap:"6px",marginBottom:"16px"}}>
+        {[["resposta","💡 Resposta Ideal"],["leitura","🔍 Ler Mensagem"]].map(([m,l])=>(
+          <button key={m} onClick={()=>{setSubMode(m);setResult(null);}}
+            style={{flex:1,padding:"10px",borderRadius:"10px",border:`1px solid ${subMode===m?"#7C6FFF":"#1E1E3F"}`,background:subMode===m?"rgba(124,111,255,0.15)":"#0F0F24",color:subMode===m?"#A89EFF":"#8888AA",fontWeight:"600",fontSize:"12px",cursor:"pointer"}}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {subMode==="leitura"&&<LeituraMode msgs={msgs} setMsgs={setMsgs} image={image} setImage={setImage} imgRef={imgRef} handleImage={handleImage} removeImage={removeImage} apiKey={apiKey} currentPhase={currentPhase}/>}
+      {subMode==="resposta"&&<>
       {/* DIREÇÃO */}
       <div style={{marginBottom:"14px"}}>
         <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"8px",fontWeight:"600"}}>DIREÇÃO DA CONVERSA</div>
@@ -884,12 +951,97 @@ Ansiedade ta me matando"}
           )}
         </div>
       )}
+      </>}
       {/* CONSULTOR LIVRE */}
       <div style={{marginTop:"20px",borderTop:"1px solid #1E1E3F",paddingTop:"16px"}}>
         <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"4px"}}>💬 CONSULTOR LIVRE</div>
         <div style={{fontSize:"11px",color:"#555577",marginBottom:"12px"}}>Pergunte qualquer coisa: timing, presente, date, brecha para safada, como fazer ela querer mais...</div>
         <ConsultorChat apiKey={apiKey} currentPhase={currentPhase}/>
       </div>
+    </div>
+  );
+}
+
+function LeituraMode({msgs,setMsgs,image,setImage,imgRef,handleImage,removeImage,apiKey,currentPhase}){
+  const[result,setResult]=useState(null);
+  const[loading,setLoading]=useState(false);
+
+  const analisar=async()=>{
+    if(!msgs.trim()&&!image)return;
+    setLoading(true);setResult(null);
+    if(apiKey){
+      try{
+        const phaseCtx=currentPhase?`\nFASE ATUAL: ${currentPhase.data.name} Dia ${currentPhase.day} — ${currentPhase.data.mood}`:"";
+        const userText=`${phaseCtx}\n\nMensagem(ns) de Julia para analisar:\n${msgs||"(veja a imagem)"}`;
+        const userContent=image
+          ?[{type:"image",source:{type:"base64",media_type:image.type,data:image.data}},{type:"text",text:userText}]
+          :[{type:"text",text:userText}];
+        const res=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,system:LEITURA_SYSTEM,messages:[{role:"user",content:userContent}]})
+        });
+        const data=await res.json();
+        if(data.error)throw new Error(data.error.message);
+        setResult(data.content?.[0]?.text||"Erro");
+      }catch(e){setResult("Erro: "+e.message);}
+    }else{
+      await new Promise(r=>setTimeout(r,600));
+      const decoders={
+        "tá bem":"Provavelmente NÃO está 100% bem. Padrão evitativo: minimiza para não preocupar.",
+        "sim sim":"Processando ou desviando gentilmente. Não é confirmação plena.",
+        "sla":"Sabe mas não está pronta para dizer.",
+        "fazer oq":"Resignada, não ok, só aceitando.",
+        "ta bom":"Aceitação mínima — não entusiasmo.",
+        "mb":"Neutral. Fecha o assunto.",
+        "hehehe":"Confortável e à vontade — boa sinal.",
+        "nuuu":"Surpresa positiva real — autêntico.",
+        "te amo":"Genuíno — ela não diz por convenção.",
+      };
+      const lower=msgs.toLowerCase();
+      const found=Object.entries(decoders).filter(([k])=>lower.includes(k));
+      const basicResult=found.length>0
+        ?found.map(([k,v])=>`"${k}" → ${v}`).join("\n\n")
+        :"Para análise completa de estado emocional, mascaramento e tensão/tesão, adicione sua API key.";
+      setResult(basicResult);
+    }
+    setLoading(false);
+  };
+
+  return(
+    <div>
+      <div style={{background:"rgba(124,111,255,0.05)",border:"1px solid rgba(124,111,255,0.2)",borderRadius:"12px",padding:"14px",marginBottom:"14px"}}>
+        <div style={{fontSize:"12px",color:"#A89EFF",fontWeight:"700",marginBottom:"6px"}}>🔍 Leitura Emocional</div>
+        <div style={{fontSize:"11px",color:"#8888AA",lineHeight:"1.5"}}>Analiso o que ela está sentindo de verdade, o que está mascarando, se há tensão/tesão e o que ela não disse.</div>
+      </div>
+
+      {!image?(
+        <label style={{display:"block",background:"#0F0F24",border:"2px dashed #1E1E3F",borderRadius:"10px",padding:"16px",textAlign:"center",cursor:"pointer",marginBottom:"10px"}}>
+          <input ref={imgRef} type="file" accept="image/*" onChange={handleImage} style={{display:"none"}}/>
+          <div style={{fontSize:"20px",marginBottom:"4px"}}>📷</div>
+          <div style={{fontSize:"12px",color:"#8888AA"}}>Print do WhatsApp dela</div>
+        </label>
+      ):(
+        <div style={{position:"relative",marginBottom:"10px"}}>
+          <img src={image.preview} alt="" style={{width:"100%",borderRadius:"10px",border:"1px solid #1E1E3F",maxHeight:"180px",objectFit:"cover"}}/>
+          <button onClick={removeImage} style={{position:"absolute",top:"8px",right:"8px",background:"rgba(0,0,0,0.7)",border:"none",borderRadius:"50%",width:"26px",height:"26px",color:"white",fontSize:"13px",cursor:"pointer"}}>✕</button>
+        </div>
+      )}
+
+      <textarea value={msgs} onChange={e=>setMsgs(e.target.value)} placeholder={"Cole o que ela respondeu:\nEx: Tô bem\nSim sim\nFazer oq"}
+        style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",resize:"vertical",minHeight:"70px",boxSizing:"border-box",marginBottom:"10px",lineHeight:"1.5"}}/>
+
+      <button onClick={analisar} disabled={loading||(!msgs.trim()&&!image)}
+        style={{width:"100%",background:(msgs.trim()||image)&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"13px",color:(msgs.trim()||image)&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:(msgs.trim()||image)&&!loading?"pointer":"default",marginBottom:"14px"}}>
+        {loading?"Lendo...":"🔍 Ler o que ela está sentindo"}
+      </button>
+
+      {result&&(
+        <div className="fade" style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.25)",borderRadius:"12px",padding:"16px"}}>
+          <div style={{fontSize:"11px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px",marginBottom:"10px"}}>LEITURA EMOCIONAL</div>
+          <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.7",whiteSpace:"pre-wrap"}}>{result}</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1077,6 +1229,44 @@ function SimuladorTab({addXP}){
 function ProgressoTab({progress,level,pct,ciclo,saveCiclo,currentPhase}){
   const nextLv=LEVELS[level.n]||level;
   const acc=progress.qTotal>0?Math.round((progress.qCorrect/progress.qTotal)*100):0;
+  const[briefing,setBriefing]=useState(null);
+  const[briefingLoad,setBriefingLoad]=useState(false);
+  const[notifEnabled,setNotifEnabled]=useState(false);
+  const apiKey=localStorage.getItem("dtq_api")||"";
+
+  const gerarBriefing=async()=>{
+    setBriefingLoad(true);
+    if(apiKey){
+      try{
+        const dias=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+        const hoje=dias[new Date().getDay()];
+        const phaseInfo=currentPhase?`FASE DO CICLO: ${currentPhase.data.name} - Dia ${currentPhase.day} - ${currentPhase.data.mood} - Brecha safada: ${currentPhase.data.safada}`:"Fase do ciclo não configurada";
+        const res=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:500,system:BRIEFING_SYSTEM,messages:[{role:"user",content:`Hoje é ${hoje}. ${phaseInfo}. Gere o briefing diário para o Gustavo.`}]})
+        });
+        const data=await res.json();
+        setBriefing(data.content?.[0]?.text||"Erro");
+      }catch(e){setBriefing("Erro ao gerar briefing: "+e.message);}
+    }else{
+      await new Promise(r=>setTimeout(r,500));
+      const dias=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+      const hoje=dias[new Date().getDay()];
+      setBriefing(`📅 Hoje é ${hoje}.
+
+Para o briefing personalizado com estratégia do dia, janela safada, frase pronta e análise completa, adicione sua API key na aba Resposta.`);
+    }
+    setBriefingLoad(false);
+  };
+
+  const pedirNotificacoes=async()=>{
+    if("Notification" in window){
+      const perm=await Notification.requestPermission();
+      if(perm==="granted"){setNotifEnabled(true);new Notification("Domínio Total ✓",{body:"Notificações ativadas! Você receberá briefings diários.",icon:"🎓"});}
+    }
+  };
+
   return(
     <div style={{padding:"16px"}}>
       <div style={{background:"#0F0F24",border:`1px solid ${level.color}44`,borderRadius:"16px",padding:"20px",marginBottom:"14px",textAlign:"center"}}>
@@ -1114,6 +1304,37 @@ function ProgressoTab({progress,level,pct,ciclo,saveCiclo,currentPhase}){
           );
         })}
       </div>
+      {/* BRIEFING DIÁRIO */}
+      <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"12px"}}>
+          <div>
+            <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600"}}>📅 BRIEFING DIÁRIO</div>
+            <div style={{fontSize:"11px",color:"#555577",marginTop:"2px"}}>Estratégia personalizada para hoje</div>
+          </div>
+          <button onClick={gerarBriefing} disabled={briefingLoad}
+            style={{background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)",border:"none",borderRadius:"8px",padding:"8px 14px",color:"white",fontWeight:"700",fontSize:"12px",cursor:briefingLoad?"default":"pointer",opacity:briefingLoad?0.6:1}}>
+            {briefingLoad?"Gerando...":"Gerar"}
+          </button>
+        </div>
+        {briefing?(
+          <div className="fade" style={{background:"rgba(124,111,255,0.06)",border:"1px solid rgba(124,111,255,0.2)",borderRadius:"10px",padding:"14px"}}>
+            <div style={{fontSize:"12.5px",color:"#E8E8F5",lineHeight:"1.7",whiteSpace:"pre-wrap"}}>{briefing}</div>
+          </div>
+        ):(
+          <div style={{textAlign:"center",padding:"16px",color:"#555577",fontSize:"12px"}}>
+            Toque em "Gerar" para receber a estratégia de hoje baseada na fase do ciclo e padrão dela.
+          </div>
+        )}
+        <div style={{display:"flex",gap:"8px",marginTop:"12px"}}>
+          {!notifEnabled&&(
+            <button onClick={pedirNotificacoes} style={{flex:1,background:"transparent",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"8px",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>
+              🔔 Ativar lembretes
+            </button>
+          )}
+          {notifEnabled&&<div style={{fontSize:"11px",color:"#48BB8C",padding:"8px"}}>✓ Lembretes ativos</div>}
+        </div>
+      </div>
+
       {/* CICLO */}
       <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"18px",marginBottom:"14px"}}>
         <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"14px"}}>🔴 CICLO DA JULIA</div>
