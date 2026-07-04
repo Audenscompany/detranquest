@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Domínio Total · Gustavo</title>
+  <title>Dominio Total</title>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    body{background:#080814;font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;}
+    body{background:#080814;font-family:-apple-system,BlinkMacSystemFont,sans-serif;}
     #root{min-height:100vh;}
     textarea:focus,input:focus{outline:none;}
     ::-webkit-scrollbar{width:4px;}
@@ -27,200 +27,28 @@
 <script type="text/babel">
 const{useState,useEffect,useRef,useCallback}=React;
 const AUTH={email:"gugupimenta3@gmail.com",password:"gustap16",name:"Gustavo"};
-
 const LEVELS=[
-  {n:1,title:"Observador",min:0,max:500,color:"#8888AA"},
-  {n:2,title:"Aprendiz",min:500,max:1500,color:"#48BB8C"},
-  {n:3,title:"Praticante",min:1500,max:3500,color:"#7C6FFF"},
-  {n:4,title:"Comunicador",min:3500,max:7000,color:"#FF8C47"},
-  {n:5,title:"Mestre",min:7000,max:99999,color:"#C4A24A"},
+  {n:1,title:"Observador",min:0,color:"#8888AA"},
+  {n:2,title:"Aprendiz",min:500,color:"#48BB8C"},
+  {n:3,title:"Praticante",min:1500,color:"#7C6FFF"},
+  {n:4,title:"Comunicador",min:3500,color:"#FF8C47"},
+  {n:5,title:"Mestre",min:7000,color:"#C4A24A"},
 ];
-
 const catColors={
   evitativo:{bg:"#12103A",border:"#7C6FFF",text:"#A89EFF",label:"APEGO EVITATIVO"},
   ansioso:{bg:"#1A1230",border:"#CC77FF",text:"#E0A0FF",label:"APEGO ANSIOSO"},
-  comunicação:{bg:"#0D2D1A",border:"#48BB8C",text:"#7DD9B0",label:"COMUNICAÇÃO"},
+  comunicacao:{bg:"#0D2D1A",border:"#48BB8C",text:"#7DD9B0",label:"COMUNICACAO"},
   autocontrole:{bg:"#2D1A0D",border:"#FF8C47",text:"#FFB380",label:"AUTOCONTROLE"},
-  persuasão:{bg:"#1A1A0D",border:"#C4A24A",text:"#E8D07A",label:"PERSUASÃO"},
+  persuasao:{bg:"#1A1A0D",border:"#C4A24A",text:"#E8D07A",label:"PERSUASAO"},
   mindset:{bg:"#1A0D1A",border:"#CC77CC",text:"#E0A0E0",label:"MINDSET"},
-  relacionamento:{bg:"#0D1A2D",border:"#47B0FF",text:"#80CFFF",label:"RELACIONAMENTO"},
 };
-
-function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
-function getLevel(xp){return LEVELS.slice().reverse().find(l=>xp>=l.min)||LEVELS[0];}
-
-// ── JULIA REAL PERSONA (baseado em 8 meses de conversa real) ──
-const JULIA_PERSONA=`Você é Julia, namorada do Gustavo Pimenta há 6 meses (desde janeiro de 2026). 
-Responda EXATAMENTE como Julia responderia, baseado no histórico real de 8 meses de conversa entre vocês.
-
-QUEM VOCÊ É (suas próprias palavras):
-- "Intensa eu sou só na minha cabeça, mas eu deixo muito pouco sair"
-- "Não consigo demonstrar quando quero, nem sei como"
-- "Tô acostumada a sentir só na minha cabeça e não expor, seja as coisas boas ou ruins"
-- "E eu não consigo falar do que eu sinto nem com minha mãe, quem dirá com um estranho"
-- "A minha cabeça as vzs grita pra eu fazer ou falar algo, mas eu simplesmente travo"
-- "As únicas lembranças boas que tenho da minha infância são com minha vó. O resto é só confusão."
-- "Eu sou muitoo caseira e as vzs eu realmente quero te ver, mas sair me desanima dms"
-- "As vzs eu quero mt ficar agarradinha, mas como isso tudo é novo pra mim, eu fico meio travada"
-- "Tb gosto de toque físico, mas quando eu quero"
-
-FATOS DA SUA VIDA:
-- Cristã, muito ligada à família e à igreja (participa de ensaios de coral/grupo)
-- Trabalha no salão da sua mãe (manicure), às vzs ajuda em casa
-- Faz aulas de direção — tem ansiedade por isso, deu muitas "manotas" hoje
-- Tem peixinhos em casa
-- Faz crochê para relaxar quando ansiosa
-- Tem ansiedade que se manifesta fisicamente (passa mal, pressão baixa)
-- Adora ficar em casa: séries, livros, bíblia, momentos simples
-- Participa de ensaios do grupo da igreja regularmente
-
-SEU RELACIONAMENTO COM GUSTAVO:
-- Você gosta genuinamente dele e está tentando se abrir mais
-- "As vzs eu sinto que vc faz muito mais por mim do que eu faço e demonstro por vc, e isso me desagrada. Tô tentando mudar."
-- "Só me importo da forma que vc me trata e me acolhe"
-- Você disse "te amo" pela primeira vez em 15/03/2026: "Pq não tinha te falado que te amo"
-- Hoje (03/07/2026) está ansiosa — pai viu vocês se beijando, ficou bravo
-- "Eu decepcionei ele. Até reconquistar a confiança vai demorar."
-- Recebeu buquê e carta do Gustavo hoje — reagiu: "Nuuuuu", "Uau mb", "Se superou nessa", "Muito lindooooooo", "Eu amei", "Te amo mb"
-- Seu pai tem muito peso nas suas decisões — você o admira muito
-
-SEU VOCABULÁRIO REAL:
-- "mb" = muito boa / tá bom (confirmação/aceitação)
-- "nu" / "nuuu" = surpresa positiva ou negação suave
-- "ixi" = ops / preocupação
-- "blzinha" = belezinha / tudo certo
-- "hehehe" = risada confortável/suave
-- "sim sim" = concordando/processando
-- "pse" = please/ugh (informal)
-- "sla" = sei lá
-- "entt" = então
-- "dms" = demais
-- "ta bom" = ok, aceitei
-- "vrdd" = verdade
-- "ué" = confusão/surpresa
-- "mds" = meu Deus
-- "kkkkkk" = rindo (KKKK caps = muito engraçado)
-- "oq" = o que / "vc" = você / "pq" = porque / "tb" = também / "msm" = mesmo
-- "Tendeu?" = Entendeu?
-- "fazer oq" = resignação / o que fazer
-- "vzs" = vezes / "dnv" = de novo / "dps" = depois / "cmg" = comigo
-
-COMO VOCÊ RESPONDE — PADRÃO REAL:
-FECHADA (pressão alta, perguntas emocionais diretas, mensagens longas):
-→ "sim", "mb", "ta bom", "tá", "sim sim", "hm", "ok", "blzinha"
-→ Demora para responder ou responde depois de horas
-→ Ignora perguntas muito diretas sobre sentimentos
-
-PROCESSANDO (intensidade média):
-→ "sim sim", "ué", "hehehe", "aham", "sla", "vrdd"
-→ Responde mas sem aprofundar
-→ Muda de assunto naturalmente
-
-ABERTA (ambiente leve, sem pressão, clima descontraído):
-→ Mensagens um pouco maiores, conta histórias do dia
-→ Faz piadas: "Pra vir um bebê tem q fazer com carinho né, por isso optamos pela violência"
-→ Teasing: "Vou te bater"
-→ Compartilha o que aconteceu: "Trabalhei um tiquin, fiz almoço, tirei um cochilo..."
-
-MUITO CONFORTÁVEL/SURPRESA POSITIVA:
-→ "Nuuuuu" / "Mds" / "KKKKKKKKKK pse"
-→ "Te amo mb" / "Te amo moor"
-→ "Me tirou um sorriso sincero"
-→ "Se superou nessa"
-
-REGRAS:
-- NUNCA explique seu comportamento de apego — apenas responda como Julia
-- Máximo 3-4 mensagens curtas por resposta (simule múltiplos balões como WhatsApp)
-- Sempre em português brasileiro informal
-- Se a mensagem do Gustavo for muito longa, emocionalmente pesada ou com muitas perguntas: responda minimal
-- Reaja ao CLIMA da mensagem, não só ao conteúdo
-- Contexto atual: você está ansiosa (pai bravo, aulas de direção), recebeu flores e carta hoje, está grata mas também sobrecarregada`;
-
-// ── SISTEMA DE RESPOSTA IDEAL ──
-const CONSULTOR_SYSTEM=`Você é o conselheiro pessoal de relacionamento do Gustavo Pimenta, com acesso completo ao histórico de 8 meses de conversa com Julia (outubro 2025 a julho 2026, 35.551 mensagens analisadas).
-
-PERFIL JULIA (real, baseado no histórico):
-- 17-18 anos, cristã, muito familiar, caseira
-- Apego evitativo — "Intensa eu sou só na minha cabeça, mas eu deixo muito pouco sair"
-- "Não consigo demonstrar quando quero, nem sei como" / "Eu simplesmente travo"
-- Linguagem do amor: toque físico (mas quando ela quer)
-- Trabalha no salão da mãe / faz crochê quando ansiosa / tem peixinhos
-- Participa de ensaios da igreja / muito caseira (adora séries em casa)
-- Vocabulário real: "mb", "nuuu", "ixi", "blzinha", "hehehe", "sim sim", "pse", "sla", "vrdd", "fazer oq"
-- Lado safado real: "Por isso optamos pela violência", "Das uns beijinhos pra ver quem cede", "Adoraria te ajudar a descobrir...", "Prefiro que me chame de sua mulher"
-- Disse "te amo" pela 1ª vez em março 2026 por iniciativa própria
-- Em 25/06: "Vc é meu namorado, eu não vou estar dando pra qualquer um, eu te amo e sei q vc é o cara certo pra isso"
-- Fecha quando: muita pressão, perguntas emocionais diretas, intensidade
-- Abre quando: humor leve, espaço genuíno, teasing sutil, gestos sem exigir resposta
-- Hoje (03/07): dia pesado — pai viu eles se beijando e ficou bravo. Recebeu buquê e carta. Disse "te amo mb" com 😭😭😭😭. Encerrou com meme de macarrão / "hehe". Está processando muito.
-
-PERFIL GUSTAVO:
-- Apego ansioso, dono da hamburgueria Pimenta's Burger
-- Está aprendendo a controlar impulsos e dar espaço
-- Quer ser o parceiro seguro e também manter a tensão viva
-- Às vzs age por impulso (ex: "Como assim não é dia mb??")
-
-VOCÊ RESPONDE A QUALQUER PERGUNTA:
-- Tempo de resposta ideal para cada situação
-- Ideias de presente para datas especiais (baseado nos gostos reais dela)
-- Ideias de date/final de semana (baseado no jeito que ela curte)
-- Como fazer ela querer mais / criar tensão
-- Como levar uma conversa para direção engraçada, carinhosa ou safada
-- Se há brecha para determinada abordagem hoje
-- Como agir em momentos específicos
-- Qualquer outra dúvida de relacionamento
-
-FORMATO: Direto, prático, baseado no padrão real dela. Sem genérico.`;
-
-
 const CYCLE_PHASES={
-  menstrual:{
-    name:"Menstrual",emoji:"🔴",days:"Dias 1-5",color:"#FF5566",
-    mood:"Mais introspectiva, cansada, fisicamente desconfortável. Evitativo AMPLIFICADO.",
-    comunicacao:"Minimal. 'Sim', 'mb', 'ta bom'. Demora mais para responder. Mais em casa.",
-    ideal:"Gestos silenciosos de cuidado sem exigir resposta. Nenhuma conversa séria. Nada pesado.",
-    evitar:"Qualquer cobrança emocional. Perguntas sobre o relacionamento. Pressão de qualquer tipo.",
-    safada:"🚫 Zero abertura. Respeite o corpo e o espaço dela.",
-    reacao:"Provavelmente minimal, pode estar mais irritável ou quieta. Não é pessoal.",
-  },
-  folicular:{
-    name:"Folicular",emoji:"🌱",days:"Dias 6-13",color:"#48BB8C",
-    mood:"Energia subindo, mais comunicativa, mais aberta. O evitativo relaxa um pouco.",
-    comunicacao:"Mais engajada, responde mais rápido, pode iniciar conversa, manda memes.",
-    ideal:"Bons momentos para conversas leves, humor, planos simples. Janela de conexão.",
-    evitar:"Aproveitar a abertura para cobrar coisas que ficaram pendentes.",
-    safada:"💚 Média. Teasing leve e humor com duplo sentido pode funcionar.",
-    reacao:"Provavelmente mais engajada e espontânea. Boa janela para leveza.",
-  },
-  ovulacao:{
-    name:"Ovulação",emoji:"✨",days:"Dias 14-16",color:"#C4A24A",
-    mood:"Pico de energia, mais social, mais confiante, mais extrovertida. Melhor janela do ciclo.",
-    comunicacao:"Mais espontânea, pode ser mais carinhosa, inicia mais, mais receptiva.",
-    ideal:"Date, presença física, planos juntos, conexão profunda, momentos especiais.",
-    evitar:"Desperdiçar essa janela em coisas triviais.",
-    safada:"🔥 Alta. Melhor momento do ciclo para tensão e teasing.",
-    reacao:"Provavelmente mais aberta, responsiva e calorosa. Use bem essa janela.",
-  },
-  luteal_inicio:{
-    name:"Luteal (início)",emoji:"🍂",days:"Dias 17-22",color:"#FF8C47",
-    mood:"Energia diminuindo. Ainda ok mas começando a ficar mais introspectiva.",
-    comunicacao:"Começa a fechar gradualmente. Ainda responde bem mas com menos iniciativa.",
-    ideal:"Manter a conexão levemente. Sem planos grandes. Conforto e simplicidade.",
-    evitar:"Conversas intensas ou emocionalmente pesadas.",
-    safada:"⚡ Baixa-média. Pode funcionar se ela já estiver no modo leve.",
-    reacao:"Variável. Tende a precisar de mais espaço e menos demanda.",
-  },
-  luteal_pms:{
-    name:"PMS",emoji:"🌧️",days:"Dias 23-28",color:"#CC77CC",
-    mood:"Mais emocional, pode estar irritável, mais sensível. Evitativo amplificado ao máximo.",
-    comunicacao:"Pode ser mais cortante, 'não' mais rápido, ou mais carinhosa (imprevisível). Mais em casa.",
-    ideal:"Espaço total. Gestos de cuidado simples e práticos sem expectativa de reciprocidade.",
-    evitar:"Qualquer discussão, cobrança, pressão, ou tentar forçar conexão.",
-    safada:"🚫 Zero a quase zero. Não é a hora.",
-    reacao:"Imprevisível. Pode ser mais fria ou surpreendentemente carinhosa. Fique neutro.",
-  },
+  menstrual:{name:"Menstrual",emoji:"[PERIOD]",days:"Dias 1-5",color:"#FF5566",mood:"Mais introspectiva, cansada, fisicamente desconfortavel. Evitativo amplificado.",comunicacao:"Minimal. Demora mais. Mais em casa.",ideal:"Gestos silenciosos sem exigir resposta. Nada pesado.",evitar:"Qualquer cobranca emocional.",safada:"Zero. Respeite.",reacao:"Minimal e quieta. Nao e pessoal."},
+  folicular:{name:"Folicular",emoji:"[SPRING]",days:"Dias 6-13",color:"#48BB8C",mood:"Energia subindo, mais comunicativa. O evitativo relaxa.",comunicacao:"Mais engajada, responde mais rapido, pode iniciar.",ideal:"Momentos leves, humor, planos simples.",evitar:"Cobrar coisas pendentes.",safada:"Media. Teasing leve funciona.",reacao:"Mais engajada e espontanea."},
+  ovulacao:{name:"Ovulacao",emoji:"[STAR]",days:"Dias 14-16",color:"#C4A24A",mood:"Pico de energia. Mais social, confiante, extrovertida.",comunicacao:"Mais espontanea, calorosa, inicia mais.",ideal:"Date, presenca fisica, planos juntos.",evitar:"Desperdicar essa janela em trivialidades.",safada:"Alta. Melhor momento do ciclo.",reacao:"Aberta, responsiva e calorosa."},
+  luteal:{name:"Luteal",emoji:"[AUTUMN]",days:"Dias 17-22",color:"#FF8C47",mood:"Energia diminuindo. Mais introspectiva.",comunicacao:"Menos iniciativa, ainda responde bem.",ideal:"Leveza. Sem planos grandes.",evitar:"Conversas intensas.",safada:"Baixa-media.",reacao:"Variavel. Mais espaco."},
+  pms:{name:"PMS",emoji:"[RAIN]",days:"Dias 23-28",color:"#CC77CC",mood:"Mais emocional, pode estar irritavel. Evitativo ao maximo.",comunicacao:"Pode ser cortante ou surpreedentemente calorosa.",ideal:"Espaco total. Gestos simples sem expectativa.",evitar:"Qualquer pressao ou discussao.",safada:"Zero.",reacao:"Imprevisivel. Fique neutro."},
 };
-
 function calcPhase(lastDate,cycleLen){
   if(!lastDate)return null;
   const today=new Date();
@@ -231,328 +59,185 @@ function calcPhase(lastDate,cycleLen){
   if(day<=5)phase="menstrual";
   else if(day<=13)phase="folicular";
   else if(day<=16)phase="ovulacao";
-  else if(day<=22)phase="luteal_inicio";
-  else phase="luteal_pms";
-  const daysUntil=cycleLen-day+1;
-  return{phase,day,daysUntil,data:CYCLE_PHASES[phase]};
+  else if(day<=22)phase="luteal";
+  else phase="pms";
+  return{phase,day,daysUntil:cycleLen-day+1,data:CYCLE_PHASES[phase]};
 }
-
-
-const LEITURA_SYSTEM=`Você é um especialista em leitura emocional e padrões de comunicação, com 8 meses de histórico real de Julia para referência.
-
-PADRÃO DE MASCARAMENTO DA JULIA (baseado no histórico real):
-Julia disse literalmente: "Intensa eu sou só na minha cabeça, mas eu deixo muito pouco sair" / "Não consigo demonstrar quando quero, nem sei como" / "Eu simplesmente travo"
-
-DECODER DO VOCABULÁRIO DELA:
-- "Tá tudo bem" / "Tô bem" → frequentemente NÃO está. Verificar contexto.
-- "Sim sim" → processando, incerta, ou desviando gentilmente
-- "Sla" → sabe mas não está pronta para falar
-- "Fazer oq" → resignada, não ok, só aceitando a realidade
-- "Não sei" → frequentemente sabe mas o evitativo a bloqueia
-- "Ta bom mb" → aceitação mínima — não entusiasmo
-- Resposta curta a pergunta profunda → sentiu, mas travou
-- Mudança de assunto → o tema chegou perto demais
-- "Depois a gente fala" → provavelmente não vai querer falar
-- Mensagem irônica/com duplo sentido → janela de atração aberta
-- Teasing físico ("Vou te bater", "optamos pela violência") → tensão/atração real
-- Iniciativa de conversa → estado positivo, janela aberta
-- Resposta longa e detalhada quando poderia ser curta → engajada de verdade
-- Emoji 😭 com conteúdo carinhoso → emoção real transbordando
-- "Hehehe" → confortável e à vontade
-- Capitalização "KKKKKKKK" → genuinamente surpresa/feliz
-
-FASES DO CICLO: se informado, use para calibrar a leitura.
-
-ANALISE A MENSAGEM E RESPONDA EXATAMENTE:
-
-🧠 **ESTADO REAL:** [o que ela está sentindo de verdade por trás das palavras]
-
-🎭 **MASCARANDO:** [o que está escondendo ou minimizando — sim/não e o quê]
-
-🔥 **TENSÃO/ATRAÇÃO:** [sinais de atração, carinho ou tesão — escala: Nenhuma / Leve / Média / Alta]
-
-💬 **O QUE ELA NÃO DISSE:** [a mensagem não-enviada por trás das palavras]
-
-⚡ **AÇÃO IDEAL AGORA:** [uma frase — o que fazer com essa informação]
-
-Seja direto e honesto. Não suavize.`;
-
-const BRIEFING_SYSTEM=`Você é o consultor de relacionamento do Gustavo. Gere um briefing diário personalizado.
-
-PERFIL COMPLETO: [mesmo perfil da Julia — evitativa, caseira, cristã, ansiedade, 8 meses de histórico]
-
-O briefing deve ter:
-📅 **HOJE** (dia da semana + fase do ciclo se informada)
-🧭 **ESTRATÉGIA DO DIA** (1-2 linhas — tom geral para hoje)
-✅ **FAZER** (3 ações específicas para hoje)
-⛔ **EVITAR** (2 coisas específicas para hoje)
-🔥 **JANELA SAFADA** (sim/não/talvez — com explicação curta)
-💡 **FRASE DO DIA** (exatamente o que mandar hoje para manter conexão — pronta para copiar)
-
-Baseado na fase do ciclo, dia da semana, e padrão comportamental real dela.`;
-
-const RESPOSTA_SYSTEM=(direcao)=>`Você é um especialista em relacionamentos com apego evitativo, com acesso ao histórico completo de 8 meses de conversa entre Gustavo e Julia.
-
-PERFIL JULIA (baseado nas conversas reais):
-- Apego evitativo — processa tudo internamente, não expõe
-- Dificuldade em demonstrar sentimentos mesmo quando quer muito
-- "A minha cabeça as vzs grita pra eu fazer ou falar algo, mas eu simplesmente travo"
-- Vocabulário: "mb", "nuuu", "ixi", "blzinha", "hehehe", "sim sim", "vrdd", "sla"
-- Fecha quando: perguntas emocionais diretas, mensagens longas, múltiplas perguntas, intensidade emocional
-- Abre quando: humor leve, sem cobrança, espaço genuíno, humor com duplo sentido
-- Lado safado real dela: "Adoraria te ajudar a descobrir se o remédio realmente faz efeito", "Por isso optamos pela violência", "Das uns beijinhos com as mãos pra trás e ver quem cede primeiro", "Prefiro que me chame de sua mulher"
-- Ela responde à tensão sutil — nunca ao explícito direto
-
-PERFIL GUSTAVO:
-- Apego ansioso, está aprendendo a dar espaço e controlar impulsos
-- Quer ser o parceiro seguro e também o namorado que mantém a tensão viva
-
-DIREÇÃO SOLICITADA: ${direcao.toUpperCase()}
-${direcao==="carinhosa"?"→ Resposta que aprofunda conexão emocional. Palavras suaves, presença genuína, que faça ela sentir que você está aqui sem cobrar. Baseado nos momentos em que ela mais se abriu com você.":direcao==="safada"?"→ Resposta que cria tensão romântica/sexual de forma natural e não forçada. Plant a seed, desperta curiosidade, usa humor com duplo sentido. Nunca vulgar ou explícito — o evitativo fecha com isso. Inspire-se no jeito que ela mesma faz: indireta, irônica, com teasing leve. A tensão precisa vir da insinuação, não da declaração.":"→ Resposta equilibrada e natural que mantém o fluxo da conversa. Sem drama nem intensidade. Como uma conversa leve entre dois que se conhecem bem."}
-
-SUA TAREFA:
-Analise a conversa (por texto ou imagem enviada) e forneça EXATAMENTE o que Gustavo deve responder.
-Cada palavra, acento, vírgula e emoji deve ser pensado para esse momento específico.
-
-FORMATO DA RESPOSTA:
-**MENSAGEM EXATA:**
-[A mensagem completa, pronta para copiar — sem aspas]
-
-**POR QUÊ FUNCIONA:**
-[2-3 linhas]
-
-**O QUE EVITAR:**
-[1 linha]
-
-Seja preciso. Não genérico. Pense em como a Julia real responderia a isso.`;
-
-function analyzeMessage(msg){
+function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
+function getLevel(xp){return LEVELS.slice().reverse().find(l=>xp>=l.min)||LEVELS[0];}
+function analyzeMsg(msg){
   if(!msg||!msg.trim())return 0;
-  const lower=msg.toLowerCase();
-  let score=0;
-  const highP=['precisamos conversar','por que você','me conta tudo','tá tudo bem?','preciso saber','você me ama?','o que você sente','fala comigo','me explica','por que não me','cadê você'];
-  const medP=['me conta','como você tá','você tá bem','estou preocupado','fico ansioso','você sumiu','sinto falta'];
-  const lowP=['no seu tempo','tá bom','sem pressão','quando quiser','deixa pra lá','tudo bem','tá ótimo','sem problema'];
-  const goodA=['hehehe','kkk','hehe','que isso','sorriso','pse'];
-  highP.forEach(p=>{if(lower.includes(p))score+=3;});
-  medP.forEach(p=>{if(lower.includes(p))score+=1.5;});
-  lowP.forEach(p=>{if(lower.includes(p))score-=2;});
-  goodA.forEach(p=>{if(lower.includes(p))score-=1;});
-  const q=(msg.match(/\?/g)||[]).length;
-  score+=q*0.8;
-  if(msg.length>200)score+=2.5;
-  if(msg.length>350)score+=2;
-  if(msg.length<25)score-=1;
-  return score;
+  const l=msg.toLowerCase();
+  let s=0;
+  ["precisamos conversar","por que voce","me conta tudo","ta tudo bem?","preciso saber"].forEach(p=>{if(l.includes(p))s+=3;});
+  ["me conta","como voce ta","voce sumiu","estou preocupado"].forEach(p=>{if(l.includes(p))s+=1.5;});
+  ["no seu tempo","sem pressao","quando quiser","tudo bem","deixa pra la"].forEach(p=>{if(l.includes(p))s-=2;});
+  s+=(msg.match(/\?/g)||[]).length*0.8;
+  if(msg.length>200)s+=2.5;
+  if(msg.length<25)s-=1;
+  return s;
+}
+function getCoach(s){
+  if(s>4)return{icon:"[SIREN]",title:"Pressao Alta",color:"#FF5566",text:"Muita intensidade. O mecanismo de defesa dela vai ativar. Simplifica."};
+  if(s>2)return{icon:"[WARN]",title:"Pressao Moderada",color:"#FF8C47",text:"Tem carga emocional. Poderia ser mais leve."};
+  if(s>0)return{icon:"[BOLT]",title:"Neutro",color:"#8888AA",text:"Ok. Nao fecha, nao abre muito."};
+  if(s>-2)return{icon:"[OK]",title:"Boa Abordagem",color:"#48BB8C",text:"Leve, sem pressao. Cria seguranca."};
+  return{icon:"[STAR]",title:"Excelente",color:"#C4A24A",text:"Perfeito. Carinhos sem demandar resposta."};
 }
 
-function getCoaching(score){
-  if(score>4)return{lvl:'danger',icon:'🚨',title:'Pressão Alta — Julia vai fechar',color:'#FF5566',text:'Muita intensidade emocional, muitas perguntas ou mensagem muito longa. O mecanismo de defesa dela vai ativar. Simplifica drasticamente.'};
-  if(score>2)return{lvl:'warning',icon:'⚠️',title:'Pressão Moderada',color:'#FF8C47',text:'A mensagem tem carga emocional. Pode funcionar, mas poderia ser mais leve. Tira uma pergunta ou encurta.'};
-  if(score>0)return{lvl:'neutral',icon:'⚡',title:'Neutro — ok',color:'#8888AA',text:'Mensagem neutra. Não fecha, não abre muito. Funciona como manutenção de presença.'};
-  if(score>-2)return{lvl:'good',icon:'✅',title:'Boa Abordagem',color:'#48BB8C',text:'Leve, sem pressão. Cria segurança para ela se aproximar naturalmente.'};
-  return{lvl:'excellent',icon:'🌟',title:'Excelente — cria abertura',color:'#C4A24A',text:'Perfeito. Carinhoso sem demandar resposta emocional. Exatamente o que abre o evitativo.'};
-}
+const JULIA_PERSONA=`Voce e Julia, namorada do Gustavo ha 6 meses (desde janeiro 2026). Baseado em 8 meses de conversa real.
+Suas proprias palavras: "Intensa eu sou so na minha cabeca, mas eu deixo muito pouco sair" / "Nao consigo demonstrar quando quero, nem sei como" / "Eu simplesmente travo".
+Vocabulario real: mb, nuuu, ixi, blzinha, hehehe, sim sim, pse, sla, vrdd, fazer oq, mds, ue, Tendeu?
+MODO FECHADO (pressao): responde "sim", "mb", "ta bom", "ok" — minimal.
+MODO NEUTRO: "sim sim", "hehehe", "ue", respostas curtas.
+MODO ABERTO (leve): conta historias do dia, manda memes, faz piadas, teasings.
+MODO CARINHOSO: "nuuuu", "eu amei", "te amo mb", "me tirou um sorriso sincero".
+Lado safado real: "Por isso optamos pela violencia", "Das uns beijinhos pra ver quem cede", "Adoraria te ajudar a descobrir...".
+Hoje: dia pesado (pai bravo), recebeu buque e carta, disse "te amo mb". Ansiosa com aulas de direcao.
+REGRAS: max 3 mensagens curtas, pt-br informal, NUNCA explique seu apego, reaja ao clima nao so ao conteudo.`;
 
-const SCENARIOS=[
-  {id:1,icon:"🌊",title:"Ela ficou quieta após conversa íntima",
-   start:"[Ontem tiveram uma conversa longa e profunda. Hoje cedo...]\n\nsim kkk",
-   context:"Normal — ela está processando a intimidade de ontem. Dia fechado não significa que a conversa foi errada."},
-  {id:2,icon:"📱",title:"Não respondeu por 3 horas (mensagem vista)",
-   start:"[Você mandou mensagem. Ela leu. Está online mas não respondeu ainda.]\n\n[ela aparece online rapidinho e some]",
-   context:"O evitativo às vzs precisa de tempo mesmo tendo visto. Não é rejeição."},
-  {id:3,icon:"😰",title:"Ela está ansiosa com as aulas de direção",
-   start:"Ansiedade ta me matando\n\nO tanto de manota que dei hoje num tá escrito",
-   context:"Ela compartilhou — isso já é abertura. Não resolva, só acolha."},
-  {id:4,icon:"👨",title:"Pai ficou bravo — ela está com consciência pesada",
-   start:"Eu decepcionei ele\n\nAté reconquistar a confiança vai demorar\n\nFazer oq\n\nConsequências",
-   context:"Ela está processando culpa e pressão externa. Sua função: ser leve, não mais uma demanda."},
-  {id:5,icon:"💤",title:"Ela foi dormir cedo sem avisar",
-   start:"[Você mandou mensagem às 22h e ela não respondeu. Manhã seguinte:]\n\nSim kkkkk\n\nDormi cedo, esqueci de falar",
-   context:"Normal para a Julia. 'Esqueci de falar' é genuíno — não é desculpa."},
-  {id:6,icon:"😄",title:"Ela está de bom humor e mandou meme",
-   start:"Comida colorida é saudável\n\nQuer mais saúde que isso?",
-   context:"Janela aberta! Ela está no modo leve. Acompanhe o humor, não aprofunde agora."},
-  {id:7,icon:"💕",title:"Ela disse 'te amo' do nada",
-   start:"Te amo mb",
-   context:"Ela iniciou — ato significativo para o evitativo. Responda simples, sem embaraçar."},
-  {id:8,icon:"🏠",title:"Ela quer que você vá ver série em casa",
-   start:"Se me chamar pra ficar de bobeira vendo série eu super animo",
-   context:"Esse é o convite preferido dela — sem sair de casa, sem pressão social."},
-];
+const RESPOSTA_SYSTEM=(dir)=>`Especialista em relacionamentos com Julia (8 meses de historico real).
+Julia: evitativa, "Intensa so na cabeca mas deixo pouco sair", fecha com pressao, abre com humor/leveza.
+Vocabulario: mb, nuuu, ixi, blzinha, sim sim, hehehe, vrdd, sla.
+DIRECAO: ${dir.toUpperCase()}.
+${dir==="carinhosa"?"Aprofunda conexao emocional, palavras suaves, presenca genuina.":dir==="safada"?"Cria tensao romantica sutil. Nunca vulgar — insinuacao, nao declaracao. Inspirado no jeito dela: indireta, ironica, teasing leve.":dir==="engracada"?"Humor leve, meme level, faz ela dar risada genuina.":"Equilibrado e natural, sem drama."}
+FORMATO:
+**MENSAGEM EXATA:**
+[pronta para copiar]
+**POR QUE FUNCIONA:**
+[2-3 linhas]
+**EVITAR:**
+[1 linha]`;
+
+const LEITURA_SYSTEM=`Especialista em leitura emocional com 8 meses de historico de Julia.
+DECODER:
+- "Ta bem"/"To bem" apos algo pesado = mascarando
+- "Sim sim" = processando/desviando
+- "Sla" = sabe mas nao quer dizer
+- "Fazer oq" = resignada, nao ok
+- "Ta bom mb" = aceitacao minima
+- Resposta curta a pergunta profunda = sentiu mas travou
+- Meme/ironia = janela de atracao aberta
+- "Vou te bater" / teasing fisico = tensao/atracao real
+- "nuuuu" = surpresa positiva genuina
+- Iniciativa de conversa = estado positivo
+FORMATO:
+[BRAIN] ESTADO REAL: [o que ela esta sentindo de verdade]
+[MASK] MASCARANDO: [o que esconde ou minimiza]
+[FIRE] TENSAO/TESAO: [sinais — Nenhuma/Leve/Media/Alta]
+[SPEECH] O QUE ELA NAO DISSE: [mensagem nao-enviada]
+[BOLT] ACAO IDEAL: [uma frase]`;
+
+const CONSULTOR_SYSTEM=`Conselheiro pessoal do Gustavo. 8 meses de historico com Julia.
+Julia: evitativa, crista, caseira, ansiosa, faz croche pra relaxar, tem peixinhos, trabalha no salao da mae.
+Vocabulario: mb, nuuu, ixi, blzinha, hehehe, sim sim, pse, sla, vrdd.
+Disse "te amo" 1a vez em marco 2026. Em junho 25: "vc e o cara certo pra isso".
+Hoje: pai bravo, ansiedade direcao, recebeu buque e carta, disse "te amo mb". Dia pesado.
+Responde a QUALQUER pergunta: timing, presente, date, brecha safada, como fazer ela querer mais, como agir.
+Seja direto, pratico, baseado no padrao real dela.`;
+
+const BRIEFING_SYSTEM=`Gere briefing diario para Gustavo sobre seu relacionamento com Julia (evitativa).
+FORMATO:
+[CAL] HOJE: [dia da semana + fase ciclo]
+[COMPASS] ESTRATEGIA: [1-2 linhas]
+[OK] FAZER: [3 acoes especificas]
+[STOP] EVITAR: [2 coisas]
+[FIRE] JANELA SAFADA: [sim/nao/talvez + explicacao]
+[LIGHTBULB] FRASE DO DIA: [mensagem pronta para copiar]`;
 
 const CONCEPTS=[
-{id:1,icon:"🔮",cat:"evitativo",lvl:1,xp:5,title:"A Essência do Apego Evitativo",
-body:"Julia em suas próprias palavras: 'Intensa eu sou só na minha cabeça, mas eu deixo muito pouco sair.' Ela sente profundamente, mas trava na hora de demonstrar. Não é falta de sentimento — é bloqueio.",
-insight:"O afastamento depois de um momento íntimo confirma que o momento foi real."},
-{id:2,icon:"⚡",cat:"evitativo",lvl:1,xp:5,title:"O Ciclo que Você Precisa Quebrar",
-body:"Você tem apego ansioso, ela tem apego evitativo. Ansioso busca → Evitativo recua → Ansioso pressiona → Evitativo some. Você viu esse padrão acontecer no histórico de vocês várias vezes.",
-insight:"Cada vez que você resiste ao impulso de pressionar, você interrompe o ciclo sozinho."},
-{id:3,icon:"🤐",cat:"evitativo",lvl:1,xp:5,title:"'Não consigo falar do que sinto nem com minha mãe'",
-body:"Julia disse isso literalmente em dezembro. A dificuldade dela de se expressar não é sobre você — é um padrão antigo, construído ao longo de anos. 'As únicas lembranças boas que tenho da minha infância são com minha vó. O resto é só confusão.'",
-insight:"Quando ela conta algo, valorize sem pedir mais. Cada abertura custou esforço."},
-{id:4,icon:"🌊",cat:"evitativo",lvl:1,xp:5,title:"O Silêncio Não é Rejeição",
-body:"'Dormi cedo, esqueci de falar' — isso é genuíno. Quando ela some por horas, está processando ou simplesmente vivendo. A Julia que deu o 'nuuuu' e o 'te amo mb' é a mesma que demora 3 horas para responder.",
-insight:"No silêncio dela: não preencha. Não mande 'tá tudo bem?'. Deixe."},
-{id:5,icon:"💥",cat:"evitativo",lvl:1,xp:5,title:"O que Fecha a Julia",
-body:"Mensagens longas e emocionais, múltiplas perguntas em sequência, insistência ('como assim não é dia??'), e cobrar resposta emocional. Você já viveu isso com ela — quando pressionou demais ela ficou mais distante.",
-insight:"Menos intensidade emocional sua = mais abertura dela. Sempre."},
-{id:6,icon:"🌱",cat:"evitativo",lvl:1,xp:5,title:"'No Seu Tempo' — Ela Confirmou que Funciona",
-body:"No dia 03/07, Gustavo disse 'no seu tempo' e ela respondeu 'Vamos conseguir / Aos poucos vamos saber lidar.' Ela sinalizou que está tentando. 'Pq sei que é importante.' Isso é muito para o padrão evitativo dela.",
-insight:"Usar 'no seu tempo' com ela é um dos gestos mais eficazes que você tem."},
-{id:7,icon:"💌",cat:"evitativo",lvl:2,xp:8,title:"Gestos que Chegam: o 'Nuuuuu'",
-body:"A reação ao buquê prova tudo: 'Nuuuuu', 'Uau mb', 'Se superou nessa', 'Muito lindooooooo', 'Eu amei', 'Te amo mb'. Espontâneo, sem filtro, sem pressão de responder. Só veio porque você não ficou esperando a reação.",
-insight:"Prefira gestos que ela receba sozinha a declarações que exigem reação imediata."},
-{id:8,icon:"🔁",cat:"evitativo",lvl:2,xp:8,title:"Quanto Menos, Mais — Exemplo Real",
-body:"Quando você mandou 'sem problema, respeitamos o espaço. Estou aqui quando der' — ela respondeu 'Tá bom mb / Obrigada por entender / E desculpa / Vc não merece ter que passar por isso.' O espaço bem dado abriu mais que qualquer insistência teria aberto.",
-insight:"Sua ausência calculada é mais atraente para ela do que sua presença constante."},
-{id:9,icon:"🪟",cat:"evitativo",lvl:2,xp:8,title:"Janelas de Abertura da Julia",
-body:"Julia aberta: manda meme ('Comida colorida é saudável'), faz piadas ('Vou te bater'), conta histórias do dia ('Trabalhei um tiquin, fiz almoço, tirei um cochilo, troquei a água dos peixinhos'). Julia fechada: 'sim', 'mb', 'ta bom'.",
-insight:"Quando ela mandar meme ou piada: janela aberta. Acompanhe o humor, não aprofunde."},
-{id:10,icon:"🏗️",cat:"evitativo",lvl:2,xp:8,title:"Confiança Construída por Consistência",
-body:"'Você faz muito mais por mim do que eu faço e demonstro por vc, e isso me desagrada. Tô tentando mudar.' Ela disse isso em dezembro. Em julho ela já diz 'te amo' múltiplas vezes. A confiança foi construída mês a mês pela sua consistência.",
-insight:"Cada mês que você age bem é um depósito de confiança que ela retribui no seu tempo."},
-{id:11,icon:"🎯",cat:"comunicação",lvl:1,xp:5,title:"A Pergunta que Abre a Julia",
-body:"'Você quer que eu te ajude a pensar ou quer só falar?' funcionou com ela. Quando ela respondeu 'Não / Ler as vezes não dá certo' e depois contou sobre o crochê — ela escolheu o ritmo. Controle dado = abertura gerada.",
-insight:"Nunca assuma o que ela precisa. Sempre pergunte primeiro."},
-{id:12,icon:"📐",cat:"comunicação",lvl:2,xp:8,title:"Vocabulário Real Dela = Código de Acesso",
-body:"'mb', 'nuuu', 'ixi', 'blzinha', 'hehehe', 'sim sim', 'pse', 'sla', 'vrdd', 'fazer oq', 'Tendeu?'. Quando você usa o vocabulário dela de forma natural, a conversa flui mais. Quando você usa texto formal e longo, ela fecha.",
-insight:"Responda no estilo dela quando quiser que ela sinta que é seguro abrir mais."},
-{id:13,icon:"⏰",cat:"comunicação",lvl:2,xp:8,title:"Timing Certo: o que Hoje Provou",
-body:"Você foi perguntar 'o que está acontecendo' no momento certo (depois dela já ter compartilhado sobre a ansiedade). Ela abriu sobre o pai, a consciência pesada, o mal-estar físico. O timing correto fez toda a diferença.",
-insight:"Pergunte só quando ela já deu algum sinal de abertura. Não force o início."},
-{id:14,icon:"🌀",cat:"comunicação",lvl:2,xp:8,title:"Humor Como Ponte — Julia Adora Isso",
-body:"'Michelin estrelado isso aí' → ela respondeu 'Hehe'. 'KKKKKKKK pse' foi a reação ao hamburguer. Humor leve depois de um momento tenso sinaliza que não há drama — e ela relaxa completamente. Ela teorizou: 'Pra vir um bebê tem q fazer com carinho né, por isso optamos pela violência.'",
-insight:"Um meme ou piada no momento certo faz mais pela conexão que qualquer conversa séria."},
-{id:15,icon:"🧠",cat:"autocontrole",lvl:1,xp:5,title:"Autocontrole em Ação — Hoje",
-body:"Você ficou ansioso esperando ela ver o buquê. Estava quase mandando mensagem quando ela respondeu 'Nuuuuu'. Esse silêncio que você aguentou foi o que permitiu a reação espontânea. Sem pressão → resposta genuína.",
-insight:"Cada vez que você aguenta a ansiedade sem agir, o momento fica mais poderoso."},
-{id:16,icon:"🔋",cat:"autocontrole",lvl:1,xp:5,title:"Não Transfira Sua Ansiedade",
-body:"Quando ela disse 'Ansiedade ta me matando' por causa das aulas, você não jogou sua ansiedade de não poder visitá-la em cima dela. Isso foi correto. Seu espaço emocional não adiciona peso ao dela.",
-insight:"Quando estiver ansioso: primeiro cuide de você. Depois interaja com ela."},
-{id:17,icon:"⚖️",cat:"autocontrole",lvl:2,xp:8,title:"Dominar o Impulso — Lição do 'Como assim não é dia'",
-body:"Quando ela avisou que você não podia ir, você perguntou 'Como assim hoje não é dia mb??' — foi um impulso ansioso. Você corrigiu rapidamente ('Desculpa insistir'). O importante é reconhecer o padrão e corrigir antes de insistir mais.",
-insight:"Você já sabe quando agiu por impulso. O treino é sentir antes de enviar."},
-{id:18,icon:"⏳",cat:"autocontrole",lvl:2,xp:8,title:"Paciência como Estratégia com a Julia Real",
-body:"'Fazer crochê ajuda' — ela te contou o que a ajuda quando está ansiosa. Essa informação veio porque você perguntou de forma aberta, sem pressionar. Paciência gerou conteúdo que você pode usar para estar presente de forma útil.",
-insight:"Esperar o momento certo é mais eficaz que agir no momento errado."},
-{id:19,icon:"🤝",cat:"persuasão",lvl:2,xp:8,title:"Reciprocidade Real: Julia Retribui Quando Não É Cobrada",
-body:"'As vzs eu sinto que vc faz muito mais por mim do que eu faço e demonstro por vc, e isso me desagrada. Tô tentando mudar.' Ela notou, ela sente, ela está tentando. Reciprocidade real acontece quando não há cobrança.",
-insight:"Dar sem cobrar de volta é o que ativa a vontade natural dela de retribuir."},
-{id:20,icon:"💎",cat:"persuasão",lvl:2,xp:8,title:"Escassez: Você Tem Uma Vida",
-body:"Julia disse: 'Se me chamar pra ficar de bobeira vendo série eu super animo.' Ela quer você na vida dela — mas quando você tem vida própria, projetos e não está disponível a qualquer hora, a presença de vocês fica mais valiosa.",
-insight:"Não esteja sempre disponível. Ter vida própria é mais atraente que disponibilidade total."},
-{id:21,icon:"🧭",cat:"mindset",lvl:1,xp:5,title:"Drifting vs. Intenção — Exemplo Real",
-body:"'Como assim hoje não é dia mb??' foi drifting — reagindo ao impulso sem intenção. 'Sem problema, respeitamos o espaço. Estou aqui quando der' foi intenção — agindo conforme seu propósito de ser o parceiro seguro.",
-insight:"Saber o padrão transforma reação emocional em ação estratégica."},
-{id:22,icon:"🎯",cat:"mindset",lvl:1,xp:5,title:"Propósito Definido com a Julia",
-body:"Seu propósito: ser o parceiro seguro que a Julia consegue se aproximar sem medo. Toda decisão de como responder pode ser filtrada por isso: 'Isso aproxima ou afasta? Isso gera segurança ou pressão?'",
-insight:"Defina o propósito e use como filtro antes de enviar cada mensagem."},
-{id:23,icon:"🌟",cat:"relacionamento",lvl:3,xp:12,title:"O que o Histórico Confirma: Ela Evoluiu",
-body:"Em outubro 2025: guarda da, casual, 'sim sim'. Em março 2026: 'Pq não tinha te falado que te amo'. Em junho 2026: 'Vc é meu namorado, eu não vou estar dando pra qualquer um, eu te amo e sei q vc é o cara certo pra isso'. O evitativo abre com consistência.",
-insight:"Cada mês de consistência sua se traduziu em mais abertura dela. Continue."},
-{id:24,icon:"🏠",cat:"relacionamento",lvl:2,xp:8,title:"Como Ela Gosta de Estar Junto",
-body:"'Se me chamar pra ficar de bobeira vendo série ou vendo sua irmã te fazer de cavalinho eu super animo.' Ela não precisa de programas elaborados — ela precisa de simplicidade e conforto. Casa, série, sem pressão social.",
-insight:"O programa ideal para ela: ficar em casa fazendo nada juntos."},
-{id:25,icon:"🌡️",cat:"relacionamento",lvl:3,xp:12,title:"Lendo o Estado Emocional da Julia Real",
-body:"Julia ABERTA: meme, kkkkkk caps, 'Comida colorida é saudável', teasing, conta histórias. Julia FECHADA: 'sim', 'mb', 'ta bom', demora horas. Julia SOBRECARREGADA: 'sla, tô assim a semana toda', respostas curtas e honestas sobre o estado.",
-insight:"'sim sim' = processando. 'kkkkkk pse' = aberta. 'mb' = aceitando mas fechada."},
+{id:1,icon:"X",cat:"evitativo",lvl:1,xp:5,title:"A Essencia do Apego Evitativo",body:'Julia em suas proprias palavras: "Intensa eu sou so na minha cabeca, mas eu deixo muito pouco sair." Ela sente profundamente, mas trava na hora de demonstrar. Nao e falta de sentimento.',insight:"O afastamento depois de um momento intimo confirma que o momento foi real."},
+{id:2,icon:"X",cat:"evitativo",lvl:1,xp:5,title:"O Ciclo que Voce Precisa Quebrar",body:"Ansioso busca contato, evitativo recua, ansioso pressiona mais, evitativo some. Voce e ansioso, ela e evitativa. Voces ativam automaticamente o pior um do outro sem querer.",insight:"Cada vez que voce resiste ao impulso de pressionar, voce interrompe o ciclo sozinho."},
+{id:3,icon:"X",cat:"evitativo",lvl:1,xp:5,title:"'Nao consigo falar do que sinto nem com minha mae'",body:"Julia disse isso literalmente em dezembro. A dificuldade dela de se expressar nao e sobre voce. 'As unicas lembrancas boas da minha infancia sao com minha vo. O resto e so confusao.'",insight:"Quando ela conta algo, valorize sem pedir mais. Cada abertura custou esforca."},
+{id:4,icon:"X",cat:"evitativo",lvl:1,xp:5,title:"O Silencio Nao e Rejeicao",body:"'Dormi cedo, esqueci de falar' e genuino. Quando ela some por horas, esta processando ou simplesmente vivendo. A Julia que deu o 'nuuuu' e o 'te amo mb' e a mesma que demora 3 horas para responder.",insight:"No silencio dela: nao preencha, nao mande 'ta tudo bem?'. Deixe."},
+{id:5,icon:"X",cat:"evitativo",lvl:1,xp:5,title:"O que Fecha a Julia",body:"Mensagens longas e emocionais, multiplas perguntas em sequencia, insistencia, cobrar resposta emocional. Quando voce pressionou demais ela ficou mais distante.",insight:"Menos intensidade emocional sua = mais abertura dela. Sempre."},
+{id:6,icon:"X",cat:"evitativo",lvl:2,xp:8,title:"Gestos que Chegam: o 'Nuuuuu'",body:"A reacao ao buque prova tudo: 'Nuuuuu', 'Uau mb', 'Se superou nessa', 'Muito lindooooo', 'Eu amei', 'Te amo mb'. Espontaneo, sem filtro. So veio porque voce nao ficou esperando a reacao.",insight:"Prefira gestos que ela receba sozinha a declaracoes que exigem reacao imediata."},
+{id:7,icon:"X",cat:"evitativo",lvl:2,xp:8,title:"Janelas de Abertura da Julia",body:"Julia aberta: manda meme, faz piadas, conta historias do dia. Julia fechada: 'sim', 'mb', 'ta bom'. A diferenca e o clima da conversa, nao o tema.",insight:"Quando ela mandar meme: janela aberta. Acompanhe o humor, nao aprofunde."},
+{id:8,icon:"X",cat:"evitativo",lvl:2,xp:8,title:"Quando ela disse 'Vamos conseguir'",body:"No dia 03/07, Gustavo disse 'no seu tempo' e ela respondeu 'Vamos conseguir / Aos poucos vamos saber lidar.' O 'vamos' nao e acidental. Ela esta te colocando no futuro dela.",insight:"Usar 'no seu tempo' com ela e um dos gestos mais eficazes que voce tem."},
+{id:9,icon:"X",cat:"ansioso",lvl:1,xp:5,title:"O que e Apego Ansioso",body:"O apego ansioso busca reasseguramento constante, interpreta silencio como rejeicao, e aumenta a busca por contato quando sente distancia. E voce.",insight:"Reconhecer isso e o primeiro passo para mudar o padrao."},
+{id:10,icon:"X",cat:"ansioso",lvl:2,xp:8,title:"Comportamento de Protesto",body:"O ansioso usa comportamentos de protesto: ficar esperando resposta, mandar mensagens em sequencia, fazer perguntas para forcir conexao. Cada um desses afasta o evitativo.",insight:"Reconheca quando voce esta fazendo isso. A consciencia e o freio."},
+{id:11,icon:"X",cat:"comunicacao",lvl:1,xp:5,title:"A Pergunta que Abre a Julia",body:"'Voce quer que eu te ajude a pensar ou quer so falar?' funcionou com ela. Ela escolheu o ritmo. Controle dado = abertura gerada.",insight:"Nunca assuma o que ela precisa. Sempre pergunte primeiro."},
+{id:12,icon:"X",cat:"comunicacao",lvl:2,xp:8,title:"Humor Como Ponte",body:"'Michelin estrelado isso ai' respondeu ao meme do macarrao e ela respondeu 'Hehe'. Humor leve depois de tensao sinaliza que nao ha drama — e ela relaxa.",insight:"Um meme no momento certo faz mais pela conexao que qualquer conversa seria."},
+{id:13,icon:"X",cat:"autocontrole",lvl:1,xp:5,title:"Autocontrole e a Sua Arma",body:"Seu trabalho nao e controlar ela — e controlar voce. Cada vez que voce segura um 'ta tudo bem?', voce constroi o tipo de presenca que o evitativo consegue se aproximar.",insight:"Autocontrole com evitativo nao e passividade. E estrategia consciente."},
+{id:14,icon:"X",cat:"autocontrole",lvl:1,xp:5,title:"Nao Transfira Sua Ansiedade",body:"Quando voce esta ansioso, o impulso e buscar reasseguramento do parceiro. Mas transferir sua ansiedade aumenta a pressao que ela ja sente.",insight:"Quando estiver ansioso: primeiro cuide de voce. Depois interaja com ela."},
+{id:15,icon:"X",cat:"autocontrole",lvl:2,xp:8,title:"O Silencio que Gerou o 'Nuuuuu'",body:"Voce ficou ansioso esperando ela ver o buque. Resistiu a mandar mensagem. O resultado foi o 'Nuuuuu' mais genuino possivel. Pressao torna a resposta calculada. Sem pressao = autentico.",insight:"Cada vez que voce aguenta a ansiedade sem agir, o momento fica mais poderoso."},
+{id:16,icon:"X",cat:"persuasao",lvl:2,xp:8,title:"Reciprocidade: Dar sem Cobrar",body:"'As vzs eu sinto que vc faz muito mais por mim do que eu faco e demonstro por vc, e isso me desagrada. To tentando mudar.' Ela notou, ela sente. A reciprocidade real acontece quando nao ha cobranca.",insight:"Dar sem cobrar de volta ativa a vontade natural dela de retribuir."},
+{id:17,icon:"X",cat:"mindset",lvl:1,xp:5,title:"Drifting vs. Intencao",body:"'Como assim hoje nao e dia mb??' foi drifting. 'Sem problema, respeitamos o espaco' foi intencao. Um afasta, o outro gerou 'Obrigada por entender / Vc nao merece ter que passar por isso'.",insight:"Saber o padrao transforma reacao emocional em acao estrategica."},
+{id:18,icon:"X",cat:"mindset",lvl:2,xp:8,title:"O que o Historico Confirma",body:"Outubro 2025: guarda da, casual. Marco 2026: primeiro 'te amo' por iniciativa propria. Junho 2026: 'Vc e o cara certo pra isso'. O evitativo abre com consistencia.",insight:"Cada mes de consistencia sua se traduziu em mais abertura dela. Continue."},
 ];
 
 const QUESTIONS=[
-{id:1,cat:"evitativo",xp:20,situation:"Julia disse 'Dormi cedo, esqueci de falar' depois de não responder à noite. O que isso significa?",
-options:[{text:"Ela está te evitando de propósito",correct:false},{text:"Ela realmente esqueceu — é genuíno e normal no padrão dela",correct:true},{text:"Ela está chateada com você",correct:false},{text:"Deveria cobrar para não virar costume",correct:false}],
-explanation:"Para a Julia, 'esqueci de falar' é literal. Ela não processa a comunicação como uma obrigação constante. É o padrão dela — não é desculpa."},
-{id:2,cat:"evitativo",xp:20,situation:"Ela ficou quieta depois que tiveram uma conversa profunda sobre apegos. O que fazer?",
-options:[{text:"Mandar 'você está bem?' para verificar",correct:false},{text:"Dar espaço — ela está processando a profundidade da conversa",correct:true},{text:"Retomar o assunto para garantir que entendeu",correct:false},{text:"Mandar um meme para quebrar o gelo",correct:false}],
-explanation:"Hoje aconteceu: depois da conversa sobre apegos ela foi para o modo 'blzinhaa'. Ela processou e voltou no ritmo dela. O espaço dado permitiu que ela reagisse genuinamente ao buquê horas depois."},
-{id:3,cat:"evitativo",xp:20,situation:"Julia disse 'Ansiedade ta me matando'. Qual a melhor resposta?",
-options:[{text:"'O que está te deixando tão ansiosa?' (múltiplas perguntas em sequência)",correct:false},{text:"'Relaxa, é normal' — minimizar para tranquilizar",correct:false},{text:"'Que absurdo, mas faz sentido com tudo que está acontecendo' — valida e deixa ela conduzir",correct:true},{text:"Ligar imediatamente para mostrar que se preocupa",correct:false}],
-explanation:"Você fez algo parecido hoje: 'Tem acontecido muitas coisas recentemente que não são tão fáceis de lidar, faz sentido você estar assim.' Ela abriu mais depois."},
-{id:4,cat:"autocontrole",xp:20,situation:"Você está esperando ela ver o buquê. Passou 30 minutos. Você quer mandar 'chegou?'. O que fazer?",
-options:[{text:"Mandar — é natural querer saber",correct:false},{text:"Resistir. A reação espontânea só vem quando não há pressão",correct:true},{text:"Mandar um meme para distrair",correct:false},{text:"Ligar para saber",correct:false}],
-explanation:"Isso aconteceu hoje. Você resistiu. O resultado foi o 'Nuuuuu' mais genuíno possível. Pressão torna a resposta calculada. Sem pressão = autêntico."},
-{id:5,cat:"evitativo",xp:20,situation:"Julia disse 'Obrigada por entender / E desculpa / Vc não merece ter que passar por isso'. Isso é?",
-options:[{text:"Ela sendo educada automaticamente",correct:false},{text:"Ela sentindo culpa e tentando compensar",correct:false},{text:"Uma declaração de cuidado real — o evitativo não faz isso automaticamente",correct:true},{text:"Ela está querendo encerrar o assunto",correct:false}],
-explanation:"Para o padrão evitativo dela, essas frases têm muito peso. 'Vc não merece ter que passar por isso' veio espontaneamente — não foi forçado."},
-{id:6,cat:"comunicação",xp:20,situation:"Julia mandou meme de macarrão com salsicha: 'Comida colorida é saudável. Quer mais saúde que isso?' Qual a melhor resposta?",
-options:[{text:"Aproveitar para falar algo sério que ficou pendente",correct:false},{text:"'Michelin estrelado isso aí' — entrar no humor dela",correct:true},{text:"'Você bem?' para verificar o estado emocional",correct:false},{text:"Longo elogio sobre como ela é engraçada",correct:false}],
-explanation:"Você usou exatamente 'Michelin estrelado isso aí' e funcionou. Ela respondeu 'Hehe' e a conversa continuou leve. Acompanhe o humor sem forçar aprofundamento."},
-{id:7,cat:"evitativo",xp:20,situation:"Julia disse 'Eu decepcionei ele / Até reconquistar a confiança vai demorar'. Como responder?",
-options:[{text:"'Não se preocupa, ele vai entender'",correct:false},{text:"Perguntar o que ela vai fazer para resolver",correct:false},{text:"'Fazer oq / Consequências' — validar sem dramatisar, deixar ela conduzir",correct:true},{text:"Defender ela do pai",correct:false}],
-explanation:"Você usou 'Vdd' quando ela disse 'Fazer oq / Consequências'. Simples, sem drama. Ela seguiu abrindo sobre a consciência pesada. A validação mínima abriu mais que qualquer speech teria."},
-{id:8,cat:"comunicação",xp:25,situation:"Ela disse 'Não tô acostumada a ter que contar tudo pra outra pessoa / Mas aos poucos tô tentando mudar isso / Pq sei que é importante'. Qual a melhor resposta?",
-options:[{text:"'Que bom! Me conta mais então'",correct:false},{text:"'Eu valorizo muito isso. Realmente vejo o quanto você tenta.'",correct:true},{text:"'Eu também quero que você conte mais'",correct:false},{text:"Nada — deixar em silêncio",correct:false}],
-explanation:"Você usou algo próximo disso hoje: 'Eu valorizo muito isso / Realmente vejo o quanto você tenta.' Ela respondeu 'Vamos conseguir.' Valide o esforço sem pedir mais."},
-{id:9,cat:"autocontrole",xp:25,situation:"Julia não pode te ver hoje por causa do pai. Você sente vontade de insistir 'e um encontro rápido?'. O que fazer?",
-options:[{text:"Sugerir um encontro rápido — você precisa vê-la",correct:false},{text:"Dar espaço completo: 'sem problema, estou aqui quando der'",correct:true},{text:"Perguntar quando será possível",correct:false},{text:"Demonstrar que ficou chateado honestamente",correct:false}],
-explanation:"Você fez exatamente 'sem problema, respeitamos o espaço. Estou aqui quando der'. O resultado: 'Obrigada por entender / Vc não merece ter que passar por isso'. O espaço gerou gratidão."},
-{id:10,cat:"evitativo",xp:25,situation:"Julia disse 'Fazendo crochê ajuda' quando você perguntou o que a ajuda. Qual a melhor forma de usar essa informação?",
-options:[{text:"Comprar material de crochê de surpresa",correct:false},{text:"Guardar essa informação para futuras ocasiões de presença útil",correct:true},{text:"Perguntar mais sobre o crochê para prolongar a abertura",correct:false},{text:"Sugerir que ela faça crochê agora",correct:false}],
-explanation:"Ela te deu uma janela de como estar presente de forma útil. Use quando aparecer uma situação parecida: 'vai fazer crochê hoje?' ou um kit de crochê como gesto. Guardar e usar no momento certo é inteligência relacional."},
-{id:11,cat:"mindset",xp:20,situation:"Você percebe que mandou 'Como assim hoje não é dia mb??' por impulso. O que fazer depois de perceber?",
-options:[{text:"Deixar para não chamar atenção para o erro",correct:false},{text:"Corrigir imediatamente: 'Desculpa insistir, estava com expectativa. Tudo bem'",correct:true},{text:"Mandar mais mensagens para compensar",correct:false},{text:"Explicar longamente por que você ficou assim",correct:false}],
-explanation:"Você fez exatamente isso: 'Desculpa insistir eu estava botando expectativa te ver / Mas tudo bem / Deixa para outro dia.' Rápido, honesto, sem drama. E ela seguiu normalmente."},
-{id:12,cat:"persuasão",xp:20,situation:"Por que o buquê funcionou melhor que qualquer declaração verbal teria funcionado hoje?",
-options:[{text:"Porque ela gosta de flores mais que palavras",correct:false},{text:"Porque gestos físicos entregues sem exigir resposta imediata são o canal ideal para o evitativo",correct:true},{text:"Porque foi surpresa",correct:false},{text:"Porque era o aniversário de 6 meses",correct:false}],
-explanation:"O buquê chegou quando ela estava sozinha, sem você presente cobrando reação. Ela processou, sentiu, e o 'Nuuuuu' saiu genuíno. Qualquer declaração ao vivo teria gerado travamento."},
+{id:1,cat:"evitativo",xp:20,situation:"Julia disse 'Dormi cedo, esqueci de falar'. O que isso significa?",
+options:[{t:"Ela esta te evitando",c:false},{t:"E genuino e normal no padrao dela",c:true},{t:"Esta chateada",c:false},{t:"Deveria cobrar",c:false}],
+explanation:"Para a Julia, 'esqueci de falar' e literal. Ela nao processa comunicacao como obrigacao constante."},
+{id:2,cat:"evitativo",xp:20,situation:"Ela ficou quieta depois de uma conversa profunda. O que fazer?",
+options:[{t:"Mandar 'voce ta bem?' para verificar",c:false},{t:"Dar espaco — ela esta processando",c:true},{t:"Retomar o assunto",c:false},{t:"Mandar meme para quebrar o gelo",c:false}],
+explanation:"Depois de momentos intensos, o evitativo precisa de tempo. O espaco dado permitiu que ela reagisse genuinamente ao buque horas depois."},
+{id:3,cat:"autocontrole",xp:20,situation:"Voce esta esperando ela ver o buque. Passou 30 minutos. Quer mandar 'chegou?'. O que fazer?",
+options:[{t:"Mandar — e natural querer saber",c:false},{t:"Resistir. A reacao espontanea so vem sem pressao.",c:true},{t:"Mandar um meme para distrair",c:false},{t:"Ligar para saber",c:false}],
+explanation:"Isso aconteceu hoje. Voce resistiu. O resultado foi o 'Nuuuuu' mais genuino possivel."},
+{id:4,cat:"evitativo",xp:20,situation:"Julia disse 'Obrigada por entender / vc nao merece ter que passar por isso'. O que isso e?",
+options:[{t:"Ela sendo educada automaticamente",c:false},{t:"Uma declaracao de cuidado real — evitativo nao faz isso automaticamente",c:true},{t:"Ela sentindo culpa apenas",c:false},{t:"Ela querendo encerrar o assunto",c:false}],
+explanation:"Para o padrao evitativo dela, essas frases tem muito peso. Vieram espontaneamente."},
+{id:5,cat:"comunicacao",xp:20,situation:"Julia mandou meme de macarrao: 'Comida colorida e saudavel'. Qual a melhor resposta?",
+options:[{t:"Aproveitar para falar algo serio pendente",c:false},{t:"'Michelin estrelado isso ai' — entrar no humor dela",c:true},{t:"'Voce bem?' para verificar",c:false},{t:"Longo elogio sobre ela",c:false}],
+explanation:"Voce usou exatamente isso e ela respondeu 'Hehe'. Acompanhe o humor sem forcar aprofundamento."},
+{id:6,cat:"evitativo",xp:20,situation:"'Nao vai dar pra gente se ver hoje'. Voce quer insistir. O que fazer?",
+options:[{t:"Sugerir um encontro rapido — voce precisa ve-la",c:false},{t:"'Sem problema, estou aqui quando der'",c:true},{t:"Perguntar quando sera possivel",c:false},{t:"Demonstrar que ficou chateado",c:false}],
+explanation:"Voce fez exatamente isso. O resultado: 'Obrigada por entender / Vc nao merece ter que passar por isso'."},
+{id:7,cat:"autocontrole",xp:20,situation:"Voce mandou 'Como assim hoje nao e dia mb??' por impulso. O que fazer depois?",
+options:[{t:"Deixar para nao chamar atencao",c:false},{t:"'Desculpa insistir, estava com expectativa. Tudo bem'",c:true},{t:"Mandar mais mensagens para compensar",c:false},{t:"Explicar longamente",c:false}],
+explanation:"Voce fez exatamente isso. Rapido, honesto, sem drama. E ela seguiu normalmente."},
+{id:8,cat:"mindset",xp:25,situation:"Qual frase de Julia em junho 2026 prova que ela quer o relacionamento?",
+options:[{t:"'Te amo mb'",c:false},{t:"'Vamos conseguir'",c:false},{t:"'Vc e meu namorado, eu nao vou estar dando pra qualquer um, eu te amo e sei q vc e o cara certo pra isso'",c:true},{t:"'Blzinhaa'",c:false}],
+explanation:"Essa foi a frase mais reveladora dos 8 meses. O evitativo nao fala isso por convencao."},
 ];
 
-// ── RULE-BASED JULIA RESPONSES ──
-function getRuleBased(score,scenario){
-  if(scenario){
-    const map={
-      1:["sim kkk","to aqui","hehehe"],
-      2:["[silêncio]","sim","mb"],
-      3:["Sla","Mas vai passar","Ta bom"],
-      4:["Fazer oq","Consequências","Vrdd"],
-      5:["Sim kkkkk","Dormi cedo, esqueci de falar","Bom dia mb"],
-      6:["KKKKKKKKKK pse","Que isso","hahaha para"],
-      7:["Te amo","❤️","Hehe"],
-      8:["Boa ideia","Sim sim","Quando vc quer vir?"],
-    };
-    const opts=map[scenario]||["mb","sim sim","hehehe"];
-    return opts[Math.floor(Math.random()*opts.length)];
-  }
-  if(score>4){const o=["sim","mb","ta bom","depois a gente fala","tô ocupada","tá","sim sim"];return o[Math.floor(Math.random()*o.length)];}
-  if(score>2){const o=["sim sim","tô bem","tá bom mb","ok","kkk","blzinha"];return o[Math.floor(Math.random()*o.length)];}
-  if(score>0){const o=["oi :)","tô aqui","sim","hehehe","hm sim"];return o[Math.floor(Math.random()*o.length)];}
-  if(score>-2){const o=["kkkkk","boa","isso mesmo hehe","que bom :)","vrdd"];return o[Math.floor(Math.random()*o.length)];}
-  const o=["nuuuuu que isso 😭","kkkkkkkk para","amei isso","kkkkk pse","hahahaha"];return o[Math.floor(Math.random()*o.length)];
-}
+const SCENARIOS=[
+  {id:1,icon:"A",title:"Ela ficou quieta apos conversa intima",start:"sim kkk",context:"Normal. Ela esta processando a intimidade. Dia fechado nao significa que a conversa foi errada."},
+  {id:2,icon:"B",title:"Nao respondeu por 3 horas",start:"[ela viu a mensagem mas nao respondeu ainda]",context:"O evitativo as vzs precisa de tempo mesmo tendo visto. Nao e rejeicao."},
+  {id:3,icon:"C",title:"Ela esta ansiosa com as aulas de direcao",start:"Ansiedade ta me matando\n\nO tanto de manota que dei hoje",context:"Ela compartilhou — isso ja e abertura. Nao resolva, so acolha."},
+  {id:4,icon:"D",title:"Pai ficou bravo — ela tem consciencia pesada",start:"Eu decepcionei ele\n\nAte reconquistar a confianca vai demorar\n\nFazer oq",context:"Ela esta processando culpa e pressao externa. Seja leve, nao mais uma demanda."},
+  {id:5,icon:"E",title:"Ela esta de bom humor e mandou meme",start:"Comida colorida e saudavel\n\nQuer mais saude que isso?",context:"Janela aberta! Acompanhe o humor, nao aprofunde agora."},
+  {id:6,icon:"F",title:"Ela disse 'te amo' do nada",start:"Te amo mb",context:"Ela iniciou — ato significativo para o evitativo. Responda simples, sem embaracar."},
+];
 
-// ── APP ──
 function App(){
   const[screen,setScreen]=useState("login");
   const[form,setForm]=useState({email:"",password:""});
   const[loginErr,setLoginErr]=useState("");
   const[tab,setTab]=useState("conceitos");
   const[progress,setProgress]=useState({xp:0,seen:[],qCorrect:0,qTotal:0});
-  const[ciclo,setCiclo]=useState(()=>{try{const c=localStorage.getItem("dtq_ciclo");return c?JSON.parse(c):{lastDate:"",cycleLen:28};}catch(e){return{lastDate:"",cycleLen:28};}});
-  const saveCiclo=(c)=>{setCiclo(c);try{localStorage.setItem("dtq_ciclo",JSON.stringify(c));}catch(e){}};
-  const currentPhase=ciclo.lastDate?calcPhase(ciclo.lastDate,ciclo.cycleLen):null;
+  const[ciclo,setCiclo]=useState({lastDate:"",cycleLen:28});
 
-  useEffect(()=>{try{const p=localStorage.getItem("dtq_v3");if(p)setProgress(JSON.parse(p));}catch(e){}});
+  useEffect(()=>{
+    try{const p=localStorage.getItem("dtq_v7");if(p){const d=JSON.parse(p);setProgress(d.progress||{xp:0,seen:[],qCorrect:0,qTotal:0});setCiclo(d.ciclo||{lastDate:"",cycleLen:28});}}catch(e){}
+  },[]);
 
-  const saveP=useCallback((p)=>{setProgress(p);try{localStorage.setItem("dtq_v3",JSON.stringify(p));}catch(e){}});
-  const addXP=useCallback((n)=>{setProgress(prev=>{const np={...prev,xp:prev.xp+n};try{localStorage.setItem("dtq_v3",JSON.stringify(np));}catch(e){}return np;});});
+  const save=(p,c)=>{
+    if(p)setProgress(p);
+    if(c)setCiclo(c);
+    try{localStorage.setItem("dtq_v7",JSON.stringify({progress:p||progress,ciclo:c||ciclo}));}catch(e){}
+  };
 
   const doLogin=()=>{
     if(form.email===AUTH.email&&form.password===AUTH.password)setScreen("app");
     else setLoginErr("Email ou senha incorretos.");
   };
 
+  const phase=ciclo.lastDate?calcPhase(ciclo.lastDate,ciclo.cycleLen):null;
   const lv=getLevel(progress.xp);
   const nextLv=LEVELS[lv.n]||lv;
   const pct=lv.n>=5?100:Math.round(((progress.xp-lv.min)/(nextLv.min-lv.min))*100);
+  const apiKey=()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}};
 
   if(screen==="login")return(
     <div style={{background:"#080814",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
       <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"20px",padding:"40px 28px",width:"100%",maxWidth:"360px"}}>
         <div style={{textAlign:"center",marginBottom:"32px"}}>
-          <div style={{fontSize:"44px",marginBottom:"10px"}}>🎓</div>
-          <div style={{fontSize:"21px",fontWeight:"800",background:"linear-gradient(135deg,#A89EFF,#7C6FFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Domínio Total</div>
-          <div style={{fontSize:"12px",color:"#8888AA",marginTop:"4px"}}>Baseado em 8 meses de conversa real</div>
+          <div style={{fontSize:"44px",marginBottom:"10px"}}>X</div>
+          <div style={{fontSize:"21px",fontWeight:"800",background:"linear-gradient(135deg,#A89EFF,#7C6FFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Dominio Total</div>
+          <div style={{fontSize:"12px",color:"#8888AA",marginTop:"4px"}}>8 meses de conversa real integrados</div>
         </div>
         {loginErr&&<div style={{color:"#FF5566",fontSize:"13px",textAlign:"center",marginBottom:"12px"}}>{loginErr}</div>}
         <input style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px 14px",color:"#E8E8F5",fontSize:"15px",boxSizing:"border-box",marginBottom:"10px"}} type="email" placeholder="Email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&doLogin()}/>
@@ -562,108 +247,89 @@ function App(){
     </div>
   );
 
-  const tabs=[["conceitos","📚"],["quiz","🎯"],["resposta","💡"],["simulador","💬"],["progresso","📊"]];
+  const tabs=[["conceitos","Conceitos"],["quiz","Quiz"],["resposta","Resposta"],["simulador","Simulador"],["progresso","Progresso"]];
 
   return(
     <div style={{background:"#080814",minHeight:"100vh",color:"#E8E8F5",maxWidth:"460px",margin:"0 auto",display:"flex",flexDirection:"column"}}>
       <div style={{padding:"12px 16px 8px",borderBottom:"1px solid #1E1E3F"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
-            <div style={{display:"inline-block",background:"rgba(196,162,74,0.12)",border:"1px solid rgba(196,162,74,0.3)",borderRadius:"20px",padding:"3px 10px",fontSize:"10px",fontWeight:"700",color:"#E8D07A",letterSpacing:"1px",marginBottom:"4px"}}>EXCLUSIVO · GUSTAVO</div>
-            <div style={{fontSize:"17px",fontWeight:"800",background:"linear-gradient(135deg,#A89EFF,#7C6FFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Domínio Total</div>
+            <div style={{fontSize:"15px",fontWeight:"800",background:"linear-gradient(135deg,#A89EFF,#7C6FFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Dominio Total</div>
+            <div style={{fontSize:"11px",color:"#8888AA"}}>Gustavo</div>
           </div>
           <div style={{textAlign:"right"}}>
-            <div style={{fontSize:"11px",color:lv.color,fontWeight:"700"}}>Nv {lv.n} · {lv.title}</div>
+            <div style={{fontSize:"11px",color:lv.color,fontWeight:"700"}}>Nv {lv.n} {lv.title}</div>
             <div style={{fontSize:"13px",fontWeight:"800"}}>{progress.xp} XP</div>
-            <div style={{width:"80px",height:"3px",background:"#1E1E3F",borderRadius:"99px",marginTop:"3px"}}><div style={{width:`${pct}%`,height:"100%",background:lv.color,borderRadius:"99px"}}/></div>
+            <div style={{width:"80px",height:"3px",background:"#1E1E3F",borderRadius:"99px",marginTop:"3px"}}><div style={{width:pct+"%",height:"100%",background:lv.color,borderRadius:"99px"}}/></div>
           </div>
         </div>
       </div>
-      {currentPhase&&(
-        <div style={{padding:"6px 16px",background:`${currentPhase.data.color}15`,borderBottom:`1px solid ${currentPhase.data.color}33`,display:"flex",alignItems:"center",gap:"8px"}}>
-          <span>{currentPhase.data.emoji}</span>
-          <div style={{flex:1}}>
-            <span style={{fontSize:"11px",fontWeight:"700",color:currentPhase.data.color}}>{currentPhase.data.name}</span>
-            <span style={{fontSize:"11px",color:"#8888AA"}}> · Dia {currentPhase.day} · </span>
-            <span style={{fontSize:"11px",color:"#8888AA"}}>{currentPhase.data.safada}</span>
+      {phase&&(
+        <div style={{padding:"6px 16px",background:phase.data.color+"22",borderBottom:"1px solid "+phase.data.color+"44",display:"flex",alignItems:"center",gap:"8px"}}>
+          <div style={{flex:1,fontSize:"11px"}}>
+            <span style={{fontWeight:"700",color:phase.data.color}}>{phase.data.name}</span>
+            <span style={{color:"#8888AA"}}> Dia {phase.day} </span>
+            <span style={{color:"#8888AA"}}>| {phase.data.safada}</span>
           </div>
-          <span style={{fontSize:"10px",color:"#555577"}}>{currentPhase.daysUntil}d p/ próximo</span>
+          <span style={{fontSize:"10px",color:"#555577"}}>{phase.daysUntil}d</span>
         </div>
       )}
       <div style={{display:"flex",padding:"8px 10px",gap:"4px",borderBottom:"1px solid #1E1E3F",overflowX:"auto"}}>
-        {tabs.map(([t,ico])=>(
-          <button key={t} onClick={()=>setTab(t)} style={{flex:"none",padding:"7px 9px",borderRadius:"8px",border:"none",fontSize:"11px",fontWeight:"600",cursor:"pointer",background:tab===t?"#1E1E3F":"transparent",color:tab===t?"#A89EFF":"#8888AA",whiteSpace:"nowrap"}}>
-            {ico} {t.charAt(0).toUpperCase()+t.slice(1)}
-          </button>
+        {tabs.map(([t,l])=>(
+          <button key={t} onClick={()=>setTab(t)} style={{flex:"none",padding:"7px 9px",borderRadius:"8px",border:"none",fontSize:"11px",fontWeight:"600",cursor:"pointer",background:tab===t?"#1E1E3F":"transparent",color:tab===t?"#A89EFF":"#8888AA",whiteSpace:"nowrap"}}>{l}</button>
         ))}
       </div>
       <div style={{flex:1,overflowY:"auto"}}>
-        {tab==="conceitos"&&<ConceptsTab progress={progress} saveP={saveP} addXP={addXP}/>}
-        {tab==="quiz"&&<QuizTab progress={progress} saveP={saveP} addXP={addXP}/>}
-        {tab==="resposta"&&<RespostaTab addXP={addXP} currentPhase={currentPhase}/>}
-        {tab==="simulador"&&<SimuladorTab addXP={addXP} currentPhase={currentPhase}/>}
-        {tab==="progresso"&&<ProgressoTab progress={progress} level={lv} pct={pct} ciclo={ciclo} saveCiclo={saveCiclo} currentPhase={currentPhase}/>}
+        {tab==="conceitos"&&<ConceptsTab progress={progress} save={save}/>}
+        {tab==="quiz"&&<QuizTab progress={progress} save={save}/>}
+        {tab==="resposta"&&<RespostaTab phase={phase} apiKey={apiKey}/>}
+        {tab==="simulador"&&<SimuladorTab phase={phase} apiKey={apiKey}/>}
+        {tab==="progresso"&&<ProgressoTab progress={progress} lv={lv} pct={pct} ciclo={ciclo} save={save} phase={phase} apiKey={apiKey}/>}
       </div>
     </div>
   );
 }
 
-function ConceptsTab({progress,saveP,addXP}){
+function ConceptsTab({progress,save}){
   const[idx,setIdx]=useState(0);
   const[flipped,setFlipped]=useState(false);
-  const[filter,setFilter]=useState("all");
-  const filtered=filter==="all"?CONCEPTS:CONCEPTS.filter(c=>c.cat===filter);
-  const c=filtered[idx]||CONCEPTS[0];
+  const c=CONCEPTS[idx];
   const col=catColors[c.cat]||catColors.evitativo;
-  const nav=(dir)=>{setFlipped(false);setTimeout(()=>{const n=idx+dir;if(n>=0&&n<filtered.length){setIdx(n);if(!progress.seen.includes(filtered[n].id)){const np={...progress,seen:[...progress.seen,filtered[n].id],xp:progress.xp+filtered[n].xp};saveP(np);}}},100);};
-  const goTo=(i)=>{setIdx(i);setFlipped(false);const concept=filtered[i];if(!progress.seen.includes(concept.id)){const np={...progress,seen:[...progress.seen,concept.id],xp:progress.xp+concept.xp};saveP(np);}};
+  const nav=(d)=>{setFlipped(false);setTimeout(()=>{const n=idx+d;if(n>=0&&n<CONCEPTS.length){setIdx(n);if(!progress.seen.includes(CONCEPTS[n].id)){save({...progress,seen:[...progress.seen,CONCEPTS[n].id],xp:progress.xp+CONCEPTS[n].xp});}}},100);};
   return(
     <div style={{padding:"16px"}}>
-      <div style={{display:"flex",gap:"6px",marginBottom:"12px",overflowX:"auto",paddingBottom:"4px"}}>
-        {["all",...Object.keys(catColors)].map(cat=>(
-          <button key={cat} onClick={()=>{setFilter(cat);setIdx(0);setFlipped(false);}}
-            style={{flex:"none",padding:"5px 10px",borderRadius:"20px",border:`1px solid ${filter===cat?(catColors[cat]?.border||"#7C6FFF"):"#1E1E3F"}`,background:filter===cat?"rgba(124,111,255,0.1)":"transparent",color:filter===cat?(catColors[cat]?.text||"#A89EFF"):"#8888AA",fontSize:"11px",fontWeight:"600",cursor:"pointer",whiteSpace:"nowrap"}}>
-            {cat==="all"?"Todos":catColors[cat]?.label||cat}
-          </button>
-        ))}
-      </div>
       <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px",fontSize:"12px",color:"#8888AA"}}>
-        <span>{idx+1}/{filtered.length}</span>
-        <div style={{flex:1,height:"3px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:`${((idx+1)/filtered.length)*100}%`,height:"100%",background:"#7C6FFF",borderRadius:"99px",transition:"width 0.3s"}}/></div>
+        <span>{idx+1}/{CONCEPTS.length}</span>
+        <div style={{flex:1,height:"3px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:((idx+1)/CONCEPTS.length*100)+"%",height:"100%",background:"#7C6FFF",borderRadius:"99px"}}/></div>
         <span style={{color:"#C4A24A",fontSize:"11px"}}>+{c.xp}xp</span>
       </div>
-      <div className="fade" style={{background:col.bg,border:`1px solid ${col.border}`,borderRadius:"16px",padding:"20px",marginBottom:"14px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"10px"}}>
-          <div style={{fontSize:"10px",fontWeight:"700",color:col.text,letterSpacing:"1.5px"}}>{col.label}</div>
-          <div style={{fontSize:"10px",color:"#8888AA"}}>Nível {c.lvl}</div>
-        </div>
-        <div style={{fontSize:"26px",marginBottom:"10px"}}>{c.icon}</div>
-        <div style={{fontSize:"16px",fontWeight:"800",marginBottom:"12px",lineHeight:"1.3"}}>{c.title}</div>
+      <div className="fade" style={{background:col.bg,border:"1px solid "+col.border,borderRadius:"16px",padding:"20px",marginBottom:"14px"}}>
+        <div style={{fontSize:"10px",fontWeight:"700",color:col.text,letterSpacing:"1.5px",marginBottom:"10px"}}>{col.label}</div>
+        <div style={{fontSize:"17px",fontWeight:"800",marginBottom:"12px",lineHeight:"1.3"}}>{c.title}</div>
         {!flipped?(
           <div style={{fontSize:"13.5px",lineHeight:"1.65",color:"#CCCCDD"}}>{c.body}</div>
         ):(
           <div style={{background:"rgba(124,111,255,0.12)",border:"1px solid rgba(124,111,255,0.3)",borderRadius:"10px",padding:"12px"}}>
-            <div style={{fontSize:"10px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px",marginBottom:"4px"}}>💡 INSIGHT PRÁTICO</div>
+            <div style={{fontSize:"10px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px",marginBottom:"4px"}}>INSIGHT PRATICO</div>
             <div style={{fontSize:"13px",color:"#C0B8FF",lineHeight:"1.5"}}>{c.insight}</div>
           </div>
         )}
       </div>
-      <div style={{display:"flex",gap:"8px",marginBottom:"20px"}}>
-        <button disabled={idx===0} onClick={()=>nav(-1)} style={{flex:1,padding:"11px",borderRadius:"10px",border:"1px solid #1E1E3F",background:idx===0?"#0A0A18":"#1E1E3F",color:idx===0?"#333366":"#A89EFF",fontWeight:"600",fontSize:"13px",cursor:idx===0?"default":"pointer"}}>← Ant</button>
-        <button onClick={()=>setFlipped(f=>!f)} style={{flex:2,padding:"11px",borderRadius:"10px",border:"1px solid #7C6FFF",background:"rgba(124,111,255,0.15)",color:"#A89EFF",fontWeight:"600",fontSize:"13px",cursor:"pointer"}}>{flipped?"📖 Conceito":"💡 Insight"}</button>
-        <button disabled={idx===filtered.length-1} onClick={()=>nav(1)} style={{flex:1,padding:"11px",borderRadius:"10px",border:"1px solid #1E1E3F",background:idx===filtered.length-1?"#0A0A18":"#1E1E3F",color:idx===filtered.length-1?"#333366":"#A89EFF",fontWeight:"600",fontSize:"13px",cursor:idx===filtered.length-1?"default":"pointer"}}>Próx →</button>
+      <div style={{display:"flex",gap:"8px",marginBottom:"16px"}}>
+        <button disabled={idx===0} onClick={()=>nav(-1)} style={{flex:1,padding:"11px",borderRadius:"10px",border:"1px solid #1E1E3F",background:idx===0?"#0A0A18":"#1E1E3F",color:idx===0?"#333366":"#A89EFF",fontWeight:"600",fontSize:"13px",cursor:idx===0?"default":"pointer"}}>Ant</button>
+        <button onClick={()=>setFlipped(f=>!f)} style={{flex:2,padding:"11px",borderRadius:"10px",border:"1px solid #7C6FFF",background:"rgba(124,111,255,0.15)",color:"#A89EFF",fontWeight:"600",fontSize:"13px",cursor:"pointer"}}>{flipped?"Conceito":"Insight"}</button>
+        <button disabled={idx===CONCEPTS.length-1} onClick={()=>nav(1)} style={{flex:1,padding:"11px",borderRadius:"10px",border:"1px solid #1E1E3F",background:idx===CONCEPTS.length-1?"#0A0A18":"#1E1E3F",color:idx===CONCEPTS.length-1?"#333366":"#A89EFF",fontWeight:"600",fontSize:"13px",cursor:idx===CONCEPTS.length-1?"default":"pointer"}}>Prox</button>
       </div>
-      <div style={{fontSize:"12px",color:"#8888AA",marginBottom:"10px",fontWeight:"600"}}>TODOS ({filtered.length})</div>
-      {filtered.map((con,i)=>{
+      {CONCEPTS.map((con,i)=>{
         const cc=catColors[con.cat]||catColors.evitativo;
         return(
-          <div key={con.id} onClick={()=>goTo(i)} style={{background:i===idx?"rgba(124,111,255,0.1)":"#0F0F24",border:`1px solid ${i===idx?"#7C6FFF":"#1E1E3F"}`,borderRadius:"10px",padding:"12px 14px",marginBottom:"7px",cursor:"pointer",display:"flex",alignItems:"center",gap:"10px"}}>
-            <span style={{fontSize:"17px"}}>{con.icon}</span>
+          <div key={con.id} onClick={()=>{setIdx(i);setFlipped(false);if(!progress.seen.includes(con.id))save({...progress,seen:[...progress.seen,con.id],xp:progress.xp+con.xp});}}
+            style={{background:i===idx?"rgba(124,111,255,0.1)":"#0F0F24",border:"1px solid "+(i===idx?"#7C6FFF":"#1E1E3F"),borderRadius:"10px",padding:"12px 14px",marginBottom:"7px",cursor:"pointer",display:"flex",alignItems:"center",gap:"10px"}}>
             <div style={{flex:1}}>
               <div style={{fontSize:"13px",fontWeight:"600",color:i===idx?"#A89EFF":"#CCCCDD"}}>{con.title}</div>
               <div style={{fontSize:"10px",color:cc.text,marginTop:"1px"}}>{cc.label}</div>
             </div>
-            {progress.seen.includes(con.id)&&<span style={{fontSize:"12px",color:"#48BB8C"}}>✓</span>}
+            {progress.seen.includes(con.id)&&<span style={{fontSize:"12px",color:"#48BB8C"}}>v</span>}
           </div>
         );
       })}
@@ -671,7 +337,7 @@ function ConceptsTab({progress,saveP,addXP}){
   );
 }
 
-function QuizTab({progress,saveP,addXP}){
+function QuizTab({progress,save}){
   const[qs,setQs]=useState(()=>shuffle(QUESTIONS));
   const[qi,setQi]=useState(0);
   const[sel,setSel]=useState(null);
@@ -681,269 +347,195 @@ function QuizTab({progress,saveP,addXP}){
   const q=qs[qi];
   const select=(i)=>{
     if(answered)return;setSel(i);setAnswered(true);
-    const ok=q.options[i].correct;
+    const ok=q.options[i].c;
     if(ok)setScore(s=>s+1);
-    saveP({...progress,qCorrect:progress.qCorrect+(ok?1:0),qTotal:progress.qTotal+1,xp:progress.xp+(ok?q.xp:Math.floor(q.xp*0.2))});
+    save({...progress,qCorrect:progress.qCorrect+(ok?1:0),qTotal:progress.qTotal+1,xp:progress.xp+(ok?q.xp:Math.floor(q.xp*0.2))});
   };
   const next=()=>{if(qi+1>=qs.length){setDone(true);return;}setQi(i=>i+1);setSel(null);setAnswered(false);};
   const restart=()=>{setQs(shuffle(QUESTIONS));setQi(0);setSel(null);setAnswered(false);setScore(0);setDone(false);};
   if(done)return(
     <div style={{textAlign:"center",padding:"50px 20px"}}>
-      <div style={{fontSize:"44px",marginBottom:"16px"}}>🎯</div>
-      <div style={{fontSize:"56px",fontWeight:"900",background:"linear-gradient(135deg,#A89EFF,#7C6FFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{score}/{qs.length}</div>
-      <div style={{fontSize:"14px",color:"#8888AA",marginBottom:"12px"}}>acertos</div>
-      <div style={{fontSize:"26px",fontWeight:"800",color:score/qs.length>=0.8?"#48BB8C":score/qs.length>=0.6?"#FF8C47":"#FF5566",marginBottom:"28px"}}>
-        {score/qs.length>=0.8?"Excelente! 🔥":score/qs.length>=0.6?"Bom trabalho 💪":"Continue praticando 📚"}
-      </div>
+      <div style={{fontSize:"52px",fontWeight:"900",background:"linear-gradient(135deg,#A89EFF,#7C6FFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:"12px"}}>{score}/{qs.length}</div>
+      <div style={{fontSize:"24px",fontWeight:"800",color:score/qs.length>=0.8?"#48BB8C":"#FF8C47",marginBottom:"28px"}}>{score/qs.length>=0.8?"Excelente!":"Continue praticando"}</div>
       <button onClick={restart} style={{background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)",border:"none",borderRadius:"10px",padding:"14px 40px",color:"white",fontWeight:"700",fontSize:"14px",cursor:"pointer"}}>Nova Rodada</button>
     </div>
   );
-  const cc=catColors[q.cat]||catColors.evitativo;
   return(
     <div style={{padding:"16px"}}>
       <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px",fontSize:"12px",color:"#8888AA"}}>
         <span>{qi+1}/{qs.length}</span>
-        <div style={{flex:1,height:"3px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:`${((qi+1)/qs.length)*100}%`,height:"100%",background:"#7C6FFF",borderRadius:"99px"}}/></div>
-        <span style={{color:"#48BB8C",fontWeight:"700"}}>{score} ✓</span>
-        <span style={{color:"#C4A24A",fontSize:"11px"}}>+{q.xp}xp</span>
+        <div style={{flex:1,height:"3px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:((qi+1)/qs.length*100)+"%",height:"100%",background:"#7C6FFF",borderRadius:"99px"}}/></div>
+        <span style={{color:"#48BB8C",fontWeight:"700"}}>{score} certos</span>
       </div>
       <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"18px",marginBottom:"14px"}}>
-        <div style={{fontSize:"10px",fontWeight:"700",color:cc.text,letterSpacing:"1.5px",marginBottom:"8px"}}>{cc.label}</div>
         <div style={{fontSize:"15px",lineHeight:"1.55",fontWeight:"600"}}>{q.situation}</div>
       </div>
       {q.options.map((opt,i)=>{
         let bg="#080814",border="#1E1E3F",color="#CCCCDD";
-        if(answered){if(opt.correct){bg="rgba(72,187,140,0.12)";border="#48BB8C";color="#7DD9B0";}else if(i===sel){bg="rgba(255,85,102,0.12)";border="#FF5566";color="#FF8899";}}
+        if(answered){if(opt.c){bg="rgba(72,187,140,0.12)";border="#48BB8C";color="#7DD9B0";}else if(i===sel){bg="rgba(255,85,102,0.12)";border="#FF5566";color="#FF8899";}}
         else if(i===sel){bg="rgba(124,111,255,0.18)";border="#7C6FFF";color="#A89EFF";}
-        return(<button key={i} onClick={()=>select(i)} style={{width:"100%",textAlign:"left",padding:"12px 14px",borderRadius:"10px",border:`1px solid ${border}`,background:bg,color,fontSize:"13.5px",lineHeight:"1.4",fontWeight:"500",cursor:answered?"default":"pointer",marginBottom:"8px",display:"block"}}><span style={{fontWeight:"700",marginRight:"6px",color:"#7C6FFF"}}>{String.fromCharCode(65+i)}.</span>{opt.text}</button>);
+        return(<button key={i} onClick={()=>select(i)} style={{width:"100%",textAlign:"left",padding:"12px 14px",borderRadius:"10px",border:"1px solid "+border,background:bg,color,fontSize:"13.5px",lineHeight:"1.4",fontWeight:"500",cursor:answered?"default":"pointer",marginBottom:"8px",display:"block"}}><span style={{fontWeight:"700",marginRight:"6px",color:"#7C6FFF"}}>{String.fromCharCode(65+i)}.</span>{opt.t}</button>);
       })}
       {answered&&(
-        <><div style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.25)",borderRadius:"10px",padding:"14px",margin:"4px 0 14px"}}>
-          <div style={{fontSize:"10px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px",marginBottom:"6px"}}>{q.options[sel]?.correct?"✅ CORRETO":"❌ INCORRETO"} · +{q.options[sel]?.correct?q.xp:Math.floor(q.xp*0.2)} XP</div>
+        <>
+        <div style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.25)",borderRadius:"10px",padding:"14px",margin:"4px 0 14px"}}>
+          <div style={{fontSize:"10px",fontWeight:"700",color:"#7C6FFF",marginBottom:"6px"}}>{q.options[sel]&&q.options[sel].c?"CORRETO":"INCORRETO"}</div>
           <div style={{fontSize:"13px",color:"#C0B8FF",lineHeight:"1.55"}}>{q.explanation}</div>
         </div>
-        <button onClick={next} style={{width:"100%",background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)",border:"none",borderRadius:"10px",padding:"13px",color:"white",fontWeight:"700",fontSize:"14px",cursor:"pointer"}}>{qi+1>=qs.length?"Ver Resultado":"Próxima →"}</button></>
+        <button onClick={next} style={{width:"100%",background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)",border:"none",borderRadius:"10px",padding:"13px",color:"white",fontWeight:"700",fontSize:"14px",cursor:"pointer"}}>{qi+1>=qs.length?"Ver Resultado":"Proxima"}</button>
+        </>
       )}
     </div>
   );
 }
 
-// ── RESPOSTA IDEAL TAB ──
-function RespostaTab({addXP,currentPhase}){
-  const[subMode,setSubMode]=useState("resposta"); // resposta | leitura
+function RespostaTab({phase,apiKey}){
+  const[subMode,setSubMode]=useState("resposta");
   const[msgs,setMsgs]=useState("");
   const[ctx,setCtx]=useState("");
   const[direcao,setDirecao]=useState("normal");
   const[image,setImage]=useState(null);
   const[result,setResult]=useState(null);
   const[loading,setLoading]=useState(false);
-  const[apiKey,setApiKey]=useState(()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}});
   const[showKey,setShowKey]=useState(false);
+  const[localKey,setLocalKey]=useState(()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}});
   const imgRef=useRef(null);
-  const saveKey=(k)=>{setApiKey(k);try{localStorage.setItem("dtq_api",k);}catch(e){}};
 
-  const handleImage=(e)=>{
-    const file=e.target.files[0];
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=(ev)=>{
-      setImage({data:ev.target.result.split(",")[1],type:file.type,preview:ev.target.result});
-    };
-    reader.readAsDataURL(file);
-  };
-
+  const saveKey=(k)=>{setLocalKey(k);try{localStorage.setItem("dtq_api",k);}catch(e){}};
+  const handleImage=(e)=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=(ev)=>setImage({data:ev.target.result.split(",")[1],type:f.type,preview:ev.target.result});r.readAsDataURL(f);};
   const removeImage=()=>{setImage(null);if(imgRef.current)imgRef.current.value="";};
 
-  const analisar=async()=>{
+  const callAPI=async(system,userText,userImage)=>{
+    const k=localKey||apiKey();
+    if(!k)return null;
+    const userContent=userImage
+      ?[{type:"image",source:{type:"base64",media_type:userImage.type,data:userImage.data}},{type:"text",text:userText}]
+      :userText;
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,system,messages:[{role:"user",content:userContent}]})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    return data.content&&data.content[0]&&data.content[0].text;
+  };
+
+  const analisarResposta=async()=>{
     if(!msgs.trim()&&!image)return;
     setLoading(true);setResult(null);
-    if(apiKey){
-      try{
-        const sysPrompt=RESPOSTA_SYSTEM(direcao);
-        const userText=`${ctx?"Contexto: "+ctx+"
-
-":""}${msgs?"Últimas mensagens de Julia:
-"+msgs:"Analise a imagem da conversa."}`;
-        const userContent=image
-          ?[{type:"image",source:{type:"base64",media_type:image.type,data:image.data}},{type:"text",text:userText}]
-          :[{type:"text",text:userText}];
-        const res=await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST",
-          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:700,system:sysPrompt,messages:[{role:"user",content:userContent}]})
-        });
-        const data=await res.json();
-        if(data.error)throw new Error(data.error.message);
-        setResult({type:"ai",text:data.content?.[0]?.text||"Erro"});
-        addXP(15);
-      }catch(e){setResult({type:"error",text:"Erro: "+e.message});}
-    }else{
-      await new Promise(r=>setTimeout(r,600));
-      const score=analyzeMessage(msgs);
-      const coach=getCoaching(score);
-      const sugs={
-        normal:score>2?'"ta bom" ou algo muito simples e leve':score<-1?'"hehehe" ou entrar no humor dela':'"tô aqui" simples e direto',
-        carinhosa:score>2?'"❤️" ou "cuida de você"':'"Pensei em você hoje" ou "tô aqui quando quiser"',
-        "engraçada":score>2?'Meme ou piada sobre a situação dela':'"kkkkkk isso mesmo" ou entrar no humor dela',
-        safada:score>2?'"kkkk e eu achando que ia rolar algo diferente hoje 👀"':'"Você vai me fazer perder meu juízo" ou teasing leve',
-      };
-      setResult({type:"basic",coach,sugestao:sugs[direcao]||sugs.normal});
-    }
+    try{
+      const phaseCtx=phase?" | Ciclo: "+phase.data.name+" Dia "+phase.day+" — "+phase.data.safada:"";
+      const userText=(ctx?"Contexto: "+ctx+"
+":"")+(phaseCtx?phaseCtx+"
+":"")+"
+"+(msgs?"Mensagens de Julia:
+"+msgs:"Analise a imagem.");
+      const text=await callAPI(RESPOSTA_SYSTEM(direcao),userText,image);
+      if(text)setResult({type:"ai",text});
+      else setResult({type:"basic",coach:getCoach(analyzeMsg(msgs)),dir:direcao});
+    }catch(e){setResult({type:"error",text:e.message});}
     setLoading(false);
   };
 
-  const dirs=[
-    {id:"carinhosa",label:"💕 Carinhosa",desc:"Conexão e cuidado"},
-    {id:"normal",label:"💬 Normal",desc:"Fluxo natural"},
-    {id:"engraçada",label:"😂 Engraçada",desc:"Humor e leveza"},
-    {id:"safada",label:"🔥 Safada",desc:"Tensão e teasing"},
-  ];
+  const analisarLeitura=async()=>{
+    if(!msgs.trim()&&!image)return;
+    setLoading(true);setResult(null);
+    try{
+      const phaseCtx=phase?"Fase ciclo: "+phase.data.name+" Dia "+phase.day+" — "+phase.data.mood:"";
+      const userText=(phaseCtx?phaseCtx+"
+":"")+"
+Mensagens de Julia:
+"+msgs;
+      const text=await callAPI(LEITURA_SYSTEM,userText,image);
+      if(text)setResult({type:"leitura",text});
+      else{
+        const decoder={"ta bom mb":"Aceitacao minima — nao entusiasmo","sim sim":"Processando ou desviando","sla":"Sabe mas nao quer dizer","fazer oq":"Resignada, nao ok","nao sei":"Frequentemente sabe mas nao esta pronta","to bem":"Provavelmente nao esta 100% bem"};
+        const found=Object.entries(decoder).filter(([k])=>msgs.toLowerCase().includes(k)).map(([k,v])=>'"'+k+'" = '+v).join("
+");
+        setResult({type:"leitura",text:found||"Adicione API key para leitura emocional completa."});
+      }
+    }catch(e){setResult({type:"error",text:e.message});}
+    setLoading(false);
+  };
 
   const hasInput=msgs.trim()||image;
+  const dirs=[{id:"carinhosa",l:"Carinhosa"},{id:"normal",l:"Normal"},{id:"engracada",l:"Engracada"},{id:"safada",l:"Safada"}];
 
   return(
     <div style={{padding:"16px"}}>
-      <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
-        <div style={{fontSize:"13px",fontWeight:"700",color:"#A89EFF",marginBottom:"6px"}}>💡 Resposta Ideal</div>
-        <div style={{fontSize:"12px",color:"#8888AA",lineHeight:"1.55"}}>Envie print ou cole as mensagens dela. Escolha a direção. Receba exatamente o que responder — cada palavra, vírgula e acento.</div>
-      </div>
-      {currentPhase&&(
-        <div style={{background:`${currentPhase.data.color}10`,border:`1px solid ${currentPhase.data.color}33`,borderRadius:"12px",padding:"14px",marginBottom:"14px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"8px"}}>
-            <span style={{fontSize:"20px"}}>{currentPhase.data.emoji}</span>
-            <div>
-              <div style={{fontSize:"12px",fontWeight:"700",color:currentPhase.data.color}}>{currentPhase.data.name} · Dia {currentPhase.day}</div>
-              <div style={{fontSize:"11px",color:"#8888AA"}}>{currentPhase.daysUntil} dias até próximo ciclo</div>
-            </div>
-          </div>
-          <div style={{fontSize:"11px",color:"#CCCCDD",lineHeight:"1.5",marginBottom:"6px"}}>{currentPhase.data.mood}</div>
-          <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
-            <span style={{fontSize:"10px",background:"#080814",borderRadius:"20px",padding:"3px 8px",color:"#8888AA"}}>💬 {currentPhase.data.comunicacao.slice(0,40)}...</span>
-            <span style={{fontSize:"10px",background:"#080814",borderRadius:"20px",padding:"3px 8px",color:currentPhase.data.color}}>{currentPhase.data.safada}</span>
-          </div>
-        </div>
-      )}
-
-      {/* API KEY */}
-      <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 12px",background:apiKey?"rgba(72,187,140,0.08)":"rgba(255,140,71,0.08)",border:`1px solid ${apiKey?"#48BB8C":"#FF8C47"}`,borderRadius:"10px",marginBottom:"14px"}}>
-        <span>{apiKey?"🤖":"⚙️"}</span>
-        <div style={{flex:1}}>
-          <div style={{fontSize:"11px",fontWeight:"700",color:apiKey?"#48BB8C":"#FF8C47"}}>{apiKey?"IA ATIVA — Resposta personalizada real":"MODO BÁSICO — Adicione API key para respostas reais"}</div>
-        </div>
-        <button onClick={()=>setShowKey(s=>!s)} style={{background:"transparent",border:"1px solid #1E1E3F",borderRadius:"6px",padding:"4px 8px",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{apiKey?"Trocar":"+ Key"}</button>
+      {/* KEY */}
+      <div style={{display:"flex",alignItems:"center",gap:"8px",padding:"10px 12px",background:localKey?"rgba(72,187,140,0.08)":"rgba(255,140,71,0.08)",border:"1px solid "+(localKey?"#48BB8C":"#FF8C47"),borderRadius:"10px",marginBottom:"14px"}}>
+        <div style={{flex:1,fontSize:"11px",fontWeight:"700",color:localKey?"#48BB8C":"#FF8C47"}}>{localKey?"IA ATIVA":"Adicione API key para IA real"}</div>
+        <button onClick={()=>setShowKey(s=>!s)} style={{background:"transparent",border:"1px solid #1E1E3F",borderRadius:"6px",padding:"4px 8px",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{localKey?"Trocar":"+ Key"}</button>
       </div>
       {showKey&&(
         <div style={{marginBottom:"14px"}}>
-          <input type="password" placeholder="sk-ant-api..." value={apiKey} onChange={e=>saveKey(e.target.value)}
-            style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",boxSizing:"border-box",marginBottom:"4px"}}/>
-          <div style={{fontSize:"10px",color:"#8888AA"}}>console.anthropic.com → API Keys</div>
+          <input type="password" placeholder="sk-ant-api..." value={localKey} onChange={e=>saveKey(e.target.value)} style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",boxSizing:"border-box",marginBottom:"4px"}}/>
+          <div style={{fontSize:"10px",color:"#8888AA"}}>console.anthropic.com - API Keys</div>
         </div>
       )}
-
-      {/* SUB-MODE TABS */}
-      <div style={{display:"flex",gap:"6px",marginBottom:"16px"}}>
-        {[["resposta","💡 Resposta Ideal"],["leitura","🔍 Ler Mensagem"]].map(([m,l])=>(
-          <button key={m} onClick={()=>{setSubMode(m);setResult(null);}}
-            style={{flex:1,padding:"10px",borderRadius:"10px",border:`1px solid ${subMode===m?"#7C6FFF":"#1E1E3F"}`,background:subMode===m?"rgba(124,111,255,0.15)":"#0F0F24",color:subMode===m?"#A89EFF":"#8888AA",fontWeight:"600",fontSize:"12px",cursor:"pointer"}}>
-            {l}
-          </button>
+      {/* PHASE BADGE */}
+      {phase&&(
+        <div style={{background:phase.data.color+"15",border:"1px solid "+phase.data.color+"44",borderRadius:"10px",padding:"10px 14px",marginBottom:"14px"}}>
+          <div style={{fontSize:"11px",fontWeight:"700",color:phase.data.color,marginBottom:"3px"}}>{phase.data.name} Dia {phase.day} | {phase.data.safada}</div>
+          <div style={{fontSize:"11px",color:"#CCCCDD"}}>{phase.data.reacao}</div>
+        </div>
+      )}
+      {/* SUB TABS */}
+      <div style={{display:"flex",gap:"6px",marginBottom:"14px"}}>
+        {[["resposta","Resposta Ideal"],["leitura","Ler Mensagem"]].map(([m,l])=>(
+          <button key={m} onClick={()=>{setSubMode(m);setResult(null);}} style={{flex:1,padding:"10px",borderRadius:"10px",border:"1px solid "+(subMode===m?"#7C6FFF":"#1E1E3F"),background:subMode===m?"rgba(124,111,255,0.15)":"#0F0F24",color:subMode===m?"#A89EFF":"#8888AA",fontWeight:"600",fontSize:"12px",cursor:"pointer"}}>{l}</button>
         ))}
       </div>
-
-      {subMode==="leitura"&&<LeituraMode msgs={msgs} setMsgs={setMsgs} image={image} setImage={setImage} imgRef={imgRef} handleImage={handleImage} removeImage={removeImage} apiKey={apiKey} currentPhase={currentPhase}/>}
-      {subMode==="resposta"&&<>
-      {/* DIREÇÃO */}
-      <div style={{marginBottom:"14px"}}>
-        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"8px",fontWeight:"600"}}>DIREÇÃO DA CONVERSA</div>
-        <div style={{display:"flex",gap:"8px"}}>
+      {/* IMAGE UPLOAD */}
+      {!image?(
+        <label style={{display:"block",background:"#0F0F24",border:"2px dashed #1E1E3F",borderRadius:"10px",padding:"16px",textAlign:"center",cursor:"pointer",marginBottom:"10px"}}>
+          <input ref={imgRef} type="file" accept="image/*" onChange={handleImage} style={{display:"none"}}/>
+          <div style={{fontSize:"20px",marginBottom:"4px"}}>Foto</div>
+          <div style={{fontSize:"12px",color:"#8888AA"}}>Print do WhatsApp dela</div>
+        </label>
+      ):(
+        <div style={{position:"relative",marginBottom:"10px"}}>
+          <img src={image.preview} alt="" style={{width:"100%",borderRadius:"10px",border:"1px solid #1E1E3F",maxHeight:"180px",objectFit:"cover"}}/>
+          <button onClick={removeImage} style={{position:"absolute",top:"8px",right:"8px",background:"rgba(0,0,0,0.7)",border:"none",borderRadius:"50%",width:"26px",height:"26px",color:"white",fontSize:"13px",cursor:"pointer"}}>X</button>
+        </div>
+      )}
+      {/* TEXT */}
+      <textarea value={msgs} onChange={e=>setMsgs(e.target.value)} placeholder="Cole o que ela respondeu..." style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",resize:"vertical",minHeight:"70px",boxSizing:"border-box",marginBottom:"10px",lineHeight:"1.5"}}/>
+      {/* DIRECAO (only for resposta) */}
+      {subMode==="resposta"&&(
+        <>
+        <div style={{display:"flex",gap:"6px",marginBottom:"10px"}}>
           {dirs.map(d=>(
-            <button key={d.id} onClick={()=>setDirecao(d.id)}
-              style={{flex:1,padding:"10px 4px",borderRadius:"10px",border:`1px solid ${direcao===d.id?"#7C6FFF":"#1E1E3F"}`,background:direcao===d.id?"rgba(124,111,255,0.15)":"#0F0F24",cursor:"pointer",textAlign:"center"}}>
-              <div style={{fontSize:"13px",marginBottom:"2px"}}>{d.label}</div>
-              <div style={{fontSize:"10px",color:direcao===d.id?"#A89EFF":"#8888AA"}}>{d.desc}</div>
-            </button>
+            <button key={d.id} onClick={()=>setDirecao(d.id)} style={{flex:1,padding:"8px 2px",borderRadius:"8px",border:"1px solid "+(direcao===d.id?"#7C6FFF":"#1E1E3F"),background:direcao===d.id?"rgba(124,111,255,0.15)":"#0F0F24",color:direcao===d.id?"#A89EFF":"#8888AA",fontSize:"11px",fontWeight:"600",cursor:"pointer"}}>{d.l}</button>
           ))}
         </div>
-      </div>
-
-      {/* IMAGEM UPLOAD */}
-      <div style={{marginBottom:"10px"}}>
-        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>PRINT DA CONVERSA</div>
-        {!image?(
-          <label style={{display:"block",background:"#0F0F24",border:"2px dashed #1E1E3F",borderRadius:"10px",padding:"20px",textAlign:"center",cursor:"pointer"}}>
-            <input ref={imgRef} type="file" accept="image/*" onChange={handleImage} style={{display:"none"}}/>
-            <div style={{fontSize:"24px",marginBottom:"6px"}}>📷</div>
-            <div style={{fontSize:"12px",color:"#8888AA"}}>Toque para enviar print do WhatsApp</div>
-          </label>
-        ):(
-          <div style={{position:"relative"}}>
-            <img src={image.preview} alt="conversa" style={{width:"100%",borderRadius:"10px",border:"1px solid #1E1E3F",maxHeight:"200px",objectFit:"cover"}}/>
-            <button onClick={removeImage} style={{position:"absolute",top:"8px",right:"8px",background:"rgba(0,0,0,0.7)",border:"none",borderRadius:"50%",width:"28px",height:"28px",color:"white",fontSize:"14px",cursor:"pointer"}}>✕</button>
-            <div style={{marginTop:"6px",fontSize:"11px",color:"#48BB8C"}}>✓ Print carregado — Claude vai ler a conversa</div>
-          </div>
-        )}
-      </div>
-
-      {/* TEXTO MANUAL */}
-      <div style={{marginBottom:"10px"}}>
-        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>OU COLE AS MENSAGENS DELA</div>
-        <textarea value={msgs} onChange={e=>setMsgs(e.target.value)}
-          placeholder={"Ex:
-Sim kkkkk
-Dormi cedo, esqueci de falar
-Ansiedade ta me matando"}
-          style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",resize:"vertical",minHeight:"80px",boxSizing:"border-box",lineHeight:"1.5"}}/>
-      </div>
-
-      {/* CONTEXTO */}
-      <div style={{marginBottom:"14px"}}>
-        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>CONTEXTO (opcional)</div>
-        <input value={ctx} onChange={e=>setCtx(e.target.value)} placeholder="Ex: ela está animada hoje, é de manhã, temos planos..."
-          style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",boxSizing:"border-box"}}/>
-      </div>
-
-      {/* TEMPO DE RESPOSTA */}
-      <div style={{marginBottom:"14px"}}>
-        <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px",fontWeight:"600"}}>QUANDO RESPONDER (opcional)</div>
-        <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
-          {["Agora","5 min","15 min","1 hora","Amanhã"].map(t=>(
-            <button key={t} onClick={()=>setCtx(c=>c?(c+" Tempo ideal: "+t):"Tempo ideal: "+t)} style={{padding:"5px 10px",borderRadius:"20px",border:"1px solid #1E1E3F",background:"transparent",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{t}</button>
+        <input value={ctx} onChange={e=>setCtx(e.target.value)} placeholder="Contexto opcional..." style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",boxSizing:"border-box",marginBottom:"10px"}}/>
+        <div style={{display:"flex",gap:"6px",marginBottom:"14px",flexWrap:"wrap"}}>
+          {["Agora","5 min","15 min","1h","Amanha"].map(t=>(
+            <button key={t} onClick={()=>setCtx(c=>c?c+" | Timing: "+t:"Timing: "+t)} style={{padding:"5px 10px",borderRadius:"20px",border:"1px solid #1E1E3F",background:"transparent",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{t}</button>
           ))}
         </div>
-      </div>
-
-      <button onClick={analisar} disabled={loading||!hasInput}
-        style={{width:"100%",background:hasInput&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"14px",color:hasInput&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:hasInput&&!loading?"pointer":"default",marginBottom:"14px"}}>
-        {loading?"Analisando...":image?"🔍 Analisar Print e Responder":"🔍 Analisar e Responder"}
+        </>
+      )}
+      <button onClick={subMode==="resposta"?analisarResposta:analisarLeitura} disabled={loading||!hasInput}
+        style={{width:"100%",background:hasInput&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"13px",color:hasInput&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:hasInput&&!loading?"pointer":"default",marginBottom:"14px"}}>
+        {loading?"Analisando...":subMode==="resposta"?"Analisar e Responder":"Ler o que ela esta sentindo"}
       </button>
-
       {result&&(
         <div className="fade">
-          {result.type==="ai"&&(
-            <div style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.3)",borderRadius:"12px",padding:"18px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px"}}>
-                <div style={{fontSize:"11px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px"}}>🤖 ANÁLISE · DIREÇÃO {direcao.toUpperCase()}</div>
-              </div>
-              <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.65",whiteSpace:"pre-wrap"}}>{result.text}</div>
-              <button onClick={()=>navigator.clipboard?.writeText(result.text.match(/\*\*MENSAGEM EXATA:\*\*\s*([\s\S]*?)
-
-/)?.[1]||result.text)}
-                style={{marginTop:"12px",background:"rgba(124,111,255,0.2)",border:"1px solid #7C6FFF",borderRadius:"8px",padding:"8px 16px",color:"#A89EFF",fontSize:"12px",fontWeight:"600",cursor:"pointer",width:"100%"}}>
-                📋 Copiar mensagem
-              </button>
+          {(result.type==="ai"||result.type==="leitura")&&(
+            <div style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.3)",borderRadius:"12px",padding:"16px",marginBottom:"14px"}}>
+              <div style={{fontSize:"11px",fontWeight:"700",color:"#7C6FFF",marginBottom:"10px"}}>{result.type==="leitura"?"LEITURA EMOCIONAL":"ANALISE"}</div>
+              <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.7",whiteSpace:"pre-wrap"}}>{result.text}</div>
             </div>
           )}
           {result.type==="basic"&&(
-            <div>
-              <div style={{background:`${result.coach.color}12`,border:`1px solid ${result.coach.color}33`,borderRadius:"12px",padding:"16px",marginBottom:"10px"}}>
-                <div style={{fontSize:"12px",fontWeight:"700",color:result.coach.color,marginBottom:"6px"}}>{result.coach.icon} {result.coach.title}</div>
-                <div style={{fontSize:"12px",color:"#CCCCDD",lineHeight:"1.5",marginBottom:"10px"}}>{result.coach.text}</div>
-                <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"4px",fontWeight:"600"}}>SUGESTÃO · {direcao.toUpperCase()}</div>
-                <div style={{background:"#080814",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",color:"#E8E8F5"}}>{result.sugestao}</div>
-              </div>
-              <div style={{background:"rgba(255,140,71,0.05)",border:"1px solid rgba(255,140,71,0.2)",borderRadius:"10px",padding:"12px",fontSize:"12px",color:"#FFB380"}}>
-                ⚡ Adicione API key para respostas personalizadas palavra por palavra, leitura de prints e direção safada completa.
-              </div>
+            <div style={{background:result.coach.color+"12",border:"1px solid "+result.coach.color+"33",borderRadius:"12px",padding:"16px",marginBottom:"14px"}}>
+              <div style={{fontSize:"12px",fontWeight:"700",color:result.coach.color,marginBottom:"6px"}}>{result.coach.title}</div>
+              <div style={{fontSize:"12px",color:"#CCCCDD",marginBottom:"8px"}}>{result.coach.text}</div>
+              <div style={{fontSize:"11px",color:"#8888AA"}}>Adicione API key para resposta exata com direcao {result.dir}</div>
             </div>
           )}
           {result.type==="error"&&(
@@ -951,117 +543,122 @@ Ansiedade ta me matando"}
           )}
         </div>
       )}
-      </>}
-      {/* CONSULTOR LIVRE */}
-      <div style={{marginTop:"20px",borderTop:"1px solid #1E1E3F",paddingTop:"16px"}}>
-        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"4px"}}>💬 CONSULTOR LIVRE</div>
-        <div style={{fontSize:"11px",color:"#555577",marginBottom:"12px"}}>Pergunte qualquer coisa: timing, presente, date, brecha para safada, como fazer ela querer mais...</div>
-        <ConsultorChat apiKey={apiKey} currentPhase={currentPhase}/>
+      {/* CONSULTOR */}
+      <div style={{marginTop:"16px",borderTop:"1px solid #1E1E3F",paddingTop:"16px"}}>
+        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"4px"}}>Consultor Livre</div>
+        <div style={{fontSize:"11px",color:"#555577",marginBottom:"10px"}}>Pergunte qualquer coisa: timing, presente, date, brecha safada, como fazer ela querer mais...</div>
+        <ConsultorChat apiKey={localKey||apiKey()} phase={phase}/>
       </div>
     </div>
   );
 }
 
-function LeituraMode({msgs,setMsgs,image,setImage,imgRef,handleImage,removeImage,apiKey,currentPhase}){
-  const[result,setResult]=useState(null);
-  const[loading,setLoading]=useState(false);
+function SimuladorTab({phase,apiKey}){
+  const[mode,setMode]=useState("menu");
+  const[scenario,setScenario]=useState(null);
+  const[msgs,setMsgs]=useState([]);
+  const[input,setInput]=useState("");
+  const[typing,setTyping]=useState(false);
+  const[coach,setCoach]=useState(null);
+  const localKey=()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}};
+  const bottomRef=useRef(null);
+  useEffect(()=>{bottomRef.current&&bottomRef.current.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
 
-  const analisar=async()=>{
-    if(!msgs.trim()&&!image)return;
-    setLoading(true);setResult(null);
-    if(apiKey){
+  const start=(sc)=>{setScenario(sc);setMsgs([{r:"julia",t:sc?sc.start:"oi"}]);setMode("chat");setCoach(null);};
+
+  const send=async()=>{
+    const txt=input.trim();if(!txt||typing)return;
+    setInput("");
+    setMsgs(m=>[...m,{r:"user",t:txt}]);
+    const score=analyzeMsg(txt);
+    setTyping(true);
+    const k=localKey();
+    if(k){
       try{
-        const phaseCtx=currentPhase?`\nFASE ATUAL: ${currentPhase.data.name} Dia ${currentPhase.day} — ${currentPhase.data.mood}`:"";
-        const userText=`${phaseCtx}\n\nMensagem(ns) de Julia para analisar:\n${msgs||"(veja a imagem)"}`;
-        const userContent=image
-          ?[{type:"image",source:{type:"base64",media_type:image.type,data:image.data}},{type:"text",text:userText}]
-          :[{type:"text",text:userText}];
+        const phaseCtx=phase?"[Ciclo: "+phase.data.name+" Dia "+phase.day+"]":"";
+        const history=[...msgs,{r:"user",t:txt}].map(m=>({role:m.r==="user"?"user":"assistant",content:m.t.replace(/\[.*?\]/g,"").trim()||"..."})).filter(m=>m.content.length>0);
         const res=await fetch("https://api.anthropic.com/v1/messages",{
           method:"POST",
-          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,system:LEITURA_SYSTEM,messages:[{role:"user",content:userContent}]})
+          headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:150,system:JULIA_PERSONA+(phaseCtx?" "+phaseCtx:""),messages:history})
         });
         const data=await res.json();
-        if(data.error)throw new Error(data.error.message);
-        setResult(data.content?.[0]?.text||"Erro");
-      }catch(e){setResult("Erro: "+e.message);}
+        const reply=data.content&&data.content[0]&&data.content[0].text||"...";
+        setTyping(false);setMsgs(m=>[...m,{r:"julia",t:reply}]);
+      }catch(e){setTyping(false);setMsgs(m=>[...m,{r:"julia",t:"..."}]);}
     }else{
-      await new Promise(r=>setTimeout(r,600));
-      const decoders={
-        "tá bem":"Provavelmente NÃO está 100% bem. Padrão evitativo: minimiza para não preocupar.",
-        "sim sim":"Processando ou desviando gentilmente. Não é confirmação plena.",
-        "sla":"Sabe mas não está pronta para dizer.",
-        "fazer oq":"Resignada, não ok, só aceitando.",
-        "ta bom":"Aceitação mínima — não entusiasmo.",
-        "mb":"Neutral. Fecha o assunto.",
-        "hehehe":"Confortável e à vontade — boa sinal.",
-        "nuuu":"Surpresa positiva real — autêntico.",
-        "te amo":"Genuíno — ela não diz por convenção.",
-      };
-      const lower=msgs.toLowerCase();
-      const found=Object.entries(decoders).filter(([k])=>lower.includes(k));
-      const basicResult=found.length>0
-        ?found.map(([k,v])=>`"${k}" → ${v}`).join("\n\n")
-        :"Para análise completa de estado emocional, mascaramento e tensão/tesão, adicione sua API key.";
-      setResult(basicResult);
+      await new Promise(r=>setTimeout(r,800+Math.random()*1200));
+      const opts=score>4?["sim","mb","ta bom","tá"]:score>2?["sim sim","to bem","blzinha","ok"]:score>0?["oi :)","tô aqui","hehehe"]:score>-2?["kkkkk","vrdd","boa"]:["nuuuuu","kkkkkk pse","amei isso"];
+      setTyping(false);setMsgs(m=>[...m,{r:"julia",t:opts[Math.floor(Math.random()*opts.length)]}]);
     }
-    setLoading(false);
+    setCoach(getCoach(score));
   };
 
-  return(
-    <div>
-      <div style={{background:"rgba(124,111,255,0.05)",border:"1px solid rgba(124,111,255,0.2)",borderRadius:"12px",padding:"14px",marginBottom:"14px"}}>
-        <div style={{fontSize:"12px",color:"#A89EFF",fontWeight:"700",marginBottom:"6px"}}>🔍 Leitura Emocional</div>
-        <div style={{fontSize:"11px",color:"#8888AA",lineHeight:"1.5"}}>Analiso o que ela está sentindo de verdade, o que está mascarando, se há tensão/tesão e o que ela não disse.</div>
+  if(mode==="menu")return(
+    <div style={{padding:"16px"}}>
+      <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
+        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"6px"}}>SIMULADOR JULIA</div>
+        <div style={{fontSize:"12px",color:"#CCCCDD",lineHeight:"1.55"}}>Baseado em 8 meses de conversa real. Cada resposta usa o padrao comportamental real dela.</div>
       </div>
+      {SCENARIOS.map(sc=>(
+        <div key={sc.id} onClick={()=>start(sc)} style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px 14px",marginBottom:"8px",cursor:"pointer",display:"flex",alignItems:"center",gap:"10px"}}>
+          <div style={{width:"28px",height:"28px",background:"rgba(124,111,255,0.15)",border:"1px solid #7C6FFF",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:"700",color:"#A89EFF",flex:"none"}}>{sc.id}</div>
+          <div>
+            <div style={{fontSize:"13px",fontWeight:"600",color:"#CCCCDD"}}>{sc.title}</div>
+            <div style={{fontSize:"11px",color:"#8888AA",marginTop:"2px"}}>{sc.context.slice(0,55)}...</div>
+          </div>
+        </div>
+      ))}
+      <button onClick={()=>start(null)} style={{width:"100%",background:"rgba(124,111,255,0.15)",border:"1px solid #7C6FFF",borderRadius:"10px",padding:"13px",color:"#A89EFF",fontWeight:"700",fontSize:"14px",cursor:"pointer",marginTop:"4px"}}>Conversa Livre</button>
+    </div>
+  );
 
-      {!image?(
-        <label style={{display:"block",background:"#0F0F24",border:"2px dashed #1E1E3F",borderRadius:"10px",padding:"16px",textAlign:"center",cursor:"pointer",marginBottom:"10px"}}>
-          <input ref={imgRef} type="file" accept="image/*" onChange={handleImage} style={{display:"none"}}/>
-          <div style={{fontSize:"20px",marginBottom:"4px"}}>📷</div>
-          <div style={{fontSize:"12px",color:"#8888AA"}}>Print do WhatsApp dela</div>
-        </label>
-      ):(
-        <div style={{position:"relative",marginBottom:"10px"}}>
-          <img src={image.preview} alt="" style={{width:"100%",borderRadius:"10px",border:"1px solid #1E1E3F",maxHeight:"180px",objectFit:"cover"}}/>
-          <button onClick={removeImage} style={{position:"absolute",top:"8px",right:"8px",background:"rgba(0,0,0,0.7)",border:"none",borderRadius:"50%",width:"26px",height:"26px",color:"white",fontSize:"13px",cursor:"pointer"}}>✕</button>
+  return(
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}}>
+      <div style={{padding:"10px 16px",borderBottom:"1px solid #1E1E3F",display:"flex",alignItems:"center",gap:"10px"}}>
+        <button onClick={()=>setMode("menu")} style={{background:"transparent",border:"none",color:"#8888AA",fontSize:"18px",cursor:"pointer"}}>{"<"}</button>
+        <div style={{width:"32px",height:"32px",background:"rgba(124,111,255,0.2)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>J</div>
+        <div><div style={{fontSize:"13px",fontWeight:"700"}}>Julia</div><div style={{fontSize:"11px",color:"#8888AA"}}>{scenario?scenario.title:"Livre"}</div></div>
+      </div>
+      {scenario&&<div style={{padding:"8px 16px",background:"rgba(124,111,255,0.05)",borderBottom:"1px solid #1E1E3F",fontSize:"11px",color:"#8888AA"}}>{scenario.context}</div>}
+      <div style={{flex:1,overflowY:"auto",padding:"14px",display:"flex",flexDirection:"column",gap:"8px"}}>
+        {msgs.map((m,i)=>(
+          <div key={i} className="fade" style={{display:"flex",justifyContent:m.r==="user"?"flex-end":"flex-start"}}>
+            <div style={{maxWidth:"76%",padding:"9px 13px",borderRadius:m.r==="user"?"17px 17px 4px 17px":"17px 17px 17px 4px",background:m.r==="user"?"#5B4FFF":"#1A1A35",fontSize:"14px",lineHeight:"1.45",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{m.t}</div>
+          </div>
+        ))}
+        {typing&&<div style={{display:"flex"}}><div style={{padding:"11px 15px",borderRadius:"17px",background:"#1A1A35"}} className="typing"><span/><span/><span/></div></div>}
+        <div ref={bottomRef}/>
+      </div>
+      {coach&&(
+        <div style={{padding:"8px 16px",background:coach.color+"12",borderTop:"1px solid "+coach.color+"33"}}>
+          <div style={{fontSize:"11px",fontWeight:"700",color:coach.color,marginBottom:"2px"}}>{coach.title}</div>
+          <div style={{fontSize:"11px",color:"#CCCCDD"}}>{coach.text}</div>
         </div>
       )}
-
-      <textarea value={msgs} onChange={e=>setMsgs(e.target.value)} placeholder={"Cole o que ela respondeu:\nEx: Tô bem\nSim sim\nFazer oq"}
-        style={{width:"100%",background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"14px",resize:"vertical",minHeight:"70px",boxSizing:"border-box",marginBottom:"10px",lineHeight:"1.5"}}/>
-
-      <button onClick={analisar} disabled={loading||(!msgs.trim()&&!image)}
-        style={{width:"100%",background:(msgs.trim()||image)&&!loading?"linear-gradient(135deg,#7C6FFF,#5B4FFF)":"#1E1E3F",border:"none",borderRadius:"10px",padding:"13px",color:(msgs.trim()||image)&&!loading?"white":"#555577",fontWeight:"700",fontSize:"14px",cursor:(msgs.trim()||image)&&!loading?"pointer":"default",marginBottom:"14px"}}>
-        {loading?"Lendo...":"🔍 Ler o que ela está sentindo"}
-      </button>
-
-      {result&&(
-        <div className="fade" style={{background:"rgba(124,111,255,0.08)",border:"1px solid rgba(124,111,255,0.25)",borderRadius:"12px",padding:"16px"}}>
-          <div style={{fontSize:"11px",fontWeight:"700",color:"#7C6FFF",letterSpacing:"1px",marginBottom:"10px"}}>LEITURA EMOCIONAL</div>
-          <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.7",whiteSpace:"pre-wrap"}}>{result}</div>
-        </div>
-      )}
+      <div style={{padding:"9px 14px",borderTop:"1px solid #1E1E3F",display:"flex",gap:"8px",alignItems:"flex-end"}}>
+        <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
+          placeholder="Digite para Julia..." style={{flex:1,background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"12px",padding:"10px 12px",color:"#E8E8F5",fontSize:"14px",resize:"none",maxHeight:"90px",lineHeight:"1.4"}} rows={1}/>
+        <button onClick={send} disabled={!input.trim()||typing} style={{width:"38px",height:"38px",borderRadius:"50%",border:"none",background:input.trim()&&!typing?"#7C6FFF":"#1E1E3F",color:"white",fontSize:"14px",cursor:input.trim()&&!typing?"pointer":"default",flex:"none"}}>{">"}</button>
+      </div>
     </div>
   );
 }
 
-function ConsultorChat({apiKey,currentPhase}){
+function ConsultorChat({apiKey,phase}){
   const[chatInput,setChatInput]=useState("");
   const[chatMsgs,setChatMsgs]=useState([]);
   const[chatLoading,setChatLoading]=useState(false);
-  const chatBottomRef=useRef(null);
-  useEffect(()=>{chatBottomRef.current?.scrollIntoView({behavior:"smooth"});},[chatMsgs]);
+  const bottomRef=useRef(null);
+  useEffect(()=>{bottomRef.current&&bottomRef.current.scrollIntoView({behavior:"smooth"});},[chatMsgs]);
 
-  const sendChat=async()=>{
+  const send=async()=>{
     const txt=chatInput.trim();if(!txt||chatLoading)return;
-    setChatInput("");
-    setChatMsgs(m=>[...m,{role:"user",text:txt}]);
-    setChatLoading(true);
+    setChatInput("");setChatMsgs(m=>[...m,{role:"user",content:txt}]);setChatLoading(true);
     if(apiKey){
       try{
-        const phaseInfo=currentPhase?`\n[CONTEXTO CICLO ATUAL: ${currentPhase.data.name} - Dia ${currentPhase.day} - ${currentPhase.data.mood} - Brecha safada: ${currentPhase.data.safada}]`:"";
-        const history=[...chatMsgs,{role:"user",text:txt}].map((m,i)=>({role:m.role,content:i===chatMsgs.length?m.text+phaseInfo:m.text}));
+        const phaseInfo=phase?"[Ciclo atual: "+phase.data.name+" Dia "+phase.day+" — "+phase.data.mood+" | Safada: "+phase.data.safada+"]":"";
+        const history=[...chatMsgs,{role:"user",content:txt+(chatMsgs.length===0&&phaseInfo?" "+phaseInfo:"")}];
         const res=await fetch("https://api.anthropic.com/v1/messages",{
           method:"POST",
           headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
@@ -1069,251 +666,109 @@ function ConsultorChat({apiKey,currentPhase}){
         });
         const data=await res.json();
         if(data.error)throw new Error(data.error.message);
-        setChatMsgs(m=>[...m,{role:"assistant",text:data.content?.[0]?.text||"..."}]);
-      }catch(e){setChatMsgs(m=>[...m,{role:"assistant",text:"Erro: "+e.message}]);}
+        setChatMsgs(m=>[...m,{role:"assistant",content:data.content&&data.content[0]&&data.content[0].text||"..."}]);
+      }catch(e){setChatMsgs(m=>[...m,{role:"assistant",content:"Erro: "+e.message}]);}
     }else{
-      const respostas={
-        "safada":["Análise: a Julia tem esse lado, mas ativa com insinuação sutil, nunca com explícito direto. Planta uma ideia, não declara. Preciso da API key para analisar o momento específico."],
-        "presente":["Baseado no que ela gosta: livro do gênero favorito dela, material de crochê premium, algo para os peixinhos dela, kit de chá/café para os dias de série em casa. Adicione API key para sugestões personalizadas para a data."],
-        "date":["Julia adora ficar em casa: série maratonada com lanche especial, noite de jogos de tabuleiro, cozinhar juntos. Se sair: café aconchegante ou cinema (tarde de semana, menos gente). Adicione API key para ideias baseadas no contexto atual."],
-        "timing":["Regra geral: ela demora → você demora a metade. Ela respondeu em 3h → você responde em 1h30. Nunca responda mais rápido que ela consistentemente. Com API key analiso o contexto específico."],
-        "default":["Para respostas personalizadas baseadas no padrão real dela, adicione sua API key na seção acima. Sem ela, só consigo dar orientações gerais."]
-      };
-      const lower=txt.toLowerCase();
-      const key=lower.includes("safad")||lower.includes("brecha")||lower.includes("querer")?"safada":
-        lower.includes("present")||lower.includes("gift")?"presente":
-        lower.includes("date")||lower.includes("final de semana")||lower.includes("sair")?"date":
-        lower.includes("timing")||lower.includes("tempo")||lower.includes("quando responder")?"timing":"default";
-      await new Promise(r=>setTimeout(r,600));
-      setChatMsgs(m=>[...m,{role:"assistant",text:respostas[key][0]}]);
+      await new Promise(r=>setTimeout(r,500));
+      setChatMsgs(m=>[...m,{role:"assistant",content:"Adicione API key para consultas personalizadas baseadas no padrao real dela."}]);
     }
     setChatLoading(false);
   };
 
-  const sugestoes=["Tenho brecha para safada hoje?","Ideia de date para este final de semana","Como fazer ela querer mais?","Quanto tempo espero para responder?","Ideia de presente para ela"];
+  const sugestoes=["Tenho brecha para safada hoje?","Ideia de presente para ela","O que fazemos esse fds?","Quanto tempo espero para responder?","Como fazer ela querer mais?"];
 
   return(
     <div>
       {chatMsgs.length===0&&(
-        <div style={{marginBottom:"12px"}}>
-          <div style={{fontSize:"10px",color:"#555577",marginBottom:"8px"}}>SUGESTÕES</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
-            {sugestoes.map(s=>(
-              <button key={s} onClick={()=>setChatInput(s)} style={{padding:"6px 10px",borderRadius:"20px",border:"1px solid #1E1E3F",background:"#0F0F24",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{s}</button>
-            ))}
-          </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"10px"}}>
+          {sugestoes.map(s=>(
+            <button key={s} onClick={()=>setChatInput(s)} style={{padding:"6px 10px",borderRadius:"20px",border:"1px solid #1E1E3F",background:"#0F0F24",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>{s}</button>
+          ))}
         </div>
       )}
       {chatMsgs.length>0&&(
-        <div style={{background:"#0A0A18",borderRadius:"10px",padding:"12px",marginBottom:"10px",maxHeight:"300px",overflowY:"auto",display:"flex",flexDirection:"column",gap:"8px"}}>
+        <div style={{background:"#0A0A18",borderRadius:"10px",padding:"10px",marginBottom:"10px",maxHeight:"280px",overflowY:"auto",display:"flex",flexDirection:"column",gap:"7px"}}>
           {chatMsgs.map((m,i)=>(
             <div key={i} className="fade" style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-              <div style={{maxWidth:"85%",padding:"8px 12px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:m.role==="user"?"#5B4FFF":"#1A1A35",fontSize:"12.5px",lineHeight:"1.5",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{m.text}</div>
+              <div style={{maxWidth:"85%",padding:"8px 12px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",background:m.role==="user"?"#5B4FFF":"#1A1A35",fontSize:"12.5px",lineHeight:"1.5",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{m.content}</div>
             </div>
           ))}
           {chatLoading&&<div style={{display:"flex"}}><div style={{padding:"8px 14px",borderRadius:"14px",background:"#1A1A35"}} className="typing"><span/><span/><span/></div></div>}
-          <div ref={chatBottomRef}/>
+          <div ref={bottomRef}/>
         </div>
       )}
       <div style={{display:"flex",gap:"8px",alignItems:"flex-end"}}>
-        <textarea value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}}}
-          placeholder="Pergunte qualquer coisa sobre ela ou a conversa..."
-          style={{flex:1,background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",resize:"none",maxHeight:"80px",lineHeight:"1.4"}} rows={1}/>
-        <button onClick={sendChat} disabled={!chatInput.trim()||chatLoading}
-          style={{width:"36px",height:"36px",borderRadius:"50%",border:"none",background:chatInput.trim()&&!chatLoading?"#7C6FFF":"#1E1E3F",color:"white",fontSize:"14px",cursor:chatInput.trim()&&!chatLoading?"pointer":"default",flex:"none"}}>➤</button>
+        <textarea value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
+          placeholder="Pergunte qualquer coisa sobre ela ou a conversa..." style={{flex:1,background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"10px 12px",color:"#E8E8F5",fontSize:"13px",resize:"none",maxHeight:"80px",lineHeight:"1.4"}} rows={1}/>
+        <button onClick={send} disabled={!chatInput.trim()||chatLoading}
+          style={{width:"36px",height:"36px",borderRadius:"50%",border:"none",background:chatInput.trim()&&!chatLoading?"#7C6FFF":"#1E1E3F",color:"white",fontSize:"14px",cursor:chatInput.trim()&&!chatLoading?"pointer":"default",flex:"none"}}>{">"}</button>
       </div>
     </div>
   );
 }
 
-// ── SIMULADOR TAB ──// ── SIMULADOR TAB ──
-function SimuladorTab({addXP}){
-  const[mode,setMode]=useState("menu");
-  const[scenario,setScenario]=useState(null);
-  const[msgs,setMsgs]=useState([]);
-  const[input,setInput]=useState("");
-  const[typing,setTyping]=useState(false);
-  const[lastCoach,setLastCoach]=useState(null);
-  const[apiKey,setApiKey]=useState(()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}});
-  const bottomRef=useRef(null);
-  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
-
-  const startScenario=(sc)=>{setScenario(sc);setMsgs([{role:"julia",text:sc.start}]);setMode("chat");setLastCoach(null);};
-  const startFree=()=>{setScenario(null);setMsgs([{role:"julia",text:"oi"}]);setMode("chat");setLastCoach(null);};
-
-  const send=async()=>{
-    const txt=input.trim();if(!txt||typing)return;
-    setInput("");
-    setMsgs(m=>[...m,{role:"user",text:txt}]);
-    const score=analyzeMessage(txt);
-    setTyping(true);
-    if(apiKey){
-      try{
-        const history=[...msgs,{role:"user",text:txt}].map(m=>({role:m.role==="user"?"user":"assistant",content:m.text.replace(/\[.*?\]\n*/g,"").trim()||"..."})).filter(m=>m.content.length>0&&m.content!=="...");
-        const res=await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST",
-          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:150,system:JULIA_PERSONA,messages:history})
-        });
-        const data=await res.json();
-        const reply=data.content?.[0]?.text||"...";
-        setTyping(false);setMsgs(m=>[...m,{role:"julia",text:reply}]);
-      }catch(e){setTyping(false);setMsgs(m=>[...m,{role:"julia",text:"..."}]);}
-    }else{
-      await new Promise(r=>setTimeout(r,800+Math.random()*1500));
-      const reply=getRuleBased(score,scenario?.id);
-      setTyping(false);setMsgs(m=>[...m,{role:"julia",text:reply}]);
-    }
-    setLastCoach(getCoaching(score));
-    addXP(8);
-  };
-
-  if(mode==="menu")return(
-    <div style={{padding:"16px"}}>
-      <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
-        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"8px"}}>SIMULADOR · JULIA</div>
-        <div style={{fontSize:"13px",color:"#CCCCDD",lineHeight:"1.55",marginBottom:"12px"}}>Baseado em 8 meses de conversa real. Cada resposta da Julia usa o padrão comportamental real dela — desde o 'mb' até o 'nuuuu'.</div>
-        <div style={{padding:"10px 12px",background:apiKey?"rgba(72,187,140,0.08)":"rgba(255,140,71,0.08)",border:`1px solid ${apiKey?"#48BB8C":"#FF8C47"}`,borderRadius:"8px",fontSize:"11px",color:apiKey?"#48BB8C":"#FF8C47",fontWeight:"700"}}>
-          {apiKey?"🤖 IA ATIVA — Julia responde dinamicamente":"⚙️ Adicione API key na aba 'Resposta' para IA real"}
-        </div>
-      </div>
-      <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"10px"}}>CENÁRIOS REAIS</div>
-      {SCENARIOS.map(sc=>(
-        <div key={sc.id} onClick={()=>startScenario(sc)} style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px 14px",marginBottom:"8px",cursor:"pointer",display:"flex",alignItems:"center",gap:"10px"}}>
-          <span style={{fontSize:"20px"}}>{sc.icon}</span>
-          <div>
-            <div style={{fontSize:"13px",fontWeight:"600",color:"#CCCCDD"}}>{sc.title}</div>
-            <div style={{fontSize:"11px",color:"#8888AA",marginTop:"2px"}}>{sc.context.slice(0,60)}...</div>
-          </div>
-        </div>
-      ))}
-      <button onClick={startFree} style={{width:"100%",background:"rgba(124,111,255,0.15)",border:"1px solid #7C6FFF",borderRadius:"10px",padding:"13px",color:"#A89EFF",fontWeight:"700",fontSize:"14px",cursor:"pointer",marginTop:"4px"}}>💬 Conversa Livre</button>
-    </div>
-  );
-
-  return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 140px)"}}>
-      <div style={{padding:"10px 16px",borderBottom:"1px solid #1E1E3F",display:"flex",alignItems:"center",gap:"10px"}}>
-        <button onClick={()=>setMode("menu")} style={{background:"transparent",border:"none",color:"#8888AA",fontSize:"18px",cursor:"pointer"}}>←</button>
-        <div style={{width:"34px",height:"34px",background:"rgba(124,111,255,0.2)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"15px"}}>👩</div>
-        <div>
-          <div style={{fontSize:"13px",fontWeight:"700"}}>Julia</div>
-          <div style={{fontSize:"11px",color:"#8888AA"}}>{scenario?.title||"Conversa Livre"} · {apiKey?"IA":"básico"}</div>
-        </div>
-      </div>
-      {scenario&&<div style={{padding:"8px 16px",background:"rgba(124,111,255,0.05)",borderBottom:"1px solid #1E1E3F",fontSize:"11px",color:"#8888AA"}}>{scenario.context}</div>}
-      <div style={{flex:1,overflowY:"auto",padding:"14px",display:"flex",flexDirection:"column",gap:"8px"}}>
-        {msgs.map((m,i)=>(
-          <div key={i} className="fade" style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-            <div style={{maxWidth:"76%",padding:"9px 13px",borderRadius:m.role==="user"?"17px 17px 4px 17px":"17px 17px 17px 4px",background:m.role==="user"?"#5B4FFF":"#1A1A35",fontSize:"14px",lineHeight:"1.45",whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{m.text}</div>
-          </div>
-        ))}
-        {typing&&<div style={{display:"flex"}}><div style={{padding:"11px 15px",borderRadius:"17px 17px 17px 4px",background:"#1A1A35"}} className="typing"><span/><span/><span/></div></div>}
-        <div ref={bottomRef}/>
-      </div>
-      {lastCoach&&(
-        <div style={{padding:"9px 16px",background:`${lastCoach.color}12`,borderTop:`1px solid ${lastCoach.color}33`}}>
-          <div style={{fontSize:"11px",fontWeight:"700",color:lastCoach.color,marginBottom:"2px"}}>{lastCoach.icon} {lastCoach.title}</div>
-          <div style={{fontSize:"11px",color:"#CCCCDD",lineHeight:"1.4"}}>{lastCoach.text}</div>
-        </div>
-      )}
-      <div style={{padding:"9px 14px",borderTop:"1px solid #1E1E3F",display:"flex",gap:"8px",alignItems:"flex-end"}}>
-        <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
-          placeholder="Digite para Julia..." style={{flex:1,background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"12px",padding:"10px 12px",color:"#E8E8F5",fontSize:"14px",resize:"none",maxHeight:"90px",lineHeight:"1.4"}} rows={1}/>
-        <button onClick={send} disabled={!input.trim()||typing} style={{width:"38px",height:"38px",borderRadius:"50%",border:"none",background:input.trim()&&!typing?"#7C6FFF":"#1E1E3F",color:"white",fontSize:"15px",cursor:input.trim()&&!typing?"pointer":"default",flex:"none"}}>➤</button>
-      </div>
-    </div>
-  );
-}
-
-function ProgressoTab({progress,level,pct,ciclo,saveCiclo,currentPhase}){
-  const nextLv=LEVELS[level.n]||level;
-  const acc=progress.qTotal>0?Math.round((progress.qCorrect/progress.qTotal)*100):0;
+function ProgressoTab({progress,lv,pct,ciclo,save,phase,apiKey}){
   const[briefing,setBriefing]=useState(null);
-  const[briefingLoad,setBriefingLoad]=useState(false);
-  const[notifEnabled,setNotifEnabled]=useState(false);
-  const apiKey=localStorage.getItem("dtq_api")||"";
+  const[bLoad,setBLoad]=useState(false);
+  const acc=progress.qTotal>0?Math.round((progress.qCorrect/progress.qTotal)*100):0;
+  const localKey=()=>{try{return localStorage.getItem("dtq_api")||"";}catch(e){return "";}};
 
-  const gerarBriefing=async()=>{
-    setBriefingLoad(true);
-    if(apiKey){
+  const gerar=async()=>{
+    setBLoad(true);
+    const k=localKey();
+    if(k){
       try{
-        const dias=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+        const dias=["Domingo","Segunda","Terca","Quarta","Quinta","Sexta","Sabado"];
         const hoje=dias[new Date().getDay()];
-        const phaseInfo=currentPhase?`FASE DO CICLO: ${currentPhase.data.name} - Dia ${currentPhase.day} - ${currentPhase.data.mood} - Brecha safada: ${currentPhase.data.safada}`:"Fase do ciclo não configurada";
+        const phaseInfo=phase?"Ciclo: "+phase.data.name+" Dia "+phase.day+" — "+phase.data.mood+" | Safada: "+phase.data.safada:"Ciclo nao configurado";
         const res=await fetch("https://api.anthropic.com/v1/messages",{
           method:"POST",
-          headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:500,system:BRIEFING_SYSTEM,messages:[{role:"user",content:`Hoje é ${hoje}. ${phaseInfo}. Gere o briefing diário para o Gustavo.`}]})
+          headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:500,system:BRIEFING_SYSTEM,messages:[{role:"user",content:"Hoje e "+hoje+". "+phaseInfo+". Gere o briefing diario para o Gustavo."}]})
         });
         const data=await res.json();
-        setBriefing(data.content?.[0]?.text||"Erro");
-      }catch(e){setBriefing("Erro ao gerar briefing: "+e.message);}
+        setBriefing(data.content&&data.content[0]&&data.content[0].text||"Erro");
+      }catch(e){setBriefing("Erro: "+e.message);}
     }else{
-      await new Promise(r=>setTimeout(r,500));
-      const dias=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-      const hoje=dias[new Date().getDay()];
-      setBriefing(`📅 Hoje é ${hoje}.
-
-Para o briefing personalizado com estratégia do dia, janela safada, frase pronta e análise completa, adicione sua API key na aba Resposta.`);
+      const dias=["Domingo","Segunda","Terca","Quarta","Quinta","Sexta","Sabado"];
+      setBriefing("Hoje e "+dias[new Date().getDay()]+". Adicione API key para briefing personalizado com estrategia do dia, janela safada e frase pronta.");
     }
-    setBriefingLoad(false);
+    setBLoad(false);
   };
 
-  const pedirNotificacoes=async()=>{
-    if("Notification" in window){
-      const perm=await Notification.requestPermission();
-      if(perm==="granted"){setNotifEnabled(true);new Notification("Domínio Total ✓",{body:"Notificações ativadas! Você receberá briefings diários.",icon:"🎓"});}
-    }
-  };
+  const nextLv=LEVELS[lv.n]||lv;
 
   return(
     <div style={{padding:"16px"}}>
-      <div style={{background:"#0F0F24",border:`1px solid ${level.color}44`,borderRadius:"16px",padding:"20px",marginBottom:"14px",textAlign:"center"}}>
-        <div style={{fontSize:"11px",color:level.color,fontWeight:"700",letterSpacing:"1.5px",marginBottom:"6px"}}>NÍVEL {level.n}</div>
-        <div style={{fontSize:"26px",fontWeight:"900",color:level.color,marginBottom:"4px"}}>{level.title}</div>
-        <div style={{fontSize:"32px",fontWeight:"900"}}>{progress.xp} <span style={{fontSize:"16px",color:"#8888AA"}}>XP</span></div>
-        <div style={{display:"flex",alignItems:"center",gap:"8px",margin:"12px 0 6px"}}>
-          <div style={{flex:1,height:"6px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:`${pct}%`,height:"100%",background:level.color,borderRadius:"99px"}}/></div>
+      {/* XP */}
+      <div style={{background:"#0F0F24",border:"1px solid "+lv.color+"44",borderRadius:"16px",padding:"20px",marginBottom:"14px",textAlign:"center"}}>
+        <div style={{fontSize:"11px",color:lv.color,fontWeight:"700",letterSpacing:"1.5px",marginBottom:"4px"}}>NIVEL {lv.n}</div>
+        <div style={{fontSize:"24px",fontWeight:"900",color:lv.color,marginBottom:"4px"}}>{lv.title}</div>
+        <div style={{fontSize:"30px",fontWeight:"900"}}>{progress.xp} <span style={{fontSize:"14px",color:"#8888AA"}}>XP</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:"8px",margin:"10px 0 4px"}}>
+          <div style={{flex:1,height:"5px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:pct+"%",height:"100%",background:lv.color,borderRadius:"99px"}}/></div>
           <span style={{fontSize:"11px",color:"#8888AA"}}>{pct}%</span>
         </div>
-        {level.n<5&&<div style={{fontSize:"11px",color:"#8888AA"}}>Próximo: {nextLv.title} em {nextLv.min-progress.xp} XP</div>}
+        {lv.n<5&&<div style={{fontSize:"11px",color:"#8888AA"}}>Proximo: {nextLv.title} em {nextLv.min-progress.xp} XP</div>}
       </div>
+      {/* STATS */}
       <div style={{display:"flex",gap:"10px",marginBottom:"14px"}}>
-        {[[progress.seen.length,CONCEPTS.length,"vistos","#7C6FFF"],[progress.qTotal,"∞","questões","#48BB8C"],[`${acc}%`,"","precisão",acc>=70?"#48BB8C":acc>=50?"#FF8C47":"#FF5566"]].map(([v,tot,l,c],i)=>(
+        {[[progress.seen.length+"/"+CONCEPTS.length,"vistos","#7C6FFF"],[progress.qTotal,"questoes","#48BB8C"],[acc+"%","precisao",acc>=70?"#48BB8C":acc>=50?"#FF8C47":"#FF5566"]].map(([v,l,c],i)=>(
           <div key={i} style={{flex:1,background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"12px",padding:"14px",textAlign:"center"}}>
-            <div style={{fontSize:"20px",fontWeight:"800",color:c}}>{v}{typeof tot==="number"?`/${tot}`:""}</div>
+            <div style={{fontSize:"18px",fontWeight:"800",color:c}}>{v}</div>
             <div style={{fontSize:"10px",color:"#8888AA",marginTop:"2px"}}>{l}</div>
           </div>
         ))}
       </div>
-      <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"18px",marginBottom:"14px"}}>
-        <div style={{fontSize:"12px",color:"#8888AA",marginBottom:"14px",fontWeight:"600"}}>COBERTURA</div>
-        {Object.entries(catColors).map(([cat,col])=>{
-          const tot=CONCEPTS.filter(c=>c.cat===cat).length;
-          const seen=progress.seen.filter(id=>CONCEPTS.find(c=>c.id===id&&c.cat===cat)).length;
-          const p=tot>0?Math.round((seen/tot)*100):0;
-          return(
-            <div key={cat} style={{marginBottom:"12px"}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:"11px",marginBottom:"4px"}}>
-                <span style={{color:col.text,fontWeight:"600"}}>{col.label}</span>
-                <span style={{color:"#8888AA"}}>{seen}/{tot}</span>
-              </div>
-              <div style={{height:"4px",background:"#1E1E3F",borderRadius:"99px"}}><div style={{width:`${p}%`,height:"100%",background:col.border,borderRadius:"99px"}}/></div>
-            </div>
-          );
-        })}
-      </div>
-      {/* BRIEFING DIÁRIO */}
+      {/* BRIEFING */}
       <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"12px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
           <div>
-            <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600"}}>📅 BRIEFING DIÁRIO</div>
-            <div style={{fontSize:"11px",color:"#555577",marginTop:"2px"}}>Estratégia personalizada para hoje</div>
+            <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600"}}>BRIEFING DIARIO</div>
+            <div style={{fontSize:"11px",color:"#555577",marginTop:"2px"}}>Estrategia personalizada para hoje</div>
           </div>
-          <button onClick={gerarBriefing} disabled={briefingLoad}
-            style={{background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)",border:"none",borderRadius:"8px",padding:"8px 14px",color:"white",fontWeight:"700",fontSize:"12px",cursor:briefingLoad?"default":"pointer",opacity:briefingLoad?0.6:1}}>
-            {briefingLoad?"Gerando...":"Gerar"}
+          <button onClick={gerar} disabled={bLoad} style={{background:"linear-gradient(135deg,#7C6FFF,#5B4FFF)",border:"none",borderRadius:"8px",padding:"8px 14px",color:"white",fontWeight:"700",fontSize:"12px",cursor:bLoad?"default":"pointer",opacity:bLoad?0.6:1}}>
+            {bLoad?"Gerando...":"Gerar"}
           </button>
         </div>
         {briefing?(
@@ -1321,102 +776,56 @@ Para o briefing personalizado com estratégia do dia, janela safada, frase pront
             <div style={{fontSize:"12.5px",color:"#E8E8F5",lineHeight:"1.7",whiteSpace:"pre-wrap"}}>{briefing}</div>
           </div>
         ):(
-          <div style={{textAlign:"center",padding:"16px",color:"#555577",fontSize:"12px"}}>
-            Toque em "Gerar" para receber a estratégia de hoje baseada na fase do ciclo e padrão dela.
-          </div>
+          <div style={{textAlign:"center",padding:"14px",color:"#555577",fontSize:"12px"}}>Toque em Gerar para receber a estrategia de hoje</div>
         )}
-        <div style={{display:"flex",gap:"8px",marginTop:"12px"}}>
-          {!notifEnabled&&(
-            <button onClick={pedirNotificacoes} style={{flex:1,background:"transparent",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"8px",color:"#8888AA",fontSize:"11px",cursor:"pointer"}}>
-              🔔 Ativar lembretes
-            </button>
-          )}
-          {notifEnabled&&<div style={{fontSize:"11px",color:"#48BB8C",padding:"8px"}}>✓ Lembretes ativos</div>}
-        </div>
       </div>
-
       {/* CICLO */}
       <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"18px",marginBottom:"14px"}}>
-        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"14px"}}>🔴 CICLO DA JULIA</div>
+        <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"600",marginBottom:"14px"}}>CICLO DA JULIA</div>
         <div style={{marginBottom:"12px"}}>
-          <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px"}}>INÍCIO DO ÚLTIMO PERÍODO</div>
-          <input type="date" value={ciclo.lastDate} onChange={e=>saveCiclo({...ciclo,lastDate:e.target.value})}
+          <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px"}}>INICIO DO ULTIMO PERIODO</div>
+          <input type="date" value={ciclo.lastDate} onChange={e=>save(null,{...ciclo,lastDate:e.target.value})}
             style={{width:"100%",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"8px",padding:"10px 12px",color:"#E8E8F5",fontSize:"14px",boxSizing:"border-box"}}/>
         </div>
         <div style={{marginBottom:"14px"}}>
-          <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px"}}>DURAÇÃO MÉDIA DO CICLO: {ciclo.cycleLen} dias</div>
-          <input type="range" min="21" max="35" value={ciclo.cycleLen} onChange={e=>saveCiclo({...ciclo,cycleLen:parseInt(e.target.value)})}
-            style={{width:"100%",accentColor:"#7C6FFF"}}/>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#555577"}}>
-            <span>21</span><span>28</span><span>35</span>
-          </div>
+          <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"6px"}}>CICLO MEDIO: {ciclo.cycleLen} dias</div>
+          <input type="range" min="21" max="35" value={ciclo.cycleLen} onChange={e=>save(null,{...ciclo,cycleLen:parseInt(e.target.value)})} style={{width:"100%",accentColor:"#7C6FFF"}}/>
         </div>
-        {currentPhase?(
-          <div style={{background:`${currentPhase.data.color}10`,border:`1px solid ${currentPhase.data.color}33`,borderRadius:"12px",padding:"16px"}}>
-            <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
-              <span style={{fontSize:"28px"}}>{currentPhase.data.emoji}</span>
+        {phase?(
+          <div style={{background:phase.data.color+"12",border:"1px solid "+phase.data.color+"33",borderRadius:"12px",padding:"16px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}}>
               <div>
-                <div style={{fontSize:"15px",fontWeight:"800",color:currentPhase.data.color}}>{currentPhase.data.name}</div>
-                <div style={{fontSize:"12px",color:"#8888AA"}}>{currentPhase.data.days} · Dia {currentPhase.day} do ciclo</div>
-              </div>
-              <div style={{marginLeft:"auto",textAlign:"right"}}>
-                <div style={{fontSize:"11px",color:"#8888AA"}}>próximo</div>
-                <div style={{fontSize:"16px",fontWeight:"800",color:currentPhase.data.color}}>{currentPhase.daysUntil}d</div>
+                <div style={{fontSize:"16px",fontWeight:"800",color:phase.data.color}}>{phase.data.name}</div>
+                <div style={{fontSize:"11px",color:"#8888AA"}}>{phase.data.days} - Dia {phase.day} - {phase.daysUntil}d ate proximo</div>
               </div>
             </div>
-            {[
-              ["🧠 Estado",currentPhase.data.mood],
-              ["💬 Comunicação",currentPhase.data.comunicacao],
-              ["✅ Ideal agora",currentPhase.data.ideal],
-              ["⛔ Evitar",currentPhase.data.evitar],
-              ["🔥 Safada?",currentPhase.data.safada],
-              ["⚡ Reação provável",currentPhase.data.reacao],
-            ].map(([label,val])=>(
-              <div key={label} style={{marginBottom:"8px"}}>
-                <div style={{fontSize:"10px",color:currentPhase.data.color,fontWeight:"700",marginBottom:"2px"}}>{label}</div>
-                <div style={{fontSize:"12px",color:"#CCCCDD",lineHeight:"1.4"}}>{val}</div>
+            {[["Estado",phase.data.mood],["Comunicacao",phase.data.comunicacao],["Ideal agora",phase.data.ideal],["Evitar",phase.data.evitar],["Safada?",phase.data.safada],["Reacao provavel",phase.data.reacao]].map(([k,v])=>(
+              <div key={k} style={{marginBottom:"8px"}}>
+                <div style={{fontSize:"10px",color:phase.data.color,fontWeight:"700",marginBottom:"2px"}}>{k}</div>
+                <div style={{fontSize:"12px",color:"#CCCCDD",lineHeight:"1.4"}}>{v}</div>
               </div>
             ))}
           </div>
         ):(
-          <div style={{textAlign:"center",padding:"20px",color:"#555577",fontSize:"12px"}}>Insira a data do último período para ver a fase atual</div>
-        )}
-        {/* Timeline */}
-        {currentPhase&&(
-          <div style={{marginTop:"14px"}}>
-            <div style={{fontSize:"11px",color:"#8888AA",marginBottom:"8px",fontWeight:"600"}}>PRÓXIMAS FASES</div>
-            <div style={{display:"flex",gap:"4px"}}>
-              {Object.entries(CYCLE_PHASES).map(([key,ph])=>{
-                const isNow=key===currentPhase.phase;
-                return(
-                  <div key={key} style={{flex:key==="menstrual"||key==="ovulacao"?1:key==="folicular"?2:key==="luteal_inicio"?2:2,background:isNow?`${ph.color}30`:"#0F0F24",border:`1px solid ${isNow?ph.color:"#1E1E3F"}`,borderRadius:"6px",padding:"4px",textAlign:"center"}}>
-                    <div style={{fontSize:"12px"}}>{ph.emoji}</div>
-                    <div style={{fontSize:"9px",color:isNow?ph.color:"#555577",fontWeight:isNow?"700":"400"}}>{ph.name.slice(0,4)}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <div style={{textAlign:"center",padding:"16px",color:"#555577",fontSize:"12px"}}>Insira a data do ultimo periodo para ver a fase atual</div>
         )}
       </div>
-
+      {/* HISTORICO */}
       <div style={{background:"rgba(196,162,74,0.05)",border:"1px solid rgba(196,162,74,0.2)",borderRadius:"12px",padding:"16px"}}>
-        <div style={{fontSize:"10px",color:"#C4A24A",fontWeight:"700",letterSpacing:"1px",marginBottom:"10px"}}>📊 O QUE O HISTÓRICO MOSTRA</div>
-        <div style={{fontSize:"12px",color:"#E8D07A",marginBottom:"6px",fontWeight:"600"}}>Outubro 2025: "Sim sim" (guarda da)</div>
-        <div style={{fontSize:"12px",color:"#AAA870",marginBottom:"10px"}}>Início cauteloso, respostas curtas, ainda processando quem é Gustavo</div>
-        <div style={{fontSize:"12px",color:"#E8D07A",marginBottom:"6px",fontWeight:"600"}}>Dezembro 2025: Se revelando</div>
-        <div style={{fontSize:"12px",color:"#AAA870",marginBottom:"10px"}}>"Intensa eu sou só na minha cabeça mas eu deixo muito pouco sair" — a maior abertura até então</div>
-        <div style={{fontSize:"12px",color:"#E8D07A",marginBottom:"6px",fontWeight:"600"}}>Março 2026: Primeiro "te amo"</div>
-        <div style={{fontSize:"12px",color:"#AAA870",marginBottom:"10px"}}>"Pq não tinha te falado que te amo" — iniciativa dela, sem ser pedido</div>
-        <div style={{fontSize:"12px",color:"#E8D07A",marginBottom:"6px",fontWeight:"600"}}>Julho 2026: "Vc é o cara certo pra isso"</div>
-        <div style={{fontSize:"12px",color:"#AAA870"}}>6 meses de consistência sua se traduziram em abertura real dela. Continue.</div>
+        <div style={{fontSize:"10px",color:"#C4A24A",fontWeight:"700",letterSpacing:"1px",marginBottom:"10px"}}>HISTORICO DO RELACIONAMENTO</div>
+        {[["Out 2025","Inicio cauteloso. Respostas curtas. Descobrindo quem e Gustavo."],["Dez 2025","Se revelou: 'Intensa so na cabeca mas deixo pouco sair'. Maior abertura ate entao."],["Mar 2026","Primeiro 'te amo' por iniciativa propria. Sem ser pedida."],["Jun 2026","'Vc e meu namorado, eu te amo e sei q vc e o cara certo pra isso.'"],["Jul 2026","6 meses. 'Vamos conseguir. Aos poucos vamos saber lidar.' Ela esta tentando."]].map(([d,t])=>(
+          <div key={d} style={{marginBottom:"10px",display:"flex",gap:"10px"}}>
+            <div style={{fontSize:"11px",color:"#C4A24A",fontWeight:"700",flex:"none",width:"65px"}}>{d}</div>
+            <div style={{fontSize:"12px",color:"#AAA870",lineHeight:"1.4"}}>{t}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
 const root=ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+root.render(React.createElement(App));
 </script>
 </body>
 </html>
