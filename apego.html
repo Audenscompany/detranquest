@@ -356,20 +356,29 @@ function singleBark(ctx,t){
 function startBarkLoop(){
   stopBark();
   try{
-    _bCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)throw new Error("no AC");
+    _bCtx=new AC();
+    const resume=()=>{if(_bCtx&&_bCtx.state==="suspended")_bCtx.resume().catch(()=>{});};
+    resume();
     function pair(){
       if(!_bCtx)return;
-      const t=_bCtx.currentTime+0.05;
+      resume();
+      const t=(_bCtx.currentTime||0)+0.1;
       singleBark(_bCtx,t);
-      singleBark(_bCtx,t+0.4);
+      singleBark(_bCtx,t+0.45);
     }
     pair();
-    _bTimer=setInterval(pair,1800);
+    _bTimer=setInterval(pair,1900);
   }catch(e){
+    // Fallback: oscillator beep
     try{
-      const ctx=new(window.AudioContext||window.webkitAudioContext)();
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return;
+      const ctx=new AC();
+      if(ctx.state==="suspended")ctx.resume().catch(()=>{});
       const osc=ctx.createOscillator();const gn=ctx.createGain();
-      osc.type="square";osc.frequency.value=880;gn.gain.value=0.4;
+      osc.type="square";osc.frequency.value=880;gn.gain.value=0.35;
       osc.connect(gn);gn.connect(ctx.destination);osc.start();
       _bCtx=ctx;
     }catch(e2){}
@@ -377,10 +386,16 @@ function startBarkLoop(){
 }
 function testBark(){
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const t=ctx.currentTime+0.05;
-    singleBark(ctx,t);singleBark(ctx,t+0.4);singleBark(ctx,t+0.85);
-    setTimeout(()=>{try{ctx.close();}catch(e){}},2500);
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ctx=new AC();
+    const go=()=>{
+      const t=(ctx.currentTime||0)+0.1;
+      singleBark(ctx,t);singleBark(ctx,t+0.42);singleBark(ctx,t+0.88);
+      setTimeout(()=>{try{ctx.close();}catch(e){}},2800);
+    };
+    if(ctx.state==="suspended"){ctx.resume().then(go).catch(()=>{});}
+    else go();
   }catch(e){}
 }
 
@@ -430,7 +445,7 @@ function App(){
     </div>
   );
 
-  const tabs=[["conceitos","Conceitos"],["quiz","Quiz"],["resposta","Resposta"],["simulador","Simulador"],["alarmes","🐕 Alarmes"],["chat","💬 Chat"],["progresso","Progresso"]];
+  const tabs=[["conceitos","Conceitos"],["quiz","Quiz"],["resposta","Resposta"],["simulador","Simulador"],["alarmes","🐕 Alarmes"],["chat","💬 Chat"],["analise","🔍 Análise"],["testes","🧠 Testes"],["progresso","Progresso"]];
 
   return(
     <div style={{background:"#080814",minHeight:"100vh",color:"#E8E8F5",maxWidth:"460px",margin:"0 auto",display:"flex",flexDirection:"column"}}>
@@ -469,6 +484,8 @@ function App(){
         {tab==="simulador"&&<SimuladorTab phase={phase} apiKey={apiKey}/>}
         {tab==="alarmes"&&<AlarmesTab/>}
         {tab==="chat"&&<ChatTab apiKey={apiKey}/>}
+        {tab==="analise"&&<AnaliseTab apiKey={apiKey}/>}
+        {tab==="testes"&&<TestesTab progress={progress} save={save}/>}
         {tab==="progresso"&&<ProgressoTab progress={progress} lv={lv} pct={pct} ciclo={ciclo} save={save} phase={phase} apiKey={apiKey}/>}
       </div>
     </div>
@@ -725,24 +742,43 @@ function AlarmesTab(){
 
   useEffect(()=>{saveAlarmsDB(alarms);},[alarms]);
 
+  const alarmsRef=useRef([]);
+  useEffect(()=>{alarmsRef.current=alarms;},[alarms]);
+  const triggeredKeys=useRef(new Set());
+
   useEffect(()=>{
-    const interval=setInterval(()=>{
-      setAlarms(current=>{
-        if(activeRef.current)return current;
-        const found=current.find(a=>shouldTriggerAlarm(a));
-        if(found){
-          const key=getAlarmTriggerKey();
-          activeRef.current=found;
-          setActiveAlarm(found);
-          startBarkLoop();
-          if(typeof Notification!=="undefined"&&Notification.permission==="granted"){
-            try{new Notification(found.title+" "+found.dayLabel,{body:found.message,icon:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐕</text></svg>"});}catch(e){}
-          }
-          return current.map(a=>a.id===found.id?{...a,lastKey:key}:a);
-        }
-        return current;
+    const check=()=>{
+      if(activeRef.current)return;
+      const now=new Date();
+      const dayCode=JS_DAY_TO_CODE[now.getDay()];
+      const hh=String(now.getHours()).padStart(2,"0");
+      const mm=String(now.getMinutes()).padStart(2,"0");
+      const ct=hh+":"+mm;
+      const minuteKey=now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+"-"+ct;
+      // Purge old keys
+      if(triggeredKeys.current.size>50)triggeredKeys.current.clear();
+      const found=alarmsRef.current.find(a=>{
+        if(!a.enabled)return false;
+        if(a.dayCode!==dayCode)return false;
+        if(a.time!==ct)return false;
+        const tk=a.id+"-"+minuteKey;
+        if(triggeredKeys.current.has(tk))return false;
+        return true;
       });
-    },15000);
+      if(found){
+        const tk=found.id+"-"+minuteKey;
+        triggeredKeys.current.add(tk);
+        activeRef.current=found;
+        setActiveAlarm(found);
+        try{startBarkLoop();}catch(e){}
+        if(typeof Notification!=="undefined"&&Notification.permission==="granted"){
+          try{new Notification(found.title+" "+found.dayLabel,{body:found.message});}catch(e){}
+        }
+        setAlarms(prev=>prev.map(a=>a.id===found.id?{...a,lastKey:tk}:a));
+      }
+    };
+    check();
+    const interval=setInterval(check,15000);
     return()=>clearInterval(interval);
   },[]);
 
@@ -971,7 +1007,7 @@ Foque em apego ansioso-evitativo e como Gustavo pode melhorar suas reacoes.`;
 
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
-      <div style={{flex:1,overflowY:"auto",padding:"16px",display:"flex",flexDirection:"column",gap:"12px"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"16px",display:"flex",flexDirection:"column",gap:"12px",maxHeight:"calc(100vh - 260px)"}}>
         {messages.map((m,i)=>(
           <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
             {m.role==="assistant"&&<div style={{width:"28px",height:"28px",borderRadius:"50%",background:"#1E1E3F",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px",flex:"none",marginRight:"8px",alignSelf:"flex-end"}}>🧠</div>}
@@ -1131,6 +1167,466 @@ function ProgressoTab({progress,lv,pct,ciclo,save,phase,apiKey}){
             <div style={{fontSize:"12px",color:"#AAA870",lineHeight:"1.4"}}>{t}</div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+// ===================== ANALISE TAB =====================
+function AnaliseTab({apiKey}){
+  const[convText,setConvText]=useState("");
+  const[result,setResult]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[subTab,setSubTab]=useState("input");
+  const[history,setHistory]=useState(()=>{try{const r=localStorage.getItem("dtq_analises");return r?JSON.parse(r):[];}catch(e){return [];}});
+
+  const ANALISE_SYS=`Voce e especialista em psicologia do apego, comunicacao nao-violenta e relacionamentos.
+Analise a conversa fornecida entre Lucas (apego ansioso) e Julia (apego evitativo) com profundidade clinica.
+
+PERFIL BASE FIXO:
+Lucas: ansioso, 24 anos, busca reasseguramento, ja fez terapia, cresceu em autocontrole mas ainda pressiona quando ansioso. Ponto cego: persistencia em obter informacao quando ansioso.
+Julia: evitativa, trabalha no salao da mae, crista, caseira, faz croche, tem peixinhos. "Intensa so na cabeca, deixo muito pouco sair." "Nao consigo demonstrar quando quero, nem sei como."
+Relacionamento: 6 meses (jan 2026). Marco 2026: primeiro "te amo" por iniciativa propria. Jun 2026: "vc e o cara certo pra isso." Jul 2026: "Vamos conseguir."
+
+ESTRUTURA OBRIGATORIA (use EXATAMENTE estes headers, sem alterar):
+ESTADO: [N]/10
+[1 linha de justificativa]
+
+LUCAS_BEM:
+[bullet cada item]
+
+LUCAS_MELHORAR:
+[bullet cada item + como melhorar especificamente]
+
+JULIA_BEM:
+[bullet cada item]
+
+JULIA_MELHORAR:
+[bullet cada item + como Lucas pode pedir sem pressionar]
+
+LUCAS_PODE_COBRAR:
+[bullet cobracas legitimas]
+
+JULIA_PODE_COBRAR:
+[bullet cobracas legitimas]
+
+ACOES_7_DIAS:
+1. [acao especifica para Lucas]
+2. [acao]
+3. [acao]
+
+FORECAST_30:
+[previsao realista baseada nos padroes da conversa]
+
+INSIGHT_PRINCIPAL:
+[a coisa mais importante que Lucas precisa entender agora]
+
+PERSONALIDADE_LUCAS:
+[analise do padrao comportamental revelado na conversa]
+
+PERSONALIDADE_JULIA:
+[analise do padrao comportamental revelado na conversa]
+
+Seja CIRURGICO e ESPECIFICO — baseado no que esta NA CONVERSA. Nao seja generico.`;
+
+  const parseResult=(text)=>{
+    const sections={
+      estado:"",justificativa:"",lucasBem:[],lucasMelhorar:[],juliaBem:[],juliaMelhorar:[],
+      lucasCobrar:[],juliaCobrar:[],acoes:[],forecast:"",insight:"",persLucas:"",persJulia:""
+    };
+    const lines=text.split("
+");
+    let current="";
+    for(const line of lines){
+      const t=line.trim();
+      if(!t)continue;
+      if(t.startsWith("ESTADO:")){const m=t.match(/(\d+)\/10/);if(m)sections.estado=m[1];current="justificativa";continue;}
+      if(t==="LUCAS_BEM:"){current="lucasBem";continue;}
+      if(t==="LUCAS_MELHORAR:"){current="lucasMelhorar";continue;}
+      if(t==="JULIA_BEM:"){current="juliaBem";continue;}
+      if(t==="JULIA_MELHORAR:"){current="juliaMelhorar";continue;}
+      if(t==="LUCAS_PODE_COBRAR:"){current="lucasCobrar";continue;}
+      if(t==="JULIA_PODE_COBRAR:"){current="juliaCobrar";continue;}
+      if(t==="ACOES_7_DIAS:"){current="acoes";continue;}
+      if(t==="FORECAST_30:"){current="forecast";continue;}
+      if(t==="INSIGHT_PRINCIPAL:"){current="insight";continue;}
+      if(t==="PERSONALIDADE_LUCAS:"){current="persLucas";continue;}
+      if(t==="PERSONALIDADE_JULIA:"){current="persJulia";continue;}
+      const clean=t.replace(/^[•\-\*]\s*/,"").replace(/^\d+\.\s*/,"");
+      if(current==="justificativa"){sections.justificativa=clean;}
+      else if(["lucasBem","lucasMelhorar","juliaBem","juliaMelhorar","lucasCobrar","juliaCobrar","acoes"].includes(current)){
+        if(clean)sections[current].push(clean);
+      }
+      else if(["forecast","insight","persLucas","persJulia"].includes(current)){
+        sections[current]+=(sections[current]?" ":"")+clean;
+      }
+    }
+    return sections;
+  };
+
+  const analisar=async()=>{
+    if(!convText.trim()){alert("Cole a conversa antes de analisar.");return;}
+    const key=apiKey();
+    if(!key){setResult("Configure a API key em Progresso para usar esta funcao.");setSubTab("result");return;}
+    setLoading(true);setResult("");setSubTab("result");
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1800,system:ANALISE_SYS,
+          messages:[{role:"user",content:"Analise esta conversa entre Lucas e Julia:
+
+"+convText.slice(0,8000)}]})
+      });
+      if(!res.ok){const e=await res.json().catch(()=>({}));setResult("Erro "+res.status+": "+(e.error?.message||"Tente novamente."));setLoading(false);return;}
+      const data=await res.json();
+      const text=data.content?.[0]?.text||"Erro ao processar.";
+      setResult(text);
+      // Save to history
+      const entry={id:Date.now(),date:new Date().toLocaleDateString("pt-BR"),preview:convText.slice(0,80)+"...",result:text};
+      const newHistory=[entry,...history.slice(0,4)];
+      setHistory(newHistory);
+      try{localStorage.setItem("dtq_analises",JSON.stringify(newHistory));}catch(e){}
+    }catch(e){setResult("Erro de conexao: "+e.message);}
+    setLoading(false);
+  };
+
+  const parsed=result?parseResult(result):null;
+  const score=parsed?parseInt(parsed.estado)||0:0;
+  const scoreColor=score>=8?"#48BB8C":score>=6?"#F59E0B":score>=4?"#FF8C47":"#FF5566";
+
+  const Section=({title,items,color,bg})=>items&&items.length>0?(
+    <div style={{background:bg||"#0F0F24",border:"1px solid "+(color||"#1E1E3F")+"44",borderRadius:"14px",padding:"14px",marginBottom:"10px"}}>
+      <div style={{fontSize:"11px",color:color||"#8888AA",fontWeight:"700",letterSpacing:"0.5px",marginBottom:"10px"}}>{title}</div>
+      {items.map((item,i)=>(
+        <div key={i} style={{display:"flex",gap:"8px",marginBottom:"8px",alignItems:"flex-start"}}>
+          <div style={{width:"6px",height:"6px",borderRadius:"50%",background:color||"#8888AA",flex:"none",marginTop:"5px"}}/>
+          <div style={{fontSize:"13px",color:"#CCCCDD",lineHeight:"1.6"}}>{item}</div>
+        </div>
+      ))}
+    </div>
+  ):null;
+
+  const TextSection=({title,text,color})=>text?(
+    <div style={{background:"#0F0F24",border:"1px solid "+(color||"#1E1E3F")+"44",borderRadius:"14px",padding:"14px",marginBottom:"10px"}}>
+      <div style={{fontSize:"11px",color:color||"#8888AA",fontWeight:"700",letterSpacing:"0.5px",marginBottom:"8px"}}>{title}</div>
+      <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.7"}}>{text}</div>
+    </div>
+  ):null;
+
+  return(
+    <div style={{padding:"16px"}}>
+      <div style={{display:"flex",gap:"8px",marginBottom:"14px"}}>
+        {[["input","📋 Conversa"],["result","📊 Análise"],["history","🕐 Histórico"]].map(([t,l])=>(
+          <button key={t} onClick={()=>setSubTab(t)} style={{flex:1,padding:"9px",borderRadius:"9px",border:"none",background:subTab===t?"#1E1E3F":"transparent",color:subTab===t?"#A89EFF":"#8888AA",fontWeight:"600",fontSize:"11px",cursor:"pointer"}}>{l}</button>
+        ))}
+      </div>
+
+      {subTab==="input"&&(
+        <div>
+          <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"16px",padding:"16px",marginBottom:"12px"}}>
+            <div style={{fontSize:"12px",color:"#8888AA",fontWeight:"700",marginBottom:"4px"}}>COLE A CONVERSA</div>
+            <div style={{fontSize:"11px",color:"#555577",marginBottom:"10px"}}>Exportacao do WhatsApp, print, ou qualquer trecho da conversa</div>
+            <textarea value={convText} onChange={e=>setConvText(e.target.value)}
+              placeholder={"[06/07 22:14] Lucas: oi
+[06/07 22:15] Julia: oi mb
+..."}
+              style={{width:"100%",minHeight:"200px",background:"#080814",border:"1px solid #1E1E3F",borderRadius:"10px",padding:"12px",color:"#E8E8F5",fontSize:"12px",lineHeight:"1.6",resize:"vertical",fontFamily:"monospace",boxSizing:"border-box",marginBottom:"10px"}}/>
+            <div style={{fontSize:"11px",color:"#555577",marginBottom:"12px"}}>{convText.length} caracteres • {convText.split("
+").filter(l=>l.trim()).length} linhas</div>
+            <button onClick={analisar} disabled={loading||!convText.trim()} style={{width:"100%",padding:"14px",borderRadius:"12px",border:"none",background:loading||!convText.trim()?"#1E1E3F":"linear-gradient(135deg,#7C6FFF,#5B4FFF)",color:loading||!convText.trim()?"#555577":"white",fontWeight:"700",fontSize:"14px",cursor:loading||!convText.trim()?"default":"pointer"}}>
+              {loading?"Analisando...":"🔍 Analisar Relacionamento"}
+            </button>
+          </div>
+          <div style={{background:"rgba(124,111,255,0.05)",border:"1px solid rgba(124,111,255,0.15)",borderRadius:"12px",padding:"14px"}}>
+            <div style={{fontSize:"11px",color:"#7C6FFF",fontWeight:"700",marginBottom:"8px"}}>O QUE A ANALISE VAI MOSTRAR</div>
+            {["Estado do relacionamento (0-10) com justificativa","O que Lucas faz bem e deve melhorar","O que Julia faz bem e deve melhorar","O que cada um pode cobrar legitimamente","3 acoes concretas para os proximos 7 dias","Previsao de 30 dias baseada nos padroes","Perfil de personalidade de cada um revelado na conversa","Insight principal — a coisa mais importante agora"].map((t,i)=>(
+              <div key={i} style={{display:"flex",gap:"8px",marginBottom:"6px",alignItems:"flex-start"}}>
+                <div style={{fontSize:"11px",color:"#555577",flex:"none"}}>→</div>
+                <div style={{fontSize:"12px",color:"#8888AA"}}>{t}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {subTab==="result"&&(
+        <div>
+          {loading&&<div style={{textAlign:"center",padding:"40px",color:"#555577"}}><div style={{fontSize:"40px",marginBottom:"12px"}}>🔍</div><div>Analisando conversa...</div><div style={{marginTop:"16px",display:"flex",justifyContent:"center"}} className="typing"><span/><span/><span/></div></div>}
+          {!loading&&!result&&<div style={{textAlign:"center",padding:"40px",color:"#555577"}}><div style={{fontSize:"40px",marginBottom:"12px"}}>📊</div><div>Cole uma conversa na aba Conversa e clique Analisar</div></div>}
+          {!loading&&result&&parsed&&(
+            <div className="fade">
+              {/* Score card */}
+              <div style={{background:"#0F0F24",border:"1px solid "+scoreColor+"44",borderRadius:"16px",padding:"20px",marginBottom:"14px",textAlign:"center"}}>
+                <div style={{fontSize:"11px",color:"#8888AA",fontWeight:"700",marginBottom:"8px"}}>ESTADO DO RELACIONAMENTO</div>
+                <div style={{fontSize:"56px",fontWeight:"900",color:scoreColor,lineHeight:1}}>{parsed.estado}<span style={{fontSize:"24px",color:"#555577"}}>/10</span></div>
+                {parsed.justificativa&&<div style={{fontSize:"13px",color:"#CCCCDD",marginTop:"10px",lineHeight:"1.5"}}>{parsed.justificativa}</div>}
+              </div>
+              {/* Insight */}
+              {parsed.insight&&<div style={{background:"rgba(196,162,74,0.08)",border:"1px solid rgba(196,162,74,0.3)",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
+                <div style={{fontSize:"11px",color:"#C4A24A",fontWeight:"700",marginBottom:"8px"}}>⚡ INSIGHT PRINCIPAL</div>
+                <div style={{fontSize:"14px",color:"#E8D07A",lineHeight:"1.7",fontStyle:"italic"}}>{parsed.insight}</div>
+              </div>}
+              {/* Lucas sections */}
+              <Section title="✅ LUCAS — O QUE FAZ BEM" items={parsed.lucasBem} color="#48BB8C" bg="#0D2D1A"/>
+              <Section title="⚠️ LUCAS — DEVE MELHORAR" items={parsed.lucasMelhorar} color="#FF8C47" bg="#2D1A0D"/>
+              {/* Julia sections */}
+              <Section title="✅ JULIA — O QUE FAZ BEM" items={parsed.juliaBem} color="#7C6FFF" bg="#12103A"/>
+              <Section title="⚠️ JULIA — DEVE MELHORAR" items={parsed.juliaMelhorar} color="#CC77FF" bg="#1A1230"/>
+              {/* Cobrar */}
+              <Section title="💬 O QUE LUCAS PODE COBRAR" items={parsed.lucasCobrar} color="#48BB8C"/>
+              <Section title="💬 O QUE JULIA PODE COBRAR" items={parsed.juliaCobrar} color="#CC77FF"/>
+              {/* Actions */}
+              {parsed.acoes.length>0&&<div style={{background:"#0F0F24",border:"1px solid #C4A24A44",borderRadius:"14px",padding:"14px",marginBottom:"10px"}}>
+                <div style={{fontSize:"11px",color:"#C4A24A",fontWeight:"700",marginBottom:"10px"}}>🎯 PROXIMOS 7 DIAS</div>
+                {parsed.acoes.map((a,i)=>(
+                  <div key={i} style={{display:"flex",gap:"10px",marginBottom:"10px",alignItems:"flex-start"}}>
+                    <div style={{width:"22px",height:"22px",borderRadius:"50%",background:"rgba(196,162,74,0.15)",border:"1px solid rgba(196,162,74,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:"700",color:"#C4A24A",flex:"none"}}>{i+1}</div>
+                    <div style={{fontSize:"13px",color:"#E8D07A",lineHeight:"1.6"}}>{a}</div>
+                  </div>
+                ))}
+              </div>}
+              {/* Forecast */}
+              <TextSection title="📅 FORECAST 30 DIAS" text={parsed.forecast} color="#6366F1"/>
+              {/* Personalities */}
+              <TextSection title="🧠 PERSONALIDADE — LUCAS (revelada na conversa)" text={parsed.persLucas} color="#FF8C47"/>
+              <TextSection title="🧠 PERSONALIDADE — JULIA (revelada na conversa)" text={parsed.persJulia} color="#CC77FF"/>
+              <button onClick={()=>{setSubTab("input");}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"1px solid #1E1E3F",background:"transparent",color:"#8888AA",fontWeight:"600",fontSize:"13px",cursor:"pointer",marginTop:"4px"}}>
+                ← Nova analise
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {subTab==="history"&&(
+        <div>
+          {history.length===0?(
+            <div style={{textAlign:"center",padding:"40px",color:"#555577"}}><div style={{fontSize:"40px",marginBottom:"12px"}}>🕐</div><div>Nenhuma analise salva ainda</div></div>
+          ):(
+            history.map((entry,i)=>(
+              <div key={entry.id} onClick={()=>{setResult(entry.result);setSubTab("result");}} style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"14px",marginBottom:"10px",cursor:"pointer"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+                  <div style={{fontSize:"11px",color:"#C4A24A",fontWeight:"700"}}>Analise #{history.length-i}</div>
+                  <div style={{fontSize:"11px",color:"#555577"}}>{entry.date}</div>
+                </div>
+                <div style={{fontSize:"12px",color:"#8888AA",lineHeight:"1.5"}}>{entry.preview}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===================== TESTES TAB =====================
+function TestesTab({progress,save}){
+  const TESTES=[
+    {
+      id:"apego",
+      title:"Ansiedade de Apego",
+      desc:"Mede seu nivel atual de ansiedade no relacionamento. Responda com honestidade — nao ha resposta certa.",
+      xpReward:50,
+      icon:"😰",
+      color:"#CC77FF",
+      questions:[
+        {q:"Fico preocupado quando Julia nao responde por horas",anxious:true},
+        {q:"Interpreto o silencio dela como rejeicao ou desinteresse",anxious:true},
+        {q:"Quando ela some, meu primeiro impulso e mandar mensagem",anxious:true},
+        {q:"Fico em loop mental analisando o que ela disse ou nao disse",anxious:true},
+        {q:"Sinto medo de que ela perca interesse em mim",anxious:true},
+        {q:"Quando ela esta distante, consigo usar o tempo para mim sem ansiedade",anxious:false},
+        {q:"Consigo deixar ela processar algo sem preencher o silencio",anxious:false},
+        {q:"Quando manda meme, consigo entrar no humor sem aprofundar",anxious:false},
+        {q:"Consigo expressar uma necessidade sem pressionar para ter resposta",anxious:false},
+        {q:"Quando tenho impulso de mandar 'ta tudo bem?', consigo segurar",anxious:false},
+      ],
+      interpret:(score)=>{
+        if(score<=20)return{level:"Alto Ansioso",color:"#FF5566",icon:"⚠️",text:"Sua ansiedade de apego ainda e alta. O progresso existe, mas o trabalho de autocontrole precisa continuar todos os dias.",tips:["Pratica: espere 2 horas antes de responder ao impulso de checar","Quando ansioso: faca uma atividade fisica de 10 minutos antes de agir","Escreva o que voce quer mandar — mas nao mande. Releia em 30 min."]};
+        if(score<=33)return{level:"Moderado",color:"#FF8C47",icon:"📈",text:"Voce esta no meio do caminho. O autocontrole e real, mas ainda reage em alguns gatilhos. Progresso claro.",tips:["Continue usando o mantra 'silencio dela nao e rejeicao'","Quando sentir ansiedade: nome o sentimento, nao aja nele","Cada vez que voce nao mandar o 'ta tudo bem?' e uma vitoria"]};
+        if(score<=42)return{level:"Bom Progresso",color:"#48BB8C",icon:"✅",text:"Apego mais seguro emergindo. Voce ja internalizou grande parte dos padroes. Continue assim.",tips:["Mantenha o diario de momentos que voce segurou o impulso","Compartilhe com ela uma vulnerabilidade pequena por semana","Celebre quando voce deixar ela processar sozinha com sucesso"]};
+        return{level:"Apego Seguro",color:"#C4A24A",icon:"⭐",text:"Parabens — voce construiu base de apego seguro. Raro e resultado de trabalho consciente.",tips:["Continue o trabalho — o apego e dinamico, nao estatico","Agora o foco: ajudar ela a se sentir mais segura com voce","Compartilhe aprendizados — voce pode ser referencia para outros"]};
+      }
+    },
+    {
+      id:"autocontrole",
+      title:"Autocontrole em Conflito",
+      desc:"Avalia sua capacidade de regular reacoes em momentos de tensao no relacionamento.",
+      xpReward:40,
+      icon:"🧘",
+      color:"#FF8C47",
+      questions:[
+        {q:"Quando ela esta fria, consigo ficar neutro sem demonstrar ansiedade",anxious:false},
+        {q:"Consigo encerrar uma conversa tensa sem precisar resolver tudo",anxious:false},
+        {q:"Quando fico irritado, espero antes de responder",anxious:false},
+        {q:"Explico minhas necessidades sem culpar ou cobrar",anxious:false},
+        {q:"Quando ela diz algo que magoa, consigo nao contra-atacar",anxious:false},
+        {q:"Fico ruminando horas depois de uma conversa dificil",anxious:true},
+        {q:"Quando algo nao fica resolvido, fico incomodado ate resolver",anxious:true},
+        {q:"Em momentos de tensao, minha reacao inicial e intensa",anxious:true},
+      ],
+      interpret:(score)=>{
+        if(score<=16)return{level:"Baixo Autocontrole",color:"#FF5566",icon:"🔥",text:"Tensao ainda domina sua reacao. Foco em tecnicas de regulacao emocional antes de qualquer conversa dificil.",tips:["Antes de responder quando irritado: 5 respiracoes profundas","Pratica: regra dos 10 minutos antes de enviar mensagem carregada","Identifique seu gatilho principal e trabalhe so esse"]};
+        if(score<=24)return{level:"Em Desenvolvimento",color:"#FF8C47",icon:"📈",text:"Autocontrole inconsistente — funciona as vezes, falha em momentos de pico. Normal nesta fase.",tips:["Mapeie os horarios de pico de reatividade (geralmente noite)","Tenha uma 'frase de saida' pronta para tensao: 'preciso pensar'","Nota de 0-10 sua reacao depois de cada conflito — observe o padrao"]};
+        if(score<=32)return{level:"Bom Controle",color:"#48BB8C",icon:"✅",text:"Voce ja consegue regular bem na maioria dos cenarios. Ainda ha espaco para consistencia.",tips:["Pratique encerrar conversas com tema aberto sem desconforto","Desenvolva tolerancia a inconclusao — nem tudo precisa de resolucao","Registre as situacoes em que o controle falhou para aprender"]};
+        return{level:"Excelente",color:"#C4A24A",icon:"⭐",text:"Alto autocontrole. Voce consegue regular suas reacoes mesmo nos cenarios mais dificeis.",tips:["Agora o nivel avancado: regulacao proativa, nao so reativa","Pratique criar espaco seguro para ela quando ela esta tensa","Ensine pelo exemplo — sua calma cria seguranca para ela abrir"]};
+      }
+    },
+    {
+      id:"comunicacao",
+      title:"Qualidade de Comunicacao",
+      desc:"Avalia como voce se comunica com Julia — o que abre e o que fecha a conexao.",
+      xpReward:40,
+      icon:"💬",
+      color:"#48BB8C",
+      questions:[
+        {q:"Faco perguntas abertas que dao a ela controle da resposta",anxious:false},
+        {q:"Quando ela compartilha algo, nao ofereço solucao imediatamente",anxious:false},
+        {q:"Uso humor para aliviar tensao em vez de intensificar",anxious:false},
+        {q:"Respeito o ritmo de resposta dela sem cobrar",anxious:false},
+        {q:"Quando quero algo, peço diretamente em vez de indiretamente",anxious:false},
+        {q:"Mando multiplas perguntas seguidas na mesma mensagem",anxious:true},
+        {q:"Mando mensagens longas com muito conteudo emocional",anxious:true},
+        {q:"Quando ela da resposta curta, mando outra mensagem logo",anxious:true},
+      ],
+      interpret:(score)=>{
+        if(score<=16)return{level:"Comunicacao Pressionada",color:"#FF5566",icon:"🚨",text:"Seu estilo de comunicacao ativa o mecanismo evitativo dela frequentemente. Ajuste urgente.",tips:["Regra de ouro: 1 pergunta por mensagem, nunca 2+","Mensagens curtas: menos de 3 linhas em 80% das vezes","Quando ela da 'sim' ou 'mb': nao mande mais nada. Aguarde."]};
+        if(score<=24)return{level:"Em Ajuste",color:"#FF8C47",icon:"📈",text:"Comunicacao melhorando. Os fundamentos estao sendo aprendidos mas ainda instavel.",tips:["Antes de enviar: leia sua mensagem e corte metade","Pratique o 'ponto final' — terminar sem perguntar se ela entendeu","Desenvolva 3 respostas curtas para quando ela esta fechada"]};
+        if(score<=32)return{level:"Boa Comunicacao",color:"#48BB8C",icon:"✅",text:"Voce ja domina a maior parte dos fundamentos. Sua comunicacao e predominantemente construtiva.",tips:["Nivel avancado: master o timing (quando falar e quando silenciar)","Aprimore o uso de humor — e sua arma mais subestimada","Pratique validar sem demandar reciprocidade"]};
+        return{level:"Comunicacao Madura",color:"#C4A24A",icon:"⭐",text:"Comunicacao excelente. Voce sabe quando falar, o que falar e o que omitir.",tips:["Ensine pelo padrao, nao pela conversa sobre o padrao","Voce ja e capaz de criar ambiente seguro para ela abrir","Continue calibrando conforme ela evolui no relacionamento"]};
+      }
+    },
+  ];
+
+  const[currentTest,setCurrentTest]=useState(null);
+  const[answers,setAnswers]=useState({});
+  const[showResult,setShowResult]=useState(false);
+  const[completedTests,setCompletedTests]=useState(()=>{try{const r=localStorage.getItem("dtq_tests");return r?JSON.parse(r):{};}catch(e){return{};}});
+
+  const startTest=(test)=>{setCurrentTest(test);setAnswers({});setShowResult(false);};
+
+  const answer=(qi,val)=>{setAnswers(prev=>({...prev,[qi]:val}));};
+
+  const calcScore=(test)=>{
+    let score=0;
+    test.questions.forEach((q,i)=>{
+      const a=answers[i]||3;
+      if(q.anxious){score+=(6-a);}
+      else{score+=a;}
+    });
+    return score;
+  };
+
+  const finishTest=()=>{
+    if(!currentTest)return;
+    const answered=Object.keys(answers).length;
+    if(answered<currentTest.questions.length){alert("Responda todas as "+currentTest.questions.length+" perguntas.");return;}
+    const score=calcScore(currentTest);
+    const newCompleted={...completedTests,[currentTest.id]:{score,date:new Date().toLocaleDateString("pt-BR")}};
+    setCompletedTests(newCompleted);
+    try{localStorage.setItem("dtq_tests",JSON.stringify(newCompleted));}catch(e){}
+    if(!completedTests[currentTest.id]){save({...progress,xp:progress.xp+currentTest.xpReward},null);}
+    setShowResult(true);
+  };
+
+  if(currentTest&&!showResult){
+    const maxQ=currentTest.questions.length;
+    const answered=Object.keys(answers).length;
+    return(
+      <div style={{padding:"16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
+          <button onClick={()=>setCurrentTest(null)} style={{background:"transparent",border:"none",color:"#8888AA",fontSize:"20px",cursor:"pointer",padding:0}}>{"<"}</button>
+          <div>
+            <div style={{fontSize:"13px",fontWeight:"700",color:currentTest.color}}>{currentTest.icon} {currentTest.title}</div>
+            <div style={{fontSize:"11px",color:"#555577"}}>{answered}/{maxQ} respondidas</div>
+          </div>
+        </div>
+        <div style={{height:"3px",background:"#1E1E3F",borderRadius:"99px",marginBottom:"16px"}}>
+          <div style={{width:(answered/maxQ*100)+"%",height:"100%",background:currentTest.color,borderRadius:"99px",transition:"width 0.3s"}}/>
+        </div>
+        {currentTest.questions.map((q,qi)=>(
+          <div key={qi} style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"14px",marginBottom:"12px"}}>
+            <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.6",marginBottom:"12px"}}>{qi+1}. {q.q}</div>
+            <div style={{display:"flex",gap:"6px",justifyContent:"center"}}>
+              {[[1,"Nunca"],[2,"Raramente"],[3,"As vezes"],[4,"Freq."],[5,"Sempre"]].map(([val,label])=>{
+                const sel=answers[qi]===val;
+                const c=val<=2?"#48BB8C":val===3?"#8888AA":val<=4?"#FF8C47":"#FF5566";
+                return(
+                  <div key={val} onClick={()=>answer(qi,val)} style={{flex:1,textAlign:"center",background:sel?c+"22":"#080814",border:"2px solid "+(sel?c:"#1E1E3F"),borderRadius:"10px",padding:"8px 4px",cursor:"pointer",transition:"all 0.15s"}}>
+                    <div style={{fontSize:"16px",fontWeight:sel?"900":"400",color:sel?c:"#8888AA"}}>{val}</div>
+                    <div style={{fontSize:"9px",color:sel?c:"#444466",marginTop:"2px"}}>{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        <button onClick={finishTest} disabled={answered<maxQ} style={{width:"100%",padding:"14px",borderRadius:"12px",border:"none",background:answered<maxQ?"#1E1E3F":"linear-gradient(135deg,"+currentTest.color+","+currentTest.color+"BB)",color:answered<maxQ?"#555577":"white",fontWeight:"700",fontSize:"14px",cursor:answered<maxQ?"default":"pointer"}}>
+          {answered<maxQ?`Responda mais ${maxQ-answered}`:"Ver Resultado →"}
+        </button>
+      </div>
+    );
+  }
+
+  if(currentTest&&showResult){
+    const score=calcScore(currentTest);
+    const interp=currentTest.interpret(score);
+    return(
+      <div style={{padding:"16px"}}>
+        <div style={{background:"#0F0F24",border:"1px solid "+interp.color+"44",borderRadius:"18px",padding:"24px",marginBottom:"14px",textAlign:"center"}}>
+          <div style={{fontSize:"36px",marginBottom:"8px"}}>{interp.icon}</div>
+          <div style={{fontSize:"18px",fontWeight:"800",color:interp.color,marginBottom:"4px"}}>{interp.level}</div>
+          <div style={{fontSize:"36px",fontWeight:"900",lineHeight:1}}>{score}<span style={{fontSize:"16px",color:"#555577"}}>/{currentTest.questions.length*5}</span></div>
+          <div style={{fontSize:"12px",color:interp.color,marginTop:"4px",fontWeight:"600"}}>+{currentTest.xpReward} XP {completedTests[currentTest.id]?"(ja ganho)":"ganhos!"}</div>
+        </div>
+        <div style={{background:"rgba(124,111,255,0.06)",border:"1px solid rgba(124,111,255,0.2)",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
+          <div style={{fontSize:"13px",color:"#E8E8F5",lineHeight:"1.7"}}>{interp.text}</div>
+        </div>
+        <div style={{background:"#0F0F24",border:"1px solid #1E1E3F",borderRadius:"14px",padding:"16px",marginBottom:"14px"}}>
+          <div style={{fontSize:"11px",color:"#C4A24A",fontWeight:"700",marginBottom:"12px"}}>PARA TRABALHAR</div>
+          {interp.tips.map((tip,i)=>(
+            <div key={i} style={{display:"flex",gap:"10px",marginBottom:"10px",alignItems:"flex-start"}}>
+              <div style={{fontSize:"13px",color:"#C4A24A",flex:"none",fontWeight:"700"}}>{i+1}.</div>
+              <div style={{fontSize:"13px",color:"#CCCCDD",lineHeight:"1.6"}}>{tip}</div>
+            </div>
+          ))}
+        </div>
+        <button onClick={()=>{setCurrentTest(null);setShowResult(false);}} style={{width:"100%",padding:"12px",borderRadius:"10px",border:"1px solid #1E1E3F",background:"transparent",color:"#8888AA",fontWeight:"600",fontSize:"13px",cursor:"pointer"}}>
+          ← Voltar aos testes
+        </button>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{padding:"16px"}}>
+      <div style={{fontSize:"12px",color:"#8888AA",marginBottom:"14px",lineHeight:"1.6"}}>
+        Testes de autoavaliacao baseados em psicologia do apego. Honestidade e mais valiosa que score alto.
+      </div>
+      {TESTES.map(test=>{
+        const done=completedTests[test.id];
+        return(
+          <div key={test.id} onClick={()=>startTest(test)} style={{background:"#0F0F24",border:"1px solid "+(done?test.color+"44":"#1E1E3F"),borderRadius:"16px",padding:"16px",marginBottom:"12px",cursor:"pointer"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+              <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
+                <div style={{fontSize:"24px"}}>{test.icon}</div>
+                <div>
+                  <div style={{fontSize:"14px",fontWeight:"700",color:done?test.color:"#E8E8F5"}}>{test.title}</div>
+                  <div style={{fontSize:"11px",color:"#555577",marginTop:"2px"}}>{test.questions.length} perguntas • +{test.xpReward} XP</div>
+                </div>
+              </div>
+              {done&&<div style={{fontSize:"12px",color:test.color,fontWeight:"700",background:test.color+"15",padding:"4px 10px",borderRadius:"99px"}}>{done.score}/{test.questions.length*5}</div>}
+            </div>
+            <div style={{fontSize:"12px",color:"#8888AA",lineHeight:"1.5"}}>{test.desc}</div>
+            {done&&<div style={{fontSize:"11px",color:"#555577",marginTop:"8px"}}>Feito em {done.date} — toque para refazer</div>}
+          </div>
+        );
+      })}
+      <div style={{background:"rgba(196,162,74,0.05)",border:"1px solid rgba(196,162,74,0.15)",borderRadius:"12px",padding:"14px",marginTop:"8px"}}>
+        <div style={{fontSize:"11px",color:"#C4A24A",fontWeight:"700",marginBottom:"6px"}}>DICA DE USO</div>
+        <div style={{fontSize:"12px",color:"#AAA870",lineHeight:"1.6"}}>Faca os testes a cada 2-4 semanas para ver sua evolucao. O objetivo nao e score perfeito — e honestidade e progresso consistente.</div>
       </div>
     </div>
   );
