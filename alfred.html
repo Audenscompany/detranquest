@@ -2261,7 +2261,89 @@ Law of Success:definiteness of purpose,masterminds,going the extra mile,creative
 // Formato: { title, author, year, domains[], tags(RegExp), core, apps }
 // Push automático via GitHub após cada livro aprovado
 // ================================================================
-const AK_LIBRARY = {};
+const AK_LIBRARY = {
+
+'sexo_cativeiro': {
+  title:'Sexo no Cativeiro', author:'Esther Perel', year:2006,
+  domains:['rel','ps'],
+  tags:/perel|erotismo|desejo.*relacionam|intimidade.*sexo|paixão.*longo prazo|libido|cativeiro/i,
+  core:`PARADOXO AMOR-DESEJO(Perel):Amor busca proximidade e fusão. Desejo exige distância e alteridade. Quanto mais seguros nos tornamos, menos desejamos — e vice-versa. Erotismo NÃO cresce com intimidade, muitas vezes é sufocado por ela. Segurança e aventura são necessidades opostas que convivem no mesmo relacionamento. Casais modernos exigem de uma pessoa o que antes uma cidade inteira oferecia: base, propósito, romance, sexo, crescimento. Sobrecarga estrutural inevitável. ABSORÇÃO ≠ AMOR: muitos casais confundem amor com fusão total — eliminam o espaço entre o eu e o outro, e com ele, o desejo. Para que haja impulso em direção ao outro, é necessário haver uma sinapse a atravessar. DISTÂNCIA SAUDÁVEL: mistério, ausência, independência e a capacidade de surpreender sustentam o erotismo. "É possível querer o que já se tem?" — esta é a pergunta central. DEMOCRACIA NA CAMA: cultura moderna torna o sexo justo, equilibrado e seguro — mas também entediante. Assimetria, risco e tensão alimentam o desejo. Corpo carrega verdades que palavras escondem; dinâmicas de poder e vulnerabilidade são desejáveis quando vividas eroticamente.`,
+  apps:`Relacionamento ansioso-evitativo: quando Julia se fecha, não é rejeição — é necessidade de espaço que, paradoxalmente, alimenta o desejo dela. Perseguição excessiva (ansioso) mata o desejo do evitativo. Cultivar mistério e ausência saudável. Não buscar fusão total — manter identidade própria cria atração. Sedução como prática contínua, não apenas conquista inicial.`
+},
+
+'mente_milionaria': {
+  title:'Os Segredos da Mente Milionária', author:'T. Harv Eker', year:2006,
+  domains:['fin','hab','ps','hill'],
+  tags:/eker|mente milionária|modelo.*dinheiro|termostato.*financeiro|arquivo.*riqueza|programação financeira/i,
+  core:`MODELO FINANCEIRO(Eker):Cada pessoa tem um termostato interno de riqueza programado na infância por influências (verbal, modelagem, incidentes). Este termostato define o teto de prosperidade — não habilidade, nem oportunidade. Para mudar resultados externos, é preciso reprogramar o interno. RAÍZES GERAM FRUTOS: o invisível (crenças, hábitos mentais) produz o visível (resultados). Mudar os frutos exige mudar as raízes. 17 ARQUIVOS DE RIQUEZA: (1)Ricos criam sua vida, pobres são vítimas das circunstâncias. (2)Ricos jogam para ganhar, pobres para não perder. (3)Ricos assumem compromisso de ser ricos, pobres gostariam. (4)Ricos pensam grande. (5)Ricos focam oportunidades, pobres focam obstáculos. (6)Ricos admiram ricos bem-sucedidos, pobres os ressentem. (7)Ricos buscam pessoas positivas. (8)Ricos gostam de se promover. (9)Ricos são maiores que seus problemas. (10)Ricos são excelentes recebedores. (11)Ricos são pagos por resultados, não por horas. (12)Ricos pensam: posso ter as duas coisas. (13)Ricos focam patrimônio líquido, não rendimento mensal. (14)Ricos administram bem o dinheiro. (15)Ricos fazem o dinheiro trabalhar para eles. (16)Ricos agem apesar do medo. (17)Ricos aprendem e se aprimoram sempre. PATRIMÔNIO LÍQUIDO como medida real de riqueza, não rendimento.`,
+  apps:`Audens/negócios: identificar crenças limitantes sobre dinheiro herdadas. Separar rendimento de patrimônio — construir ativos, não apenas renda. Agir apesar do medo como hábito. Remunerar-se por resultados (comissão, não hora). Gerenciar dinheiro com disciplina mesmo em volumes pequenos — o hábito precede a quantia.`
+},
+
+'republica_platao': {
+  title:'A República', author:'Platão', year:-375,
+  domains:['phi','pol','lea'],
+  tags:/platão|república|alegoria.*caverna|filósofo.*rei|formas platônicas|justiça.*platão|eidos|ideias platônicas/i,
+  core:`ALEGORIA DA CAVERNA(Platão):Prisioneiros veem apenas sombras na parede e as tomam por realidade. A saída é dolorosa (a luz ofusca), mas necessária. Filósofo = quem saiu da caverna e voltou para libertar os outros. Maioria prefere as sombras (conforto da ilusão) à luz (dificuldade da verdade). FORMAS/IDEIAS: a realidade sensível é sombra imperfeita das Formas eternas e perfeitas (Beleza, Justiça, Bem em si). Conhecer as Formas = epistemê; opinar sobre sombras = doxa. TRIPARTIÇÃO DA ALMA: razão (logos) / thumos (espírito/honra) / apetite (epithymia). Justiça pessoal = cada parte no seu lugar, razão governando. TIPOS DE GOVERNO (degeneração): Aristocracia (razão governa)→Timocracia (honra governa)→Oligarquia (dinheiro governa)→Democracia (desejos governam)→Tirania (paixão escraviza). FILÓSOFO-REI: só aquele que conhece o Bem pode governar justamente. Saber sem poder é impotente; poder sem saber é tirania. EROS EPISTÊMICO: amor ao saber como impulso ascendente em direção ao Bem.`,
+  apps:`Decisões: identificar se razão, honra ou apetite está governando. Questionar percepções ("essa crença é sombra ou luz?"). Distinguir opinião (doxa) de conhecimento (epistemê). Na liderança: quem governa por honra (ego/vaidade) degrada para oligarquia pessoal.`
+},
+
+'jung_tipos': {
+  title:'Tipos Psicológicos', author:'Carl Gustav Jung', year:1921,
+  domains:['ps','rel'],
+  tags:/jung|introvertido|extrovertido|tipos psicológicos|sombra.*jung|anima|animus|individuação|inconsciente coletivo|arquétipo/i,
+  core:`8 TIPOS PSICOLÓGICOS(Jung):Atitude=Introvertido(energia para dentro,mundo subjetivo)×Extrovertido(energia para fora,mundo objetivo). Funções=Pensamento/Sentimento(julgamento)×Sensação/Intuição(percepção). 4 funções × 2 atitudes = 8 tipos. Função superior=a mais desenvolvida. Função inferior=a reprimida, portadora da Sombra. SOMBRA:o que rejeitamos em nós mesmos que projetamos nos outros. "O que mais nos irrita nos outros é geralmente a nossa própria sombra projetada." ANIMA/ANIMUS:imagem do feminino no homem (anima) / do masculino na mulher (animus) — guia para relacionamentos e criatividade. PERSONA:máscara social adaptativa — útil mas perigosa quando confundida com a identidade real. INDIVIDUAÇÃO:processo de integrar a sombra, anima/animus e Self para tornar-se inteiro. COMPENSAÇÃO:o inconsciente compensa unilateralidade da consciência (excesso de lógica → sonhos emocionais; excesso de emoção → sonhos racionais). Tipos se atraem por complementaridade mas colidem por incompreensão da diferença.`,
+  apps:`Relacionamentos: introvertidos processam internamente antes de responder (silêncio ≠ rejeição). Extravertidos precisam verbalizar para pensar (fala ≠ resolução). Conflito como oportunidade de individuação. Identificar projeção de sombra em Julia (o que mais irrita pode ser o que está em você). Função inferior é porta para o desenvolvimento.`
+},
+
+'proverbios': {
+  title:'Provérbios', author:'Salomão/Compiladores', year:-900,
+  domains:['teo','phi','hab','lea'],
+  tags:/provérbios|pv\s|temor.*senhor|sabedoria.*bíblica|mulher virtuosa|Pr\s[0-9]/i,
+  core:`SABEDORIA PRÁTICA(Provérbios):Base: "O temor do SENHOR é o princípio do saber" (1:7) — sabedoria começa no reconhecimento da própria limitação diante do absoluto. Não é tratado religioso, mas ética prática. PRINCÍPIOS CENTRAIS: (1)Diligência supera talento: "mão do diligente enriquece" (10:4). (2)Língua como arma: "morte e vida estão no poder da língua" (18:21). (3)Conselheiros múltiplos: "nos muitos conselheiros há segurança" (11:14). (4)Orgulho precede queda: "orgulho precede a ruína" (16:18). (5)Humildade precede honra (15:33). (6)Gestão do dinheiro: "na multidão de palavras não falta pecado" (10:19) — menos é mais. (7)Amizade real vs superficial: "há amigos mais chegados do que um irmão" (18:24). (8)Reputação > riqueza: "bom nome é preferível a muitas riquezas" (22:1). (9)Caráter feminino ideal (31): produtiva, sábia, digna, temente a Deus. (10)Integridade de caráter como fundamento duradouro.`,
+  apps:`Negócios: conselheiros múltiplos para decisões importantes. Reputação como ativo. Língua como ferramenta e risco. Pessoal: humildade como acesso ao crescimento. Orgulho como ponto cego estratégico. Diligência consistente supera surtos de genialidade.`
+},
+
+'cantivo_canticos': {
+  title:'Cântico dos Cânticos', author:'Tradição Salomônica', year:-400,
+  domains:['teo','rel','phi'],
+  tags:/cântico dos cânticos|shir hashirim|amor forte.*morte|sacramento.*amor|amor como morte/i,
+  core:`AMOR COMO SACRAMENTO(Cântico):Único livro bíblico que celebra explicitamente o amor erótico humano sem constrangimento. Interpretação dupla: literal (amor humano como bom em si) + alegórica (amor divino). "O amor é forte como a morte, a paixão implacável como o Cheol" (8:6) — amor como força existencial absoluta. JOGO DE DISTÂNCIA E INTIMIDADE:o amado que chega e parte, a amada que busca e encontra — a busca sustenta o amor (não apenas a posse). "Encontrei-o mas não o larguei" (3:4). ALTERIDADE NA INTIMIDADE:"O meu amado é para mim e eu sou para ele" (2:16) — união que não elimina a distinção. AMOR QUE NÃO ENVERGONHA:corpo celebrado com poesia — sensualidade como dignidade, não fraqueza. DISTÂNCIA QUE CONVIDA:"Foje, meu amado" (8:14) — paradoxo final: amor que convida o amado a partir, porque o amor vive do movimento, não da imobilidade.`,
+  apps:`Para o ansioso: a busca não é fracasso — é o modo de amar. Distância do evitativo pode ser como o amado que parte — não abandono definitivo mas ritmo do amor. O amor saudável une sem absorver. Intimidade que mantém mistério é sustentável.`
+},
+
+'confissoes_agostinho': {
+  title:'Confissões', author:'Santo Agostinho', year:397,
+  domains:['teo','phi','ps'],
+  tags:/agostinho|confissões|inquieto.*repouso|cor nostrum|convertido|memória agostinho|nosso coração/i,
+  core:`INQUIETAÇÃO COMO VOCAÇÃO(Agostinho):"Nosso coração está inquieto até repousar em Ti" — o desassossego humano não é falha mas sinal de uma orientação transcendente ainda não saciada. PECADO COMO DESORDEM DO AMOR:não ausência de amor mas amor desordenado — amar a coisa certa de modo errado, ou a coisa errada no lugar certo. Todo pecado é uma ordem de preferência perturbada. VONTADE DIVIDIDA:"Quero mas não quero completamente" — animo dimidium (alma pela metade). Conversão gradual, não instantânea. MEMÓRIA COMO PRESENÇA:o passado não passou, vive na memória como presença atual — daí a possibilidade de confissão (re-presentar o passado para reintegrá-lo). BUSCA DE DEUS É DEUS NOS BUSCANDO:a ânsia pelo infinito é o próprio infinito se manifestando. CONFISSÃO COMO AUTOCONHECIMENTO:falar a verdade sobre si mesmo diante do absoluto é o caminho para a transformação — não punição mas clareza. Identidade em Cristo ≠ performance religiosa.`,
+  apps:`Crises pessoais: inquietação como sinal, não problema a resolver. Pecado como desordem de prioridades (amor a coisas certas fora de ordem). Conversão como processo — não exigir mudança instantânea de si ou do outro. Autoconhecimento pela honestidade radical sobre si mesmo.`
+},
+
+'estrategias_guerra': {
+  title:'33 Estratégias de Guerra', author:'Robert Greene', year:2006,
+  domains:['str','neg','men','com'],
+  tags:/greene.*estratégia|33 estratégias|guerrilha mental|zona de morte|blitzkrieg.*greene|guerra.*greene|fait accompli|grande estratégia/i,
+  core:`GUERRA AUTODIRIGIDA:Declarar guerra a si mesmo (inimigos internos: hábitos, emoções, passado). Guerrilha mental: nunca linhas estáticas, tudo fluido. Zona de morte: colocar-se em situação sem saída para ativar máxima performance. Contrapeso: manter presença de espírito no caos. GUERRA DEFENSIVA:Escolher batalhas — economia de forças perfeita. Contra-ataque: quem age segundo deixa o adversário exposto. Dissuasão: reputação de ser imprevisível/temível. Trocar espaço por tempo. GUERRA OFENSIVA:Grande estratégia (visão além da batalha imediata). Inteligência sobre o inimigo (mente da pessoa, não apenas suas ações). Blitzkrieg: velocidade e imprevisibilidade derrotam força superior. Dividir-e-conquistar. Centro de gravidade: atingir o ponto crítico do adversário. GUERRA DIPLOMÁTICA:Negociar enquanto avança. Fait accompli: morder aos poucos antes de percebido. Penetrar mentes via comunicação indireta. GUERRA NÃO-CONVENCIONAL:Misturar fato e ficção. Ocupar terreno moral elevado. Negar alvos (vazio). Semeiar incerteza e pânico. LEI CENTRAL: conheça seu inimigo (mente, não apenas ações) antes de agir.`,
+  apps:`Vendas/negócios: criar urgência (zona de morte) para fechar. Escolher batalhas — não lutar em todas as frentes. Negociar sem revelar o limite. Reputação como dissuasão de concorrentes. Na liderança: cruzada moral unifica equipes. Fait accompli: criar fatos antes de pedir permissão.`
+},
+
+'novo_mundo_tolle': {
+  title:'Um Novo Mundo', author:'Eckhart Tolle', year:2005,
+  domains:['phi','ps','teo','hab'],
+  tags:/tolle|novo mundo|presença.*tolle|corpo de dor|ego.*tolle|momento presente.*tolle|despertar.*tolle|voz.*cabeça/i,
+  core:`EGO(Tolle):Identificação com forma (pensamentos, emoções, papéis, coisas, história pessoal). Ego não é quem você é — é o que você pensa que é. A voz na cabeça que comenta tudo não é você — é o ego. Ego se alimenta de drama, conflito e reatividade. CORPO DE DOR:Campo de energia emocional negativa acumulada do passado. Busca situações que o ativem (conflito, drama, tristeza). Identificação com o corpo de dor cria reatividade. Reconhecer o corpo de dor enquanto está ativo é o começo da libertação. PRESENÇA:Consciência do momento presente sem julgamento ou narrativa. Espaço interior onde você observa pensamentos sem ser governado por eles. Quando presente, o ego não pode operar. DESPERTAR:Perceber que você é a consciência que observa, não o conteúdo observado. Separação entre o que você É e o que você pensa/sente. 3 MODALIDADES DE AÇÃO DESPERTA:Aceitação (quando não pode mudar), Prazer (engajamento total), Entusiasmo (visão + ação). Qualquer ação sem uma dessas três modalidades cria sofrimento.`,
+  apps:`Ansiedade/impulsividade: observar a ansiedade sem se identificar com ela — "estou notando ansiedade" vs "estou ansioso". Corpo de dor se alimenta de conflito — não alimentar com reatividade. Momento presente como único campo de ação real. Relacionamentos: ego projeta no outro o que odeia em si mesmo. Presença é o único antídoto para a reatividade ansioso-evitativa.`
+},
+
+'genealogia_moral': {
+  title:'Genealogia da Moral', author:'Friedrich Nietzsche', year:1887,
+  domains:['phi','ps'],
+  tags:/nietzsche|genealogia.*moral|moral.*senhores|moral.*escravos|ressentimento.*nietzsche|vontade de poder|além do bem e do mal/i,
+  core:`GENEALOGIA DOS VALORES(Nietzsche):Questionar não "o que é bom?" mas "de onde vem a ideia de 'bom'?". Todo valor tem uma história e uma psicologia de origem. MORAL DOS SENHORES vs ESCRAVOS:Senhores (aristocratas): Bom = força, nobre, afirmativo / Ruim = fraco, vulgar. Escravos: Bem = humildade, compaixão / Mal = força, prazer, vitalidade. Moral escrava nasce do RESSENTIMENTO — incapacidade de agir se torna virtude. "Os fracos transformaram sua fraqueza em mérito." MÁ CONSCIÊNCIA:Instintos agressivos reprimidos que se voltam contra o próprio indivíduo — a origem da culpa. IDEAIS ASCÉTICOS:Sacerdotes que negam a vida para ter poder — inventam o pecado para ter o perdão como moeda. VONTADE DE PODER:Não apenas poder sobre outros, mas expansão e afirmação da vida. Força vital afirmativa. CRÍTICA:Nietzsche exige questionar valores herdados — não aceitá-los por tradição. Genealogia = arqueologia da moral. ATENÇÃO ÉTICA:Usar como ferramenta de análise crítica, não como guia de conduta — Nietzsche diagnostica, não prescreve.`,
+  apps:`Crenças morais herdadas: perguntar "de onde veio esse valor?" antes de obedecer. Identificar ressentimento disfarçado de princípio ético. Distinguir fraqueza transformada em virtude de força genuína. Pensar crítico sobre normas sociais sem cair no niilismo.`
+}
+
+};
 
 const TOPIC_MAP=[
   {p:/julia|namorad|relacionam|apego|amor|sentimen|dela|evitativ|conversa.*dela/i,d:['rel']},
