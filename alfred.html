@@ -1448,6 +1448,12 @@ async function handleInput(msg){
   spBuf='';clearTimeout(silT);
   const msgTrim=msg.trim();
   addMsg(msgTrim,'u');
+  // Track behavioral patterns
+  BEHAV.add(msgTrim, currentMode);
+  // Check for feedback acceptance
+  if(ld('behavPendingFeedback',false)&&msgTrim.toLowerCase().match(/^(sim|pode|claro|vai|quero|ok|positivo)/)){
+    await generateBehaviorFeedback(); return;
+  }
   const t=msgTrim.toLowerCase();
   // Call command (high priority)
   if(t.match(/ligue? para|ligar? para|liga para/)){handleCallCommand(msgTrim);return;}
@@ -1554,7 +1560,16 @@ async function genRadar(){
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:480,system:buildSys(),
-        messages:[{role:'user',content:'[MODO RADAR] Gere o radar diário. Horário: '+tod+'. Tarefas pendentes: '+tasks+'. Use o formato de 6 componentes.'}]})});
+        messages:[{role:'user',content:'[MODO RADAR] Gere o radar diário estratégico. Horário: '+tod+'. Tarefas pendentes: '+tasks+`'.
+Use o formato de 8 componentes:
+📅 ANÁLISE DO DIA: [contexto e estado atual]
+⚡ PRIORIDADE #1: [tarefa mais importante hoje]
+🚨 ALERTAS: [riscos ou urgências detectados]
+💡 OPORTUNIDADE: [algo a aproveitar]
+📈 MELHORIA SUGERIDA: [algo para implementar]
+🎯 AÇÃO IMEDIATA: [próximo passo nos próximos 30min]
+📚 CONHECIMENTO DO DIA: [1 conceito ou framework aplicável agora]
+❓ PERGUNTA PARA REFLEXÃO: [pergunta estratégica para o senhor pensar hoje]`}]})});
     const data=await res.json();
     const text=data.content?.[0]?.text||'';
     if(text){
@@ -1609,8 +1624,13 @@ async function uploadKB(evt){
     const chunks=[];
     for(let i=0;i<text.length;i+=500){const c=text.slice(i,i+500).trim();if(c.length>50)chunks.push(c);}
     if(!kb.docs)kb.docs=[];
-    kb.docs.push({id:Date.now(),name:file.name,size:Math.round(file.size/1024)+'KB',chunks,date:new Date().toLocaleDateString('pt-BR')});
-    saveKB();renderKB();setStat('Senhor, '+file.name+' foi absorvido');
+    setStat('Senhor, analisando '+file.name+' em profundidade...');
+    const meta = await deepProcessKB(text, file.name);
+    const doc = {id:Date.now(),name:file.name,size:Math.round(file.size/1024)+'KB',chunks,date:new Date().toLocaleDateString('pt-BR'),meta};
+    kb.docs.push(doc);
+    saveKB();renderKB();
+    setStat('Senhor, '+file.name+' absorvido'+(meta?' com análise completa':''));
+    if(meta)toastOk('Absorção completa: '+file.name);
   }catch(e){alert('Senhor, erro: '+(e.message||'Arquivo inválido'));setStat('Aguardando o senhor');}
 }
 
@@ -1633,7 +1653,26 @@ async function extractPDF(file){
 function renderKB(){
   const el=document.getElementById('kb-list');if(!el)return;
   if(!kb.docs||!kb.docs.length){el.innerHTML='<div class="em">Senhor, nenhum documento. Envie PDFs ou TXTs.</div>';return;}
-  el.innerHTML=kb.docs.map(d=>`<div class="ki"><div class="kb-ico">${d.name.endsWith('.pdf')?'📕':d.name.endsWith('.md')?'📝':'📄'}</div><div style="flex:1"><div class="kn">${d.name}</div><div class="km">${(d.chunks||[]).length} fragm · ${d.size} · ${d.date}</div></div><button class="kd" onclick="delKB(${d.id})">✕</button></div>`).join('');
+  el.innerHTML=kb.docs.map(d=>{
+    const meta=d.meta;
+    const ico=d.name.endsWith('.pdf')?'📕':d.name.endsWith('.md')?'📝':'📄';
+    const imp=meta?.importance==='alto'?'🔴':meta?.importance==='médio'?'🟡':meta?'🟢':'';
+    const tags=meta?.tags?.slice(0,3).map(t=>`<span style="background:rgba(244,197,66,0.1);border-radius:4px;padding:1px 5px;color:var(--gold);font-size:9.5px">${escHtml(t)}</span>`).join('') || '';
+    return `<div class="ki" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;gap:9px;align-items:center">
+        <div class="kb-ico">${ico}</div>
+        <div style="flex:1">
+          <div class="kn">${escHtml(d.name)}</div>
+          <div class="km">${(d.chunks||[]).length} fragmentos · ${d.size} · ${d.date} ${imp?imp+' '+( meta?.category||''):'(sem análise)'}</div>
+          ${tags?`<div style="margin-top:3px">${tags}</div>`:''}
+        </div>
+        <button class="kd" onclick="delKB(${d.id})">✕</button>
+      </div>
+      ${meta?.summary?`<div style="font-size:11px;color:var(--muted);padding:6px 4px;border-top:1px solid var(--border);margin-top:6px;line-height:1.5">${escHtml(meta.summary)}</div>`:''}
+      ${meta?.keyQuote?`<div style="font-size:10.5px;color:var(--gold);font-style:italic;padding:4px 4px">"${escHtml(meta.keyQuote)}"</div>`:''}
+      ${meta?.flashcards?.length?`<div style="font-size:10px;color:var(--c);padding:2px 4px">📋 ${meta.flashcards.length} flashcards gerados</div>`:''}
+    </div>`;
+  }).join('');
 }
 function delKB(id){kb.docs=kb.docs.filter(d=>d.id!==id);saveKB();renderKB();}
 
@@ -1744,6 +1783,176 @@ function init(){
 
 
 
+
+// ================================================================
+// ALFRED OS — BEHAVIOR PATTERN TRACKER
+// Analisa padrões de comunicação e oferece feedback no momento certo
+// ================================================================
+const BEHAV = {
+  msgs: [],
+  patterns: {
+    anxious: 0, impulsive: 0, frustrated: 0, indecisive: 0,
+    totalMsgs: 0, lastFeedback: 0, sessionStart: Date.now(),
+    lastActivity: Date.now()
+  },
+
+  ANXIOUS_P: /ela.*não.*respondeu|por que.*não.*responde|ela.*sumiu|cadê ela|o que.*aconteceu|ela está.*brava|ela.*chateada|ela.*offline|será que|ela.*me ignor|por que ela não|não sei o que (ela|aconteceu)/i,
+  IMPULSIVE_P: /vou.*mandar|vou.*ligar.*agora|não aguen|que merda|raiva|irritad|bravo|[f][u][d]|já era|desisto|vai tomar|odeio/i,
+  FRUSTRATION_P: /não entende|sempre assim|nunca muda|por que sempre|de novo isso|cansativo|cansado disso|não adianta|tanto faz/i,
+  INDECISIVE_P: /não sei se|fico na dúvida|não consigo decidir|qual é melhor|o que você acha que (eu|devo)|deveria ou não|vale a pena ou não/i,
+
+  add(text, mode) {
+    const t = text || '';
+    this.patterns.totalMsgs++;
+    this.patterns.lastActivity = Date.now();
+    this.msgs.push({ text: t, ts: Date.now(), mode });
+    if (this.msgs.length > 150) this.msgs = this.msgs.slice(-150);
+    this._analyze(t);
+    this._checkProactive(t);
+  },
+
+  _analyze(text) {
+    if (this.ANXIOUS_P.test(text)) this.patterns.anxious++;
+    if (this.IMPULSIVE_P.test(text)) this.patterns.impulsive++;
+    if (this.FRUSTRATION_P.test(text)) this.patterns.frustrated++;
+    if (this.INDECISIVE_P.test(text)) this.patterns.indecisive++;
+  },
+
+  _checkProactive(text) {
+    // Detect high-risk impulsive moment and intervene immediately
+    if (this.IMPULSIVE_P.test(text) && text.length < 120) {
+      const warnings = [
+        'Senhor, percebi um sinal de impulsividade. Recomendo pausar 90 segundos antes de agir.',
+        'Senhor, esse momento pode gerar uma decisão que o senhor vai querer revisar depois. Posso ajudar a pensar antes de agir?',
+        'Senhor, a melhor resposta agora talvez seja nenhuma. Quer esperar um momento?'
+      ];
+      const w = warnings[Math.floor(Math.random() * warnings.length)];
+      setTimeout(() => {
+        addMsg(w, 'a');
+        if (sets.autoSpeak) speak(w);
+      }, 1500);
+    }
+    // Detect anxiety loop
+    if (this.ANXIOUS_P.test(text) && this.patterns.anxious >= 2) {
+      const msg = 'Senhor, percebi um padrão ansioso. Sistema 2 ativo: o silêncio dela não é rejeição — é processamento. Quer que eu analise a situação com calma?';
+      setTimeout(() => {
+        addMsg(msg, 'a');
+        if (sets.autoSpeak) speak(msg);
+      }, 2000);
+    }
+  },
+
+  shouldFeedback() {
+    const now = Date.now();
+    const inactiveFor = now - this.patterns.lastActivity;
+    const timeSinceFeedback = now - this.patterns.lastFeedback;
+    const hasEnoughData = this.patterns.totalMsgs >= 8;
+    const hasPatterns = this.patterns.anxious + this.patterns.impulsive + this.patterns.frustrated >= 3;
+    const quietMoment = inactiveFor > 20 * 60 * 1000; // 20min inactive
+    const feedbackCooldown = timeSinceFeedback > 6 * 60 * 60 * 1000; // 6h between feedbacks
+    return hasEnoughData && hasPatterns && quietMoment && feedbackCooldown;
+  },
+
+  async offerFeedback() {
+    if (!this.shouldFeedback()) return;
+    this.patterns.lastFeedback = Date.now();
+    const offer = 'Senhor, percebi que o senhor está num momento mais tranquilo. Tenho algumas observações sobre seus padrões de comunicação desta sessão. Posso compartilhar?';
+    addMsg(offer, 'a');
+    speak(offer);
+    sv('behavPendingFeedback', true);
+    sv('behavSnapshot', this.getSnapshot());
+  },
+
+  getSnapshot() {
+    return {
+      totalMsgs: this.patterns.totalMsgs,
+      anxious: this.patterns.anxious,
+      impulsive: this.patterns.impulsive,
+      frustrated: this.patterns.frustrated,
+      indecisive: this.patterns.indecisive,
+      sessionMinutes: Math.round((Date.now() - this.patterns.sessionStart) / 60000),
+      recentMsgs: this.msgs.slice(-20).map(m => m.text).join(' | ')
+    };
+  },
+
+  reset() {
+    this.patterns = { anxious:0, impulsive:0, frustrated:0, indecisive:0, totalMsgs:0, lastFeedback:this.patterns.lastFeedback, sessionStart:Date.now(), lastActivity:Date.now() };
+    this.msgs = [];
+  }
+};
+
+// Check for pending feedback every 15 minutes
+setInterval(async () => {
+  if (!alfredModeOn) return;
+  // Offer feedback if conditions met
+  if (BEHAV.shouldFeedback()) {
+    await BEHAV.offerFeedback();
+  }
+  // If user confirmed feedback is wanted, generate it
+  if (ld('behavPendingFeedback', false)) {
+    // Will be triggered by user saying "sim" or "pode" after offer
+  }
+}, 15 * 60 * 1000);
+
+async function generateBehaviorFeedback() {
+  const snap = ld('behavSnapshot', null);
+  if (!snap) { addMsg('Senhor, ainda não tenho dados suficientes para gerar feedback. Continue usando o Alfred.', 'a'); return; }
+  sv('behavPendingFeedback', false);
+  const key = apiKey();
+  if (!key) { addMsg('Senhor, configure a API key para feedback de comportamento.', 'a'); return; }
+
+  const FB_SYS = `Você é Alfred OS gerando feedback comportamental para o senhor.
+Use os dados de padrões observados para dar feedback construtivo, honesto e respeitoso.
+Baseie-se em:
+- Teoria do Apego (Bowlby/Levine)
+- Regulação emocional (Kahneman—Sistema 1 vs 2)
+- Estoicismo (o que está no seu controle?)
+- Hábitos (Clear—identidade vs comportamento)
+- Comunicação saudável (CNV de Rosenberg)
+
+Formato:
+📊 PADRÕES OBSERVADOS:
+[o que foi detectado nessa sessão]
+
+🔍 O QUE ISSO PODE INDICAR:
+[interpretação com hipótese, nunca certeza]
+
+⚡ SITUAÇÕES DE RISCO IDENTIFICADAS:
+[momentos em que o padrão pode prejudicar]
+
+✅ O QUE O SENHOR FEZ BEM:
+[pontos positivos da sessão]
+
+🎯 SUGESTÕES PRÁTICAS:
+[3 ações concretas baseadas nos frameworks]
+
+📚 CONHECIMENTO APLICÁVEL:
+[1-2 conceitos dos livros/frameworks que se aplicam]
+
+Seja direto, honesto e respeitoso. Use "o senhor" sempre. Hipóteses, não certezas.`;
+
+  setOrb('T'); isThinking = true; setStat('Gerando feedback...');
+  try {
+    const prompt = `Dados da sessão:\n- Total mensagens: ${snap.totalMsgs}\n- Sinais ansiosos: ${snap.anxious}\n- Sinais impulsivos: ${snap.impulsive}\n- Sinais frustração: ${snap.frustrated}\n- Sinais indecisão: ${snap.indecisive}\n- Duração: ${snap.sessionMinutes}min\n- Amostra de mensagens: ${snap.recentMsgs.slice(0, 500)}`;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,system:FB_SYS,messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    const feedback = data.content?.[0]?.text || 'Erro ao gerar feedback.';
+    addMsg(feedback, 'a');
+    if (sets.autoSpeak) speak('Senhor, o relatório está na tela. Leia com calma.');
+    // Save feedback to memory
+    addItem('insights', 'Feedback Alfred: ' + feedback.slice(0, 200), true);
+    BEHAV.reset();
+  } catch(e) {
+    addMsg('Senhor, erro ao gerar feedback: ' + e.message, 'a');
+  }
+  isThinking = false; setOrb(isListening?'L':'I');
+}
+
+
 // ================================================================
 // ALFRED OS — BASE DE CONHECIMENTO INTEGRADA v3 Final
 // 15 domínios | 30+ frameworks | conhecimento aplicável
@@ -1762,7 +1971,34 @@ hab:`HÁBITOS:Atomic Habits(Clear):Deixa→Desejo→Resposta→Recompensa. 4 Lei
 sau:`SAÚDE:Sono:7-9h,ciclos 90min,luz solar matinal sincroniza relógio,sem luz azul 1h antes,temperatura fria,consistência de horário>duração. Exercício:BDNF+dopamina+serotonina imediatos,150min cardio moderado/sem ou 75min intenso,resistência 2x,melhor antidepressivo natural. Nutrição:proteína 1.6-2.2g/kg,déficit calórico moderado,ômega-3,vegetais coloridos,reduzir processados/açúcar. Estresse crônico=cortisol eleva→hipocampo prejudicado. Técnicas:respiração 4-7-8,cold exposure 15s,exercício aeróbico,natureza.`,
 ait:`IA & TECNOLOGIA:RAG=Retrieval-Augmented Generation:busca docs relevantes→injeta contexto→resposta mais precisa. Prompt Engineering:1)Persona 2)Contexto 3)Exemplos(few-shot) 4)Formato 5)Restrições 6)Chain-of-thought. Temperature:0-0.3 precisão,0.7-1.0 criatividade. Agentes:loop Observe→Plan→Act→Observe. Multi-agentes:especialização por papel. Memória:working(contexto),episódica(histórico),semântica(conhecimento). Segurança:prompt injection(isolar contexto usuário),prompt leakage(não revelar system),jailbreak(red teaming).`,
 sof:`SOFTWARE:Clean Architecture:domínio no centro,infraestrutura na periferia. SOLID:Single Responsibility,Open/Closed,Liskov,Interface Segregation,Dependency Inversion. DRY,KISS,YAGNI. React:componentes puros,estado mínimo,efeitos controlados. React Native:performance evita JS thread. APIs:REST vs GraphQL,JWT stateless,rate limiting,versioning. Segurança web:XSS(sanitizar output),CSRF(tokens),SQL Injection(prepared statements),HTTPS obrigatório. TDD:Red-Green-Refactor.`,
-sec:`SEGURANÇA:CIA Triad:Confidencialidade,Integridade,Disponibilidade. Criptografia:AES-256(repouso),TLS 1.3(trânsito),bcrypt/argon2(senhas),SHA-256(integridade). Zero Trust:nunca confie,sempre verifique. Menor privilégio. MFA obrigatório. Backup 3-2-1:3 cópias,2 mídias,1 offsite. Privacidade:minimização dados,consentimento,direito ao esquecimento. OWASP Top 10:Injection,Broken Auth,XSS,IDOR,Security Misconfig,XXE,Insecure Deserialization,Vulnerable Components,Logging Failures.`
+sec:`SEGURANÇA:CIA Triad:Confidencialidade,Integridade,Disponibilidade. Criptografia:AES-256(repouso),TLS 1.3(trânsito),bcrypt/argon2(senhas),SHA-256(integridade). Zero Trust:nunca confie,sempre verifique. Menor privilégio. MFA obrigatório. Backup 3-2-1:3 cópias,2 mídias,1 offsite. Privacidade:minimização dados,consentimento,direito ao esquecimento. OWASP Top 10:Injection,Broken Auth,XSS,IDOR,Security Misconfig,XXE,Insecure Deserialization,Vulnerable Components,Logging Failures.`,
+men:`MENTALISTA ÉTICO & COMPORTAMENTO:
+Micro-expressões(Ekman):7 universais—Alegria,Tristeza,Medo,Raiva,Surpresa,Desgosto,Desprezo. Duram 1/15s. Inconsistência expressão+palavras=sinal de atenção. Nunca certeza—sempre hipótese.
+Linguagem corporal(Navarro—What Every BODY is Saying):Pés/pernas=mais honestos que rosto. Gestos pacificadores=auto-toque(nariz,pescoço)indica desconforto. Braços cruzados≠defensivo necessariamente. Inclinação para frente=interesse. Espaço pessoal: íntimo(<45cm),pessoal(45-120cm),social(1.2-3.6m),público(>3.6m).
+Perfil comportamental(FBI—Schafer The Like Switch):FRIENDSHIP FORMULA=Proximidade+Frequência+Duração+Intensidade. Rapport=encontrar pontos comuns genuínos. Espelhamento sutil constrói conexão. Perguntas abertas>fechadas para obter informação.
+Análise de inconsistências:Tom desalinhado com palavras,excesso de detalhes(pode ser construção),falta de detalhes(pode ser supressão),hesitação em questões factuais simples. Use hipóteses:"há sinais que podem indicar","uma interpretação possível é","nível de confiança: baixo/médio/alto".
+Games People Play(Berne—Análise Transacional):Ego states=Pai(normativo/nutritivo),Adulto(racional),Criança(adaptada/livre). Jogos relacionais=padrões repetitivos de comunicação com payoff oculto. Triângulo de Karpman:Perseguidor→Vítima→Salvador. Transcender jogos=comunicar do Adulto.
+Vendas/Reuniões como copiloto:Objeções ocultas(cliente que não diz não diz de frente),sinais de interesse(perguntas sobre implementação,preço,prazo),sinais de resistência(resposta monossilábica,olha pro relógio,braços cruzados). SPIN Selling(Rackham):Situação→Problema→Implicação→Necessidade de solução. Challenger Sale:ensina,personaliza,toma controle. Quando fechar:silêncio estratégico após proposta.`,
+pol:`POLÍTICA & FILOSOFIA POLÍTICA (análise equilibrada):
+Liberalismo(Locke,Mill,Rawls):direitos naturais,propriedade,liberdade individual,estado mínimo,contrato social. Força=defesa da liberdade. Limitação=pode gerar desigualdade.
+Conservadorismo(Burke,Oakeshott):respeito à tradição,mudança gradual,instituições orgânicas,ceticismo das utopias racionais. Força=estabilidade e sabedoria acumulada. Limitação=pode resistir a mudanças necessárias.
+Socialismo/Social-democracia(Marx,Rawls):redistribuição,igualdade material,regulação mercado,proteção social. Força=reduz desigualdade extrema. Limitação=incentivos,burocracia,eficiência.
+Libertarianismo(Hayek,Nozick):liberdade máxima,estado mínimo,livre mercado,propriedade privada. Força=inovação,eficiência. Limitação=externalidades,bens públicos,desigualdade.
+Geopolítica:Realismo(poder é central,anarquia internacional),Liberalismo(cooperação,instituições,democracias não guerreiam),Construtivismo(identidade e normas moldam comportamento). Brasil:presidencialismo de coalizão,multipartidarismo,federalismo. Poderes:Executivo,Legislativo,Judiciário. STF,TCU,Banco Central.
+Análise política equilibrada:identificar interesses por trás de posições,consequências de 1ª/2ª/3ª ordem,trade-offs inevitáveis. Democracia=melhor sistema conhecido para proteger direitos,apesar das falhas(Churchill). Nenhuma ideologia pura funciona—implementação importa tanto quanto teoria.`,
+str:`ESTRATÉGIA & PODER:
+Maquiavel—O Príncipe:virtù(capacidade de moldar a fortuna)+fortuna(acaso). Leão(força)+raposa(astúcia). Preferível ser temido a amado,se não puder ser ambos. Aparência de virtude≠virtude real. Prudência=escolher o menor mal. Centralidade da reputação—difícil de construir,fácil de destruir.
+Sun Tzu—A Arte da Guerra:Vencer sem lutar=máximo estratégico. Conheça seu inimigo e a si mesmo. Adapte-se como água. Velocidade=vantagem. Evite batalha em que não pode vencer. Information asymmetry=poder.
+Clausewitz—Da Guerra:Guerra=política por outros meios. Friction(névoa da guerra)=planos nunca sobrevivem ao contato com realidade. Centro de gravidade(ponto crítico do adversário). Moral é 3x mais importante que físico.
+Boyd—OODA Loop:Observe→Orient→Decide→Act. Quem itera mais rápido ganha. Disrupt o OODA do adversário. Orientação(cultura,análise,síntese)é o coração do loop.
+Taleb—Antifragilidade:Frágil,Robusto,Antifrágil. Construa sistemas que ganham com o caos. Barbell strategy:muito seguro+algum risco extremo. Evite otimização excessiva. Pele no jogo=responsabilidade.
+48 Laws of Power(Greene):lei 1—nunca ofusque o mestre. Lei 4—diga menos. Lei 6—atenção a qualquer preço. Lei 15—esmague o inimigo totalmente. Lei 28—aja com ousadia. Contexto ético:use para análise,não para manipulação.
+Gracián—Arte da Prudência:conheça homens profundamente,cultive a arte do conversador,pense no final antes do começo,nunca exagere,escolha bem seus inimigos.`,
+hill:`NAPOLEON HILL & MENTALIDADE:
+Think and Grow Rich:Desejo ardente(definido e específico)→Fé(crença na realização)→Autosugestão→Conhecimento especializado→Imaginação→Planejamento organizado→Decisão→Persistência→Mastermind(alianças). Principio mestre:tudo que a mente pode conceber e acreditar,pode conquistar. Sexta sentido=desenvolvimento de intuição pelo estudo e prática.
+Ressonância mental:ambiente,auto-talk,círculo de convivência moldam crenças limitantes vs potencializadoras. "Cada adversidade carrega semente de benefício equivalente." Medo=o maior inimigo—6 tipos:pobreza,crítica,doença,amor perdido,velhice,morte.
+Law of Success:definiteness of purpose,masterminds,going the extra mile,creative vision,self-discipline,enthusiasm,personal initiative,pleasing personality,accurate thinking,concentration,cooperation,profiting by failure,tolerance,golden rule.`
+\`
 };
 
 const TOPIC_MAP=[
@@ -1781,14 +2017,20 @@ const TOPIC_MAP=[
   {p:/ai|inteligência artificial|prompt|modelo|llm|rag|agente|openai|anthropic/i,d:['ait']},
   {p:/segurança|criptograf|privacidade|proteção|backup|autenticação|hack/i,d:['sec']},
   {p:/psicolog|emoção|ansied|depressão|tdah|distração|viés cognitiv|cognit/i,d:['ps']},
+  {p:/mentalista|comportamento|linguagem corporal|micro.*expressão|perfil comportament|leitura.*sinais|reunião.*venda|copiloto.*venda|objeção/i,d:['men','com','ps']},
+  {p:/política|democracia|liberal|conservad|socialismo|geopolítica|governo|eleição|constituição|república|partido/i,d:['pol','phi']},
+  {p:/maquiavel|estratégia|poder|sun tzu|guerra|48 laws|reputação|ooda|antifragil|taleb/i,d:['str','phi']},
+  {p:/napoleon hill|think and grow|mastermind|desejo ardente|mentalidade.*sucesso|lei do sucesso/i,d:['hill','hab','ps']},
+  {p:/persuad.*vend|spin selling|challenger|objeção.*venda|fechar venda|rapport|venda consulti/i,d:['men','com','neg']},
 ];
 
 function getKB(text){
   const matched=new Set();
   for(const t of TOPIC_MAP){if(t.p.test(text||''))t.d.forEach(d=>matched.add(d));}
-  if(!matched.size)return'';
-  const order=['rel','ps','phi','com','neg','fin','hab','pro','lea','sau','ait','sof','sec','teo'];
-  return order.filter(d=>matched.has(d)&&AK[d]).map(d=>AK[d]).join(' | ');
+  const order=['rel','ps','men','phi','com','str','hill','neg','fin','hab','pro','lea','sau','ait','sof','sec','teo','pol'];
+  const parts=order.filter(d=>matched.has(d)&&AK[d]).map(d=>AK[d]);
+  if(!parts.length)return'';
+  return parts.join(' | ');
 }
 
 
@@ -1929,6 +2171,9 @@ const VOICE_ROUTES = [
   // Session
   {p:/ativ[ae].*escuta|modo escuta|começar.*ouvir/i, fn: ()=>{swp('escuta');startSession();}},
   {p:/par.*escuta|encerr.*sessão|para.*ouvir/i, fn: ()=>stopSession()},
+  {p:/(?:me dê|quero|pode.*dar|gerar).*feedback|como (?:eu|o senhor) está|como estou me saindo|análise.*comportamento|padrão.*comportamento/i, fn: ()=>generateBehaviorFeedback()},
+  {p:/modo mentalista|analisa.*comportamento.*(?:dele|dela|deles)|leitura.*sinais/i, fn: ()=>setMode('analista')},
+  {p:/modo.*política|analisa.*política|me explica.*política/i, fn: ()=>{setMode('professor'); speak('Senhor, modo política ativo. O senhor pode pedir análise de qualquer tema político e Alfred apresentará perspectivas equilibradas.')}},
   // Alfred mode
   {p:/^alfred[,\s]+ligar?$|^alfred liga$/i, fn: ()=>setAlfredMode(true)},
   {p:/^alfred[,\s]+desligar?$|^alfred desliga$/i, fn: ()=>setAlfredMode(false)},
@@ -1950,6 +2195,45 @@ function routeVoiceCommand(text) {
     }
   }
   return false; // Not matched — forward to AI
+}
+
+
+
+// ================================================================
+// ALFRED OS — KNOWLEDGE BLACK BELT
+// Absorção profunda de arquivos com geração de metadata via IA
+// ================================================================
+async function deepProcessKB(text, fileName) {
+  const key = apiKey();
+  if (!key) return null; // Skip deep processing if no API key
+  const sample = text.slice(0, 4000); // First 4000 chars for analysis
+  const BELT_SYS = `Você é o módulo Alfred Knowledge Black Belt.
+Analise o trecho de documento e retorne APENAS um JSON válido (sem markdown, sem blocos de código).
+Formato exato:
+{"summary":"resumo executivo 2-3 frases","keyConcepts":["conceito 1","conceito 2","conceito 3"],"practicalApps":["aplicação prática 1","aplicação 2"],"flashcards":[{"q":"pergunta 1","a":"resposta 1"},{"q":"pergunta 2","a":"resposta 2"}],"tags":["tag1","tag2","tag3"],"category":"categoria principal","importance":"alto|médio|baixo","forBusiness":"como aplica em negócios","forRelationship":"como aplica em relacionamento","forDecision":"como aplica em decisões","mainAuthor":"autor principal se detectado","keyQuote":"frase-chave mais importante"}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:BELT_SYS,messages:[{role:'user',content:'Documento: '+fileName+'\n\n'+sample}]})
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '{}';
+    return JSON.parse(raw.replace(/^```json\n?|^```\n?|\n?```$/g,'').trim());
+  } catch(e) { return null; }
+}
+
+function renderKBMeta(meta) {
+  if (!meta) return '';
+  const imp = meta.importance==='alto'?'🔴':meta.importance==='médio'?'🟡':'🟢';
+  return `<div style="background:rgba(196,162,74,0.07);border:1px solid rgba(196,162,74,0.2);border-radius:10px;padding:10px;margin-top:8px;font-size:11.5px;">
+    <div style="font-weight:700;color:var(--gold);margin-bottom:6px">${imp} ${meta.category||'Geral'} ${meta.mainAuthor?'· '+meta.mainAuthor:''}</div>
+    <div style="color:var(--text);margin-bottom:5px">${meta.summary||''}</div>
+    ${meta.keyQuote?`<div style="color:var(--muted);font-style:italic;margin-bottom:5px">"${meta.keyQuote}"</div>`:''}
+    ${meta.keyConcepts?.length?`<div style="margin-bottom:4px"><span style="color:var(--c);font-weight:700">Conceitos: </span>${meta.keyConcepts.join(', ')}</div>`:''}
+    ${meta.tags?.length?`<div>${meta.tags.map(t=>`<span style="background:rgba(244,197,66,0.1);border-radius:4px;padding:1px 5px;margin:2px;color:var(--gold);font-size:10px">${t}</span>`).join('')}</div>`:''}
+    ${meta.flashcards?.length?`<div style="margin-top:6px;color:var(--c);font-weight:700;font-size:10px">FLASHCARDS: ${meta.flashcards.length} cards gerados</div>`:''}
+  </div>`;
 }
 
 
