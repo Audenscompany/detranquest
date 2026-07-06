@@ -11,14 +11,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" onerror="window.pdfFailed=true"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    :root{--c:#00D0FF;--gold:#C4A24A;--g:#00E07A;--o:#FF8C42;--r:#FF3A5C;--v:#8A70FF;
-      --bg:#000A16;--bg2:#03101E;--bg3:#071624;--border:rgba(0,208,255,0.13);
-      --text:#D8EEFF;--muted:rgba(216,238,255,0.4);}
+    :root{--c:#F4C542;--gold:#D4A020;--g:#48C774;--o:#FF9900;--r:#FF3A4A;--v:#7B3FA8;
+      --bg:#06040A;--bg2:#0D090F;--bg3:#140F18;--border:rgba(244,197,66,0.15);
+      --text:#EDE8D8;--muted:rgba(237,232,216,0.4);}
     body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif;height:100dvh;overflow:hidden;}
+    body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 160'%3E%3Cpath fill='%23F4C542' d='M150 18 C140 14 120 20 108 34 C92 26 68 30 52 46 C36 40 16 46 4 62 C20 62 36 54 46 50 C50 76 68 100 96 108 L90 122 L106 116 L112 128 L118 108 C130 114 140 118 150 118 C160 118 170 114 182 108 L188 128 L194 116 L210 122 L204 108 C232 100 250 76 254 50 C264 54 280 62 296 62 C284 46 264 40 248 46 C232 30 208 26 192 34 C180 20 160 14 150 18Z'/%3E%3C/svg%3E") center 45% no-repeat;background-size:min(85vw,420px) auto;opacity:0.028;pointer-events:none;z-index:0;}
+    body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(244,197,66,0.07) 0%,transparent 55%);pointer-events:none;z-index:0;}
     #root{height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;overflow:hidden;}
 
     /* AUTH */
-    #auth-sc{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#031828 0%,#000A16 70%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;transition:opacity 0.5s;}
+    #auth-sc{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(244,197,66,0.08) 0%,#06040A 65%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;transition:opacity 0.5s;}
     .a-logo{font-size:10px;letter-spacing:8px;color:var(--c);font-weight:800;opacity:0.65;margin-bottom:8px;}
     .a-title{font-size:26px;font-weight:900;margin-bottom:5px;text-align:center;}
     .a-sub{font-size:12px;color:var(--muted);margin-bottom:36px;text-align:center;line-height:1.5;}
@@ -68,12 +70,12 @@
     .pb::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
 
     /* ALFRED PANEL */
-    #alfred{background:radial-gradient(ellipse at 50% 30%,#041A30 0%,var(--bg) 65%);}
+    #alfred{background:radial-gradient(ellipse at 50% 15%,rgba(244,197,66,0.06) 0%,rgba(60,20,20,0.04) 30%,transparent 60%);}
     .orb-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:0;}
     .r3{position:absolute;width:265px;height:265px;border-radius:50%;border:1px solid rgba(0,208,255,0.05);animation:rs 28s linear infinite;pointer-events:none;}
     .r2{position:absolute;width:222px;height:222px;border-radius:50%;border:1px solid rgba(0,208,255,0.09);animation:rs 18s linear infinite reverse;pointer-events:none;}
     .r1{position:absolute;width:187px;height:187px;border-radius:50%;border:1px solid rgba(0,208,255,0.14);animation:rs 10s linear infinite;pointer-events:none;}
-    .orb{width:155px;height:155px;border-radius:50%;border:2px solid var(--c);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;z-index:2;transition:all 0.4s ease;box-shadow:0 0 30px rgba(0,208,255,0.12),inset 0 0 20px rgba(0,208,255,0.04);}
+    .orb{width:155px;height:155px;border-radius:50%;border:2px solid var(--c);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;z-index:2;transition:all 0.4s ease;box-shadow:0 0 30px rgba(244,197,66,0.18),0 0 60px rgba(244,197,66,0.07),inset 0 0 20px rgba(244,197,66,0.04);}
     .orb::before{content:'';position:absolute;inset:-15px;border-radius:50%;border:1px solid rgba(0,208,255,0.16);animation:pr 2.4s ease infinite;pointer-events:none;}
     .orb::after{content:'';position:absolute;inset:-30px;border-radius:50%;border:1px solid rgba(0,208,255,0.07);animation:pr 2.4s 0.7s ease infinite;pointer-events:none;}
     .o-ico{font-size:32px;line-height:1;margin-bottom:3px;}
@@ -90,7 +92,7 @@
     .wv:nth-child(5){animation:wa 1s ease infinite 0.05s;}
     .wvz.sp .wv{background:var(--g);}
     .wvz.th .wv{background:var(--v);}
-    .orb.L{border-color:var(--c);box-shadow:0 0 50px rgba(0,208,255,0.28),inset 0 0 30px rgba(0,208,255,0.05);}
+    .orb.L{border-color:var(--c);box-shadow:0 0 50px rgba(244,197,66,0.32),0 0 90px rgba(244,197,66,0.12),inset 0 0 30px rgba(244,197,66,0.06);}
     .orb.T{border-color:var(--v);box-shadow:0 0 50px rgba(138,112,255,0.28);}
     .orb.T::before{animation:st 0.9s linear infinite;border-color:var(--v);border-top-color:transparent;}
     .orb.S{border-color:var(--g);box-shadow:0 0 50px rgba(0,224,122,0.28);}
@@ -771,8 +773,22 @@ function resetInact(){
 ['touchstart','mousedown','keydown'].forEach(ev=>document.addEventListener(ev,resetInact,{passive:true}));
 
 // ======================== STORAGE ========================
-function ld(k,d){try{const r=localStorage.getItem('alf_'+k);return r?JSON.parse(r):d;}catch(e){return d;}}
-function sv(k,v){try{localStorage.setItem('alf_'+k,JSON.stringify(v));}catch(e){console.warn('Storage full');}}
+function ld(k,d){try{const r=localStorage.getItem('alf_'+k);if(!r)return d;const p=JSON.parse(r);return p!==null?p:d;}catch(e){return d;}}
+function sv(k,v){
+  try{
+    const s=JSON.stringify(v);
+    localStorage.setItem('alf_'+k,s);
+  }catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
+      // Emergency cleanup: remove oldest history entries
+      try{
+        const oldHist=ld('hist',[]);
+        if(oldHist.length>10){sv('hist',oldHist.slice(-10));localStorage.setItem('alf_'+k,JSON.stringify(v));}
+        else{console.warn('Alfred OS: armazenamento cheio. Considere exportar e limpar os dados.');}
+      }catch(e2){console.warn('Storage full, cleanup failed:',e2.message);}
+    }
+  }
+}
 
 let mem=ld('mem',{tarefas:[],notas:[],relacionamento:[],negocios:[],estudos:[],decisoes:[],insights:[]});
 let kb=ld('kb',{docs:[]});
@@ -892,29 +908,58 @@ function searchKB(q){
 }
 
 // ======================== API ========================
+const API_ERRORS = {
+  400:'Requisição inválida. Verifique o conteúdo enviado.',
+  401:'API key inválida ou expirada. Verifique em Configurações.',
+  403:'Acesso não autorizado. Verifique sua API key.',
+  404:'Endpoint não encontrado.',
+  429:'Limite de requisições atingido. Aguarde alguns segundos antes de tentar novamente.',
+  500:'Erro nos servidores da Anthropic. Tente novamente em instantes.',
+  503:'Serviço temporariamente indisponível.'
+};
+let _apiLastErr = 0;
+const API_COOLDOWN = 2000;
+
 async function callAlfred(userMsg,maxTok,customSys){
   const key=apiKey();
-  if(!key)return'Senhor, configure a API key em Configurações para eu funcionar plenamente.';
+  if(!key)return'Senhor, a API key não está configurada. Vá em Configurações e insira sua chave Anthropic.';
+  const now=Date.now();
+  if(now-_apiLastErr<API_COOLDOWN)return'Senhor, aguarde um momento antes de tentar novamente.';
   const kbCtx=searchKB(userMsg);
   const sys=(customSys||buildSys())+(kbCtx?'\n\nCONHECIMENTO RELEVANTE:\n'+kbCtx:'');
   const hints={decisao:'[MODO DECISÃO — use formato completo 7 componentes]\n\n',relacao:'[MODO RELAÇÃO — análise Alfred de relacionamento]\n\n',analista:'[MODO ANALISTA — formato Fato/Interpretação/Risco/Oportunidade/Ação]\n\n',professor:'[MODO PROFESSOR — formato didático 5 componentes]\n\n',radar:'[MODO RADAR — formato radar diário 6 componentes]\n\n'};
   const hint=hints[currentMode]||'';
   const msgs=[...hist.slice(-8).map(m=>({role:m.role,content:m.content})),{role:'user',content:hint+userMsg}];
+  const ctrl=new AbortController();
+  const timeout=setTimeout(()=>ctrl.abort(),30000);
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||850,system:sys,messages:msgs})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||850,system:sys,messages:msgs}),
+      signal:ctrl.signal
     });
-    if(!res.ok){const e=await res.json().catch(()=>({}));return'Senhor, erro '+res.status+': '+(e.error?.message||'Tente novamente.');}
+    clearTimeout(timeout);
+    if(!res.ok){
+      _apiLastErr=Date.now();
+      const e=await res.json().catch(()=>({}));
+      const errMsg=API_ERRORS[res.status]||('Erro '+res.status);
+      return'Senhor, '+errMsg+(e.error?.message?' — '+e.error.message:'');
+    }
     const data=await res.json();
-    const reply=data.content?.[0]?.text||'Senhor, não consegui processar.';
+    const reply=data.content?.[0]?.text||'Senhor, resposta vazia. Tente novamente.';
     hist.push({role:'user',content:userMsg});
     hist.push({role:'assistant',content:reply});
     saveHist();
     autoExtract(userMsg,reply);
     return reply;
-  }catch(e){return'Senhor, erro de conexão: '+(e.message||'Verifique a internet.');}
+  }catch(e){
+    clearTimeout(timeout);
+    _apiLastErr=Date.now();
+    if(e.name==='AbortError')return'Senhor, a requisição excedeu 30 segundos. Verifique sua conexão.';
+    if(!navigator.onLine)return'Senhor, sem conexão com a internet. Verifique sua rede.';
+    return'Senhor, erro de conexão: '+(e.message||'Verifique a internet e tente novamente.');
+  }
 }
 
 function autoExtract(msg,reply){
@@ -990,8 +1035,11 @@ function stopSession(){
   document.getElementById('esc-start-btn').style.display='block';
   document.getElementById('esc-stop-btn').style.display='none';
   document.getElementById('live-dot').className='live-dot';
-  if(sessionTr.length>0)genSummary();
-  else speak('Senhor, sessão encerrada sem transcrição.');
+  if(sessionTr.length>=2){genSummary();}
+  else if(sessionTr.length===1){
+    document.getElementById('sum-text').textContent='Sessão curta. Apenas 1 entrada detectada:\n\n'+sessionTr[0].ch+': '+sessionTr[0].text;
+    document.getElementById('sum-modal').style.display='flex';
+  }else{speakImmediate('Senhor, sessão encerrada. Nenhuma fala detectada. Verifique o microfone.');}
 }
 
 function setupSessionRec(){
@@ -1178,10 +1226,27 @@ function openApp(name,nat,url){
 
 function doCalc(text){
   try{
-    let e=text.toLowerCase().replace(/mais/g,'+').replace(/menos/g,'-').replace(/vezes|multiplicado por/g,'*').replace(/dividido por/g,'/').replace(/[^\d\+\-\*\/\.\s\(\)]/g,' ').replace(/\s+/g,' ').trim();
+    // Safe math parser — no eval/Function
+    let e=text.toLowerCase()
+      .replace(/mais/g,'+').replace(/menos/g,'-')
+      .replace(/vezes|multiplicado por/g,'*').replace(/dividido por/g,'/')
+      .replace(/porcento/g,'*0.01').replace(/[^\d\+\-\*\/\.\s\(\)]/g,' ')
+      .replace(/\s+/g,' ').trim();
     if(!/\d/.test(e))return null;
-    const r=Function('"use strict";return ('+e+')')();
-    return isNaN(r)||!isFinite(r)?null:(Number.isInteger(r)?r:parseFloat(r.toFixed(4)));
+    // Validate — only allow safe math chars
+    if(/[^0-9\.\+\-\*\/\(\)\s]/.test(e))return null;
+    // Parse simple two-operand expressions
+    const parts=e.match(/^([\d\.]+)\s*([\+\-\*\/])\s*([\d\.]+)$/);
+    if(parts){
+      const a=parseFloat(parts[1]),op=parts[2],b=parseFloat(parts[3]);
+      if(isNaN(a)||isNaN(b))return null;
+      let r;
+      if(op==='+')r=a+b;else if(op==='-')r=a-b;else if(op==='*')r=a*b;
+      else if(op==='/')r=b===0?null:a/b;else return null;
+      if(r===null||isNaN(r)||!isFinite(r))return null;
+      return Number.isInteger(r)?r:parseFloat(r.toFixed(4));
+    }
+    return null;
   }catch(e){return null;}
 }
 
@@ -1279,6 +1344,46 @@ function setupRec(){
   return r;
 }
 
+// ======================== UTILS ========================
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+let _speakQueue = [];
+let _speakBusy = false;
+
+function speak(text) {
+  if (!sets.autoSpeak) return;
+  try {
+    _speakQueue.push(text);
+    if (!_speakBusy) _processSpeak();
+  } catch(e) {}
+}
+
+function _processSpeak() {
+  if (!_speakQueue.length) { _speakBusy = false; return; }
+  _speakBusy = true;
+  const text = _speakQueue.shift();
+  try {
+    speechSynthesis.cancel();
+    const clean = text.replace(/[🔍🧠⚡✅🕊️🔥🎯📌🔎📋🔀📊⏭️💡📚❓📅🚨📈😄💙🦇⭘🔴]/g, '');
+    if (!clean.trim()) { _processSpeak(); return; }
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'pt-BR'; u.rate = vRate; u.pitch = 0.88;
+    if (selVoice) u.voice = selVoice;
+    isSpeaking = true; setOrb('S'); setWv('sp');
+    u.onend = () => { isSpeaking = false; if(sets.autoListen&&isListening){setOrb('L');setWv('listening');}else{setOrb('I');setWv('');} _processSpeak(); };
+    u.onerror = () => { isSpeaking = false; setOrb('I'); setWv(''); _processSpeak(); };
+    speechSynthesis.speak(u);
+  } catch(e) { isSpeaking = false; _speakBusy = false; }
+}
+
+function speakImmediate(text) {
+  _speakQueue = [text]; // Clear queue and play immediately
+  _speakBusy = false;
+  _processSpeak();
+}
+
 function toggleListen(){
   if(isThinking)return;
   if(isSpeaking){speechSynthesis.cancel();isSpeaking=false;}
@@ -1294,7 +1399,8 @@ function toggleListen(){
   }
 }
 
-function speak(text){
+// [REPLACED BY NEW_UTILS SPEAK ABOVE]
+function _oldSpeak_unused(text){
   if(!sets.autoSpeak)return;
   try{
     speechSynthesis.cancel();
@@ -1408,8 +1514,8 @@ REGRA DE ESTILO PESSOAL DO SENHOR:
     res.scrollIntoView({behavior:'smooth',block:'start'});
     const pat=text.match(/PADRÃO DETECTADO:\n([^\n]+)/);
     if(pat&&pat[1])addItem('relacionamento','Padrão: '+pat[1].trim(),true);
-  }catch(e){res.textContent='Senhor, erro de conexão.';res.style.display='block';}
-  btn.textContent='🔍 Analisar com Alfred';btn.disabled=false;
+  }catch(e){res.textContent='Senhor, erro de conexão: '+(e.message||'Verifique sua internet.');res.style.display='block';}
+  finally{btn.textContent='🔍 Analisar com Alfred';btn.disabled=false;}
 }
 
 // ======================== RADAR ========================
@@ -1602,6 +1708,14 @@ function init(){
       setTimeout(()=>{addMsg('Senhor, Alfred OS v3.0 inicializado.\n\nNovo: Modo Alfred Sempre Ativo (diga "Alfred ligar"), Contatos com ligação direta, 5 estilos de resposta para o relacionamento, Autoatualização assistida.\n\nToque em ⭘ LIGAR para ativar o modo sempre-ativo.','a');},700);
     }
     document.addEventListener('touchstart',()=>{try{const a=new(window.AudioContext||window.webkitAudioContext)();a.resume();a.close();}catch(e){}},{once:true});
+    // Network status
+    window.addEventListener('offline',()=>{setStat('Senhor, sem conexão com a internet.');});
+    window.addEventListener('online',()=>{setStat('Senhor, conexão restaurada.');setTimeout(()=>setStat('Aguardando o senhor'),3000);});
+    // Page visibility — pause standby if hidden
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden&&alfredModeOn&&standbyActive)stopStandby();
+      else if(!document.hidden&&alfredModeOn&&!standbyActive)setTimeout(startStandby,500);
+    });
   }catch(e){console.error('Init error:',e);}
 }
 
@@ -1632,35 +1746,59 @@ function setAlfredMode(on) {
   }
 }
 
+let _standbyRetries = 0;
+const STANDBY_MAX_RETRIES = 5;
+
 function startStandby() {
   if (standbyActive) return;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return;
+  if (!SR) { console.warn('Alfred OS: SpeechRecognition not supported'); return; }
   standbyActive = true;
-  function createRec() {
+  _standbyRetries = 0;
+  _createStandbyRec(SR);
+}
+
+function _createStandbyRec(SR) {
+  if (!alfredModeOn || !standbyActive) return;
+  // Cleanup previous instance
+  if (standbyRec) { try { standbyRec.abort(); } catch(e) {} standbyRec = null; }
+  try {
     const r = new SR();
     r.lang = 'pt-BR'; r.continuous = false; r.interimResults = false;
     r.onresult = (e) => {
       try {
+        _standbyRetries = 0;
         const t = e.results[0][0].transcript.toLowerCase().trim();
         processWakeWord(t);
       } catch(err) {}
     };
-    r.onerror = () => {};
-    r.onend = () => {
-      if (alfredModeOn && standbyActive && !isListening)
-        setTimeout(() => { try { standbyRec = createRec(); standbyRec.start(); } catch(e) {} }, 500);
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed') { stopStandby(); speak('Senhor, permissão de microfone negada. Ative em Configurações do iPhone.'); }
     };
-    return r;
+    r.onend = () => {
+      if (!alfredModeOn || !standbyActive || isListening) return;
+      _standbyRetries++;
+      if (_standbyRetries > STANDBY_MAX_RETRIES) {
+        console.warn('Alfred OS: Standby rec failed too many times, pausing 10s');
+        _standbyRetries = 0;
+        setTimeout(() => { if (alfredModeOn && standbyActive) _createStandbyRec(SR); }, 10000);
+        return;
+      }
+      const delay = Math.min(300 * _standbyRetries, 3000);
+      setTimeout(() => { if (alfredModeOn && standbyActive) _createStandbyRec(SR); }, delay);
+    };
+    standbyRec = r;
+    r.start();
+  } catch(e) {
+    standbyActive = false;
+    console.warn('Alfred OS: Could not start standby recognition:', e.message);
   }
-  standbyRec = createRec();
-  try { standbyRec.start(); } catch(e) { standbyActive = false; }
 }
 
 function stopStandby() {
   standbyActive = false;
-  if (standbyRec) try { standbyRec.abort(); } catch(e) {}
-  standbyRec = null;
+  _standbyRetries = 0;
+  if (standbyRec) { try { standbyRec.abort(); } catch(e) {} standbyRec = null; }
 }
 
 function processWakeWord(text) {
@@ -1764,24 +1902,34 @@ function callContact(c) {
     });
 }
 
+
+// XSS-safe contact callbacks (indices into contacts array)
+function _callByIdx(i){ if(i>=0&&i<contacts.length)callContact(contacts[i]); }
+function _delByIdx(i){ if(i>=0&&i<contacts.length)delContact(contacts[i].id); }
+
+function isValidPhone(ph) {
+  const clean = cleanPhone(ph);
+  return clean.length >= 8 && /^\+?[\d]{8,15}$/.test(clean);
+}
+
 function callRawNumber() {
   const num = document.getElementById('call-num').value.trim();
   if (!num) { alert('Senhor, insira o número.'); return; }
-  requestConf('📞', 'Ligar para ' + num + '?', 'Alfred abrirá o app Telefone.',
-    () => { window.location.href = 'tel:' + cleanPhone(num); });
+  const clean = cleanPhone(num);
+  if (!isValidPhone(clean)) { alert('Senhor, número inválido: ' + num + '. Use formato +55 XX XXXXX-XXXX.'); return; }
+  requestConf('📞', 'Ligar para ' + clean + '?', 'Final: ' + clean.slice(-4) + '. Alfred abrirá o app Telefone.',
+    () => { window.location.href = 'tel:' + clean; });
 }
 
 function renderContacts() {
   const el = document.getElementById('contacts-list');
   if (!el) return;
   if (!contacts.length) { el.innerHTML = '<div class="em">Nenhum contato importado</div>'; return; }
-  el.innerHTML = contacts.map(c => `
-    <div class="cnt-card">
-      <div class="cnt-ico">${c.index}</div>
-      <div style="flex:1"><div class="cnt-nm">${c.name}</div><div class="cnt-ph">${c.phone}</div></div>
-      <button class="call-b" onclick="callContact({name:'${c.name.replace(/'/g,"\'")}',phone:'${c.phone}'})">📞</button>
-      <button class="kd" style="margin-left:4px" onclick="delContact(${JSON.stringify(c.id)})">✕</button>
-    </div>`).join('');
+    // Use data-based approach to avoid XSS
+  el.innerHTML = contacts.map((c,i)=>{
+    const en=escHtml(c.name),ep=escHtml(c.phone),ei=escHtml(String(c.index));
+    return `<div class="cnt-card" data-i="${i}"><div class="cnt-ico">${ei}</div><div style="flex:1"><div class="cnt-nm">${en}</div><div class="cnt-ph">${ep}</div></div><button class="call-b" onclick="_callByIdx(${i})">📞</button><button class="kd" style="margin-left:4px" onclick="_delByIdx(${i})">✕</button></div>`;
+  }).join('');
 }
 
 function delContact(id) {
