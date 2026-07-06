@@ -149,6 +149,15 @@
     .kn{font-size:12px;font-weight:600;color:var(--text);}
     .km{font-size:9.5px;color:var(--muted);margin-top:2px;}
     .kd{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12.5px;}
+    .bib-tabs{display:flex;gap:6px;margin-bottom:10px;}
+    .bib-tab{flex:1;padding:7px 4px;background:rgba(196,162,74,0.07);border:1px solid rgba(196,162,74,0.2);border-radius:8px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+    .bib-tab.on{background:rgba(196,162,74,0.18);border-color:var(--gold);color:var(--gold);}
+    .paste-inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;margin-bottom:6px;outline:none;box-sizing:border-box;}
+    .paste-area{width:100%;min-height:200px;max-height:60vh;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:11.5px;resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;line-height:1.5;}
+    .abs-job{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(196,162,74,0.06);border:1px solid rgba(196,162,74,0.12);border-radius:8px;margin-bottom:4px;font-size:11px;}
+    .abs-job.done{border-color:rgba(76,175,80,0.3);background:rgba(76,175,80,0.05);}
+    .abs-job.error{border-color:rgba(255,90,90,0.3);background:rgba(255,90,90,0.05);}
+    .abs-job.processing{border-color:rgba(196,162,74,0.4);background:rgba(196,162,74,0.1);}
 
     /* ESCUTA — ACTIVE LISTENING */
     #escuta{background:var(--bg);}
@@ -411,18 +420,38 @@
 
   <!-- KNOWLEDGE PANEL -->
   <div id="know" class="panel">
-    <div class="ph"><div class="pt">Base de Conhecimento</div><div class="ps">Documentos absorvidos pelo Alfred</div></div>
+    <div class="ph"><div class="pt">📚 Biblioteca Alfred</div><div class="ps">Absorção ilimitada — memória permanente no dispositivo</div></div>
     <div class="pb">
-      <div style="background:rgba(196,162,74,0.05);border:1px solid rgba(196,162,74,0.18);border-radius:10px;padding:9px 11px;font-size:11px;color:rgba(196,162,74,0.8);margin-bottom:10px;line-height:1.55">Senhor, envie PDFs, livros, anotações. O Alfred absorve e consulta automaticamente.</div>
-      <div class="uz" onclick="document.getElementById('kb-inp').click()">
-        <div style="font-size:26px;margin-bottom:5px">📚</div>
-        <div style="font-size:11.5px;color:var(--muted);line-height:1.5">Toque para enviar arquivo<br><small>PDF · TXT · MD — máx. 5MB</small></div>
+      <div class="bib-tabs">
+        <button class="bib-tab on" onclick="bibTab('upload')">📁 PDF</button>
+        <button class="bib-tab" onclick="bibTab('paste')">📋 Colar</button>
+        <button class="bib-tab" onclick="bibTab('lib')">📖 Biblioteca</button>
       </div>
-      <input type="file" id="kb-inp" accept=".pdf,.txt,.md,.csv" onchange="uploadKB(event)" style="display:none">
-      <div id="kb-list"></div>
-      <div style="margin-top:12px">
-        <button class="ctrl-btn" onclick="FLASHCARD.start(null)" style="width:100%">📋 Revisar Flashcards por Voz</button>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Diga "Alfred, flashcards" para iniciar por voz</div>
+
+      <!-- Aba: Upload PDF (múltiplos, sem limite) -->
+      <div id="bib-upload">
+        <div class="uz" onclick="document.getElementById('kb-inp').click()" style="min-height:80px;margin-bottom:8px">
+          <div style="font-size:28px;margin-bottom:4px">📚</div>
+          <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Toque para selecionar PDFs<br><small style="color:rgba(196,162,74,0.7)">Múltiplos arquivos · Sem limite de tamanho · Sem limite de quantidade</small></div>
+        </div>
+        <input type="file" id="kb-inp" accept=".pdf,.txt,.md" multiple onchange="uploadKB(event)" style="display:none">
+        <div id="bib-queue"></div>
+      </div>
+
+      <!-- Aba: Colar texto ilimitado -->
+      <div id="bib-paste" style="display:none">
+        <input type="text" id="paste-title" class="paste-inp" placeholder="Título do livro ou texto (opcional)">
+        <textarea id="paste-body" class="paste-area" placeholder="Cole aqui qualquer quantidade de texto — capítulos inteiros, PDFs convertidos, anotações, transcrições... sem limite de tamanho."></textarea>
+        <button class="ctrl-btn" style="width:100%;margin-top:8px;font-weight:700" onclick="absorbPaste()">🧠 Absorver com Maestria</button>
+        <div style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:5px">O Alfred divide, analisa e sintetiza automaticamente</div>
+      </div>
+
+      <!-- Aba: Biblioteca (livros absorvidos) -->
+      <div id="bib-lib" style="display:none">
+        <div id="kb-list"></div>
+        <div style="margin-top:10px">
+          <button class="ctrl-btn" onclick="FLASHCARD.start(null)" style="width:100%">📋 Revisar Flashcards por Voz</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1635,29 +1664,27 @@ function renderMem(){
 function addTaskPrompt(){const t=prompt('Senhor, qual tarefa?');if(t&&t.trim()){addItem('tarefas',t.trim());updateDash();}}
 
 // ======================== KB OPS ========================
+// ======================== BIBLIOTECA — UPLOAD ILIMITADO ========================
 async function uploadKB(evt){
-  const file=evt.target.files[0];if(!file)return;
+  const files=Array.from(evt.target.files||[]);
   evt.target.value='';
-  if(file.size>5*1024*1024){alfAlert('Senhor, arquivo maior que 5MB.');return;}
-  setStat('Senhor, lendo '+file.name+'...');
-  try{
-    let text='';
-    if(file.name.endsWith('.pdf')&&!window.pdfFailed){text=await extractPDF(file);}
-    if(!text.trim())text=await file.text().catch(()=>'');
-    if(!text.trim()){alert('Senhor, não consegui extrair texto.');setStat('Aguardando o senhor');return;}
-    const chunks=[];
-    for(let i=0;i<text.length;i+=500){const c=text.slice(i,i+500).trim();if(c.length>50)chunks.push(c);}
-    if(!kb.docs)kb.docs=[];
-    setStat('Senhor, analisando '+file.name+' em profundidade...');
-    const meta = await deepProcessKB(text, file.name);
-    const doc = {id:Date.now(),name:file.name,size:Math.round(file.size/1024)+'KB',chunks,date:new Date().toLocaleDateString('pt-BR'),meta};
-    kb.docs.push(doc);
-    saveKB();renderKB();
-    setStat('Senhor, '+file.name+' absorvido'+(meta?' com análise completa':''));
-    if(meta)toastOk('Absorção completa: '+file.name);
-  }catch(e){alert('Senhor, erro: '+(e.message||'Arquivo inválido'));setStat('Aguardando o senhor');}
+  if(!files.length)return;
+  bibTab('upload');
+  setStat('Senhor, preparando '+files.length+' arquivo(s)...');
+  for(const file of files){
+    try{
+      setStat('Senhor, lendo '+file.name+'...');
+      let text='';
+      const nm=file.name.toLowerCase();
+      if(nm.endsWith('.pdf')){text=await extractPDF(file);}
+      if(!text.trim()){text=await file.text().catch(()=>'');}
+      if(!text.trim()){toastErr('Não consegui extrair texto: '+file.name);continue;}
+      queueAbsorb({name:file.name, text, source:'pdf', status:'waiting'});
+    }catch(e){toastErr('Erro em '+file.name+': '+(e.message||''));}
+  }
 }
 
+// Extração PDF sem limite de páginas, sem limite de tamanho
 async function extractPDF(file){
   try{
     if(typeof pdfjsLib==='undefined')return'';
@@ -1665,7 +1692,8 @@ async function extractPDF(file){
     const buf=await file.arrayBuffer();
     const pdf=await pdfjsLib.getDocument({data:buf}).promise;
     let text='';
-    for(let i=1;i<=Math.min(pdf.numPages,50);i++){
+    const total=pdf.numPages; // SEM LIMITE DE PÁGINAS
+    for(let i=1;i<=total;i++){
       const page=await pdf.getPage(i);
       const content=await page.getTextContent();
       text+=content.items.map(x=>x.str).join(' ')+'\n';
@@ -1674,31 +1702,70 @@ async function extractPDF(file){
   }catch(e){return'';}
 }
 
-function renderKB(){
+// Absorver texto colado — sem limite de tamanho
+async function absorbPaste(){
+  const titleEl=document.getElementById('paste-title');
+  const bodyEl=document.getElementById('paste-body');
+  const title=(titleEl?.value||'').trim()||'Texto '+new Date().toLocaleDateString('pt-BR');
+  const body=(bodyEl?.value||'').trim();
+  if(!body){alfAlert('Senhor, cole o texto antes de absorver.');return;}
+  queueAbsorb({name:title, text:body, source:'paste', status:'waiting'});
+  if(bodyEl)bodyEl.value='';
+  if(titleEl)titleEl.value='';
+  toastOk('Senhor, "'+title+'" adicionado à fila.');
+}
+
+// Renderizar biblioteca do IndexedDB
+async function renderKB(){
   const el=document.getElementById('kb-list');if(!el)return;
-  if(!kb.docs||!kb.docs.length){el.innerHTML='<div class="em">Senhor, nenhum documento. Envie PDFs ou TXTs.</div>';return;}
-  el.innerHTML=kb.docs.map(d=>{
-    const meta=d.meta;
-    const ico=d.name.endsWith('.pdf')?'📕':d.name.endsWith('.md')?'📝':'📄';
-    const imp=meta?.importance==='alto'?'🔴':meta?.importance==='médio'?'🟡':meta?'🟢':'';
-    const tags=meta?.tags?.slice(0,3).map(t=>`<span style="background:rgba(244,197,66,0.1);border-radius:4px;padding:1px 5px;color:var(--gold);font-size:9.5px">${escHtml(t)}</span>`).join('') || '';
+  let idbBooks=[];
+  try{idbBooks=await ALFRED_DB.getAll();}catch(e){}
+  const akCount=Object.keys(AK_LIBRARY).length;
+  const total=idbBooks.length+akCount;
+  if(!idbBooks.length){
+    el.innerHTML=`<div class="em">Senhor, biblioteca vazia. Envie PDFs ou cole textos.</div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">${akCount} livros no núcleo Alfred<br>Adicione seus livros nas abas acima</div>`;
+    return;
+  }
+  el.innerHTML=`<div style="font-size:11px;color:var(--gold);margin-bottom:10px;text-align:center;font-weight:700">📚 ${idbBooks.length} absorvidos + ${akCount} núcleo = ${total} total</div>`+
+  idbBooks.map(b=>{
+    const imp=b.importance==='alto'?'🔴':b.importance==='médio'?'🟡':'🟢';
+    const domStr=(b.domains||[]).slice(0,5).map(d=>`<span style="background:rgba(196,162,74,0.1);border-radius:4px;padding:1px 5px;color:var(--gold);font-size:9px;margin-right:2px">${d}</span>`).join('');
+    const sz=b.size?Math.round(b.size/1000)+'k chars':'';
     return `<div class="ki" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:9px;align-items:center">
-        <div class="kb-ico">${ico}</div>
-        <div style="flex:1">
-          <div class="kn">${escHtml(d.name)}</div>
-          <div class="km">${(d.chunks||[]).length} fragmentos · ${d.size} · ${d.date} ${imp?imp+' '+( meta?.category||''):'(sem análise)'}</div>
-          ${tags?`<div style="margin-top:3px">${tags}</div>`:''}
+        <div style="font-size:20px">📚</div>
+        <div style="flex:1;min-width:0">
+          <div class="kn" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(b.title||b.key)}</div>
+          <div class="km">${b.author?escHtml(b.author)+' · ':''} ${b.dateAdded||''} ${imp} ${sz?'· '+sz:''}</div>
+          ${domStr?`<div style="margin-top:3px">${domStr}</div>`:''}
         </div>
-        <button class="kd" onclick="delKB(${d.id})">✕</button>
+        <button class="kd" onclick="delIDB('${escHtml(b.key)}')">✕</button>
       </div>
-      ${meta?.summary?`<div style="font-size:11px;color:var(--muted);padding:6px 4px;border-top:1px solid var(--border);margin-top:6px;line-height:1.5">${escHtml(meta.summary)}</div>`:''}
-      ${meta?.keyQuote?`<div style="font-size:10.5px;color:var(--gold);font-style:italic;padding:4px 4px">"${escHtml(meta.keyQuote)}"</div>`:''}
-      ${meta?.flashcards?.length?`<div style="font-size:10px;color:var(--c);padding:2px 4px">📋 ${meta.flashcards.length} flashcards gerados</div>`:''}
+      ${b.summary?`<div style="font-size:11px;color:var(--muted);padding:6px 4px;border-top:1px solid var(--border);margin-top:6px;line-height:1.5">${escHtml(b.summary)}</div>`:''}
+      ${b.keyQuote?`<div style="font-size:10.5px;color:var(--gold);font-style:italic;padding:4px 4px">"${escHtml(b.keyQuote)}"</div>`:''}
+      ${b.flashcards?.length?`<div style="font-size:10px;color:var(--c);padding:2px 4px">📋 ${b.flashcards.length} flashcards</div>`:''}
     </div>`;
   }).join('');
 }
-function delKB(id){kb.docs=kb.docs.filter(d=>d.id!==id);saveKB();renderKB();}
+
+async function delIDB(key){
+  if(!confirm('Senhor, remover "'+key+'" da biblioteca?'))return;
+  try{await ALFRED_DB.del(key);delete window._idbLib[key];renderKB();}catch(e){alfAlert('Erro ao remover.');}
+}
+function delKB(id){kb.docs=(kb.docs||[]).filter(d=>d.id!==id);saveKB();}
+
+// Trocar aba da biblioteca
+function bibTab(t){
+  ['upload','paste','lib'].forEach(id=>{
+    const el=document.getElementById('bib-'+id);
+    if(el)el.style.display=id===t?'block':'none';
+  });
+  document.querySelectorAll('.bib-tab').forEach((b,i)=>{
+    b.classList.toggle('on',['upload','paste','lib'][i]===t);
+  });
+  if(t==='lib')renderKB();
+}
 
 // ======================== UI ========================
 function addMsg(text,role){
@@ -1781,7 +1848,8 @@ function init(){
     const pt=ld('profile_text','');
     const pi=document.getElementById('profile-i');if(pi)pi.value=pt;
     Object.keys(sets).forEach(k=>{const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');});
-    renderMem();renderKB();updateDash();
+    loadIDBLibrary(); // Carrega livros do IndexedDB em memória
+  renderMem();renderKB();updateDash();
     // Restore Alfred mode and contacts
     renderContacts();
     if(alfredModeOn){
@@ -2397,25 +2465,35 @@ function getKB(text){
   const order=['rel','ps','men','phi','com','str','hill','neg','fin','hab','pro','lea','sau','ait','sof','sec','teo','pol'];
   const parts=order.filter(d=>matched.has(d)&&AK[d]).map(d=>AK[d]);
 
-  // — AK_LIBRARY: score de relevância por livro —
+  // — AK_LIBRARY estático: score de relevância —
   const scored=Object.entries(AK_LIBRARY).map(([key,book])=>{
     let score=0;
-    // Tag match direto (maior peso)
     if(book.tags&&book.tags.test(q))score+=10;
-    // Título/autor no texto
     if(q.includes((book.title||'').toLowerCase().slice(0,8)))score+=8;
     if(q.includes((book.author||'').toLowerCase().split(' ')[0]))score+=6;
-    // Domain overlap
     if(book.domains)book.domains.forEach(d=>{if(matched.has(d))score+=3;});
     return{key,book,score};
   }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
 
-  // Máximo 4 livros mais relevantes por consulta (evita overflow de contexto)
   const libParts=scored.slice(0,4).map(({book})=>
     `[${book.title} — ${book.author}] ${book.core}${book.apps?` | APLICAÇÕES:${book.apps}`:''}`
   );
 
-  const all=[...parts,...libParts];
+  // — IndexedDB library: score dinâmico (livros absorvidos pelo senhor) —
+  const idbScored=Object.values(window._idbLib||{}).map(book=>{
+    let score=0;
+    try{const rx=book.tagPattern?new RegExp(book.tagPattern,'i'):null;if(rx&&rx.test(q))score+=10;}catch(e){}
+    if(book.title&&q.includes(book.title.toLowerCase().slice(0,8)))score+=8;
+    if(book.author&&q.includes(book.author.toLowerCase().split(' ')[0]))score+=6;
+    if(book.domains)book.domains.forEach(d=>{if(matched.has(d))score+=3;});
+    return{book,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+
+  const idbParts=idbScored.slice(0,4).map(({book})=>
+    `[${book.title||book.key} — ${book.author||''}] ${book.core||''}${book.apps?` | APLICAÇÕES:${book.apps}`:''}`
+  );
+
+  const all=[...parts,...libParts,...idbParts];
   if(!all.length)return'';
   return all.join(' | ');
 }
@@ -2597,32 +2675,192 @@ function routeVoiceCommand(text) {
 
 
 // ================================================================
-// ALFRED OS — KNOWLEDGE BLACK BELT
-// Absorção profunda de arquivos com geração de metadata via IA
+// ALFRED OS — KNOWLEDGE BLACK BELT v2
+// Absorção ilimitada: IndexedDB + Fila Assíncrona + Maestria Total
 // ================================================================
-async function deepProcessKB(text, fileName) {
-  const key = apiKey();
-  if (!key) return null; // Skip deep processing if no API key
-  const sample = text.slice(0, 4000); // First 4000 chars for analysis
-  const BELT_SYS = `Você é o módulo Alfred Knowledge Black Belt.
-Analise o trecho de documento e retorne APENAS um JSON válido (sem markdown, sem blocos de código).
-Formato exato:
-{"summary":"resumo executivo 2-3 frases","keyConcepts":["conceito 1","conceito 2","conceito 3"],"practicalApps":["aplicação prática 1","aplicação 2"],"flashcards":[{"q":"pergunta 1","a":"resposta 1"},{"q":"pergunta 2","a":"resposta 2"}],"tags":["tag1","tag2","tag3"],"category":"categoria principal","importance":"alto|médio|baixo","forBusiness":"como aplica em negócios","forRelationship":"como aplica em relacionamento","forDecision":"como aplica em decisões","mainAuthor":"autor principal se detectado","keyQuote":"frase-chave mais importante"}`;
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:BELT_SYS,messages:[{role:'user',content:'Documento: '+fileName+'\n\n'+sample}]})
+
+// --- IndexedDB: storage permanente no dispositivo, sem limite ---
+const ALFRED_DB = {
+  name:'AlfredBib_v1', ver:1, store:'livros', _db:null,
+  async open(){
+    if(this._db)return this._db;
+    return new Promise((res,rej)=>{
+      const req=indexedDB.open(this.name,this.ver);
+      req.onupgradeneeded=e=>{
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains(this.store))
+          db.createObjectStore(this.store,{keyPath:'key'});
+      };
+      req.onsuccess=e=>{this._db=e.target.result;res(this._db);};
+      req.onerror=e=>rej(e.target.error);
     });
-    const data = await res.json();
-    const raw = data.content?.[0]?.text || '{}';
-    return JSON.parse(raw.replace(/^```json\n?|^```\n?|\n?```$/g,'').trim());
-  } catch(e) { return null; }
+  },
+  async save(b){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction(this.store,'readwrite');tx.objectStore(this.store).put(b);tx.oncomplete=()=>res(b);tx.onerror=e=>rej(e.target.error);});},
+  async getAll(){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction(this.store,'readonly');const r=tx.objectStore(this.store).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=e=>rej(e.target.error);});},
+  async del(k){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction(this.store,'readwrite');tx.objectStore(this.store).delete(k);tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});},
+  async count(){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction(this.store,'readonly');const r=tx.objectStore(this.store).count();r.onsuccess=()=>res(r.result);r.onerror=e=>rej(e.target.error);});}
+};
+
+// Cache em memória para getKB() síncrono
+window._idbLib = {};
+async function loadIDBLibrary(){
+  try{const all=await ALFRED_DB.getAll();window._idbLib={};all.forEach(b=>{window._idbLib[b.key]=b;});}
+  catch(e){window._idbLib={};}
 }
 
-function renderKBMeta(meta) {
-  if (!meta) return '';
-  const imp = meta.importance==='alto'?'🔴':meta.importance==='médio'?'🟡':'🟢';
+// --- Fila de absorção: processa 1 por vez, nunca perde jobs ---
+const _absQueue=[];
+let _absBusy=false;
+
+function queueAbsorb(job){
+  _absQueue.push(job);
+  renderAbsQueue();
+  runAbsQueue();
+}
+
+async function runAbsQueue(){
+  if(_absBusy||!_absQueue.length)return;
+  _absBusy=true;
+  const job=_absQueue[0];
+  job.status='processing';
+  renderAbsQueue();
+  try{
+    await processAbsJob(job);
+    job.status='done';
+  }catch(e){
+    job.status='error';
+    job.error=e.message||'Erro desconhecido';
+  }
+  _absQueue.shift();
+  _absBusy=false;
+  renderAbsQueue();
+  await runAbsQueue();
+}
+
+async function processAbsJob(job){
+  const text=job.text||'';
+  const name=job.name||'Sem título';
+  setStat('Senhor, absorvendo: '+name+'...');
+  const meta=await absorveMaestria(text,name);
+  if(!meta||!meta.key)throw new Error('Falha na extração — verifique a API Key');
+  const book={
+    key:meta.key||slugify(name),
+    title:meta.title||name,
+    author:meta.author||'',
+    year:meta.year||new Date().getFullYear(),
+    domains:Array.isArray(meta.domains)?meta.domains:['ps'],
+    tagPattern:meta.tagPattern||meta.tag||'',
+    core:meta.core||'',
+    apps:meta.apps||'',
+    keyQuote:meta.keyQuote||'',
+    summary:meta.summary||'',
+    flashcards:Array.isArray(meta.flashcards)?meta.flashcards:[],
+    importance:meta.importance||'médio',
+    dateAdded:new Date().toLocaleDateString('pt-BR'),
+    source:job.source||'pdf',
+    size:text.length,
+    status:'ok'
+  };
+  await ALFRED_DB.save(book);
+  window._idbLib[book.key]=book;
+  setStat('Senhor, '+name+' absorvido com maestria.');
+  toastOk('✅ '+name+' absorvido');
+}
+
+function renderAbsQueue(){
+  const el=document.getElementById('bib-queue');if(!el)return;
+  if(!_absQueue.length){el.innerHTML='';return;}
+  el.innerHTML=_absQueue.map(j=>{
+    const ic=j.status==='processing'?'⚡':j.status==='done'?'✅':j.status==='error'?'❌':'⏳';
+    const lb=j.status==='processing'?'processando...':j.status==='done'?'concluído':j.status==='error'?'erro: '+(j.error||''):'aguardando';
+    return `<div class="abs-job ${j.status}">
+      <span>${ic}</span>
+      <span style="flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(j.name)}</span>
+      <span style="color:var(--muted);font-size:10px;flex-shrink:0">${lb}</span>
+    </div>`;
+  }).join('');
+}
+
+// --- Prompt mestre de absorção com maestria ---
+const ABSORB_SYS=`Você é Alfred Knowledge Absorber — absorção com máxima maestria.
+Analise o texto e retorne APENAS JSON válido. Sem markdown, sem blocos de código, sem texto antes ou depois.
+{
+  "key":"slug_snake_case_unico",
+  "title":"Título completo",
+  "author":"Autor(es)",
+  "year":2024,
+  "domains":["dom1","dom2"],
+  "tagPattern":"palavra1|palavra2|autor|conceito-central",
+  "core":"FRAMEWORKS E PRINCÍPIOS em formato denso. Mínimo 800 chars. Inclua: NOME_FRAMEWORK(autor): descrição. Leis, modelos mentais, princípios centrais, dinâmicas-chave, insights mais poderosos.",
+  "apps":"APLICAÇÕES PRÁTICAS em 3 áreas: (1)negócios/delivery/marketing/agência (2)relacionamento ansioso-evitativo (3)desenvolvimento pessoal/disciplina. Mínimo 300 chars.",
+  "keyQuote":"frase mais poderosa e memorável do texto",
+  "summary":"resumo executivo em 2 frases densas",
+  "flashcards":[{"q":"pergunta","a":"resposta concisa"}],
+  "importance":"alto|médio|baixo"
+}
+Domínios: rel,ps,phi,teo,neg,fin,hab,lea,str,men,com,pro,sau,ait,sof,sec,pol,hill
+Retorne APENAS o JSON. Nada antes, nada depois.`;
+
+// Absorção com maestria: divide estrategicamente livros grandes
+async function absorveMaestria(text,name){
+  const k=apiKey();if(!k)return null;
+  const len=text.length;
+  const t1=text.slice(0,Math.min(7000,len));
+  const t2=len>14000?text.slice(Math.floor(len*0.38),Math.floor(len*0.38)+7000):'';
+  const t3=len>10000?text.slice(Math.max(0,len-6000)):'';
+  if(len<=9000){return await callAbsorbAPI(name,t1+(t3?'\n\n[FIM DO TEXTO]\n'+t3:''));}
+  if(len<=20000){
+    const p1=await callAbsorbAPI(name+'[início]',t1);
+    const p3=await callAbsorbAPI(name+'[fim]',t3||t1);
+    return(p1&&p3)?await sintetizarPartes([p1,p3],name,k):(p1||p3);
+  }
+  const parts=[];
+  const p1=await callAbsorbAPI(name+'[início]',t1);if(p1)parts.push(p1);
+  if(t2){const p2=await callAbsorbAPI(name+'[meio]',t2);if(p2)parts.push(p2);}
+  if(t3){const p3=await callAbsorbAPI(name+'[fim]',t3);if(p3)parts.push(p3);}
+  if(!parts.length)return null;
+  if(parts.length===1)return parts[0];
+  return sintetizarPartes(parts,name,k);
+}
+
+async function callAbsorbAPI(name,text){
+  const k=apiKey();if(!k)return null;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:ABSORB_SYS,messages:[{role:'user',content:'Texto do livro "'+name+'":'+String.fromCharCode(10)+String.fromCharCode(10)+text}]})
+    });
+    const d=await r.json();
+    const raw=(d.content?.[0]?.text||'{}').replace(/^```json\n?|^```\n?|\n?```$/g,'').trim();
+    return JSON.parse(raw);
+  }catch(e){return null;}
+}
+
+async function sintetizarPartes(partes,name,k){
+  const SINT=`Você é Alfred Knowledge Synthesizer. Receberá análises parciais do mesmo livro e deve sintetizar em UMA análise final completa. Retorne APENAS JSON válido, sem markdown. Regras: key/title/author/year da primeira parte. domains=união de todos. tagPattern=pipe-separated union. core=síntese densa mínimo 1000 chars. apps=síntese mínimo 400 chars. keyQuote e summary: os melhores. flashcards: até 8 melhores. importance: a maior.`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:SINT,messages:[{role:'user',content:'Livro: '+name+String.fromCharCode(10)+String.fromCharCode(10)+partes.map((p,i)=>`PARTE ${i+1}:${String.fromCharCode(10)}${JSON.stringify(p)}`).join(String.fromCharCode(10)+String.fromCharCode(10))}]})
+    });
+    const d=await r.json();
+    const raw=(d.content?.[0]?.text||'{}').replace(/^```json\n?|^```\n?|\n?```$/g,'').trim();
+    return JSON.parse(raw);
+  }catch(e){return partes[0];}
+}
+
+function slugify(s){
+  return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'livro_'+Date.now();
+}
+
+// deepProcessKB: mantido por compatibilidade
+async function deepProcessKB(text,fileName){return await callAbsorbAPI(fileName,text.slice(0,5000));}
+
+function renderKBMeta(meta){
+  if(!meta)return'';
+  const imp=meta.importance==='alto'?'🔴':meta.importance==='médio'?'🟡':'🟢';
   return `<div style="background:rgba(196,162,74,0.07);border:1px solid rgba(196,162,74,0.2);border-radius:10px;padding:10px;margin-top:8px;font-size:11.5px;">
     <div style="font-weight:700;color:var(--gold);margin-bottom:6px">${imp} ${meta.category||'Geral'} ${meta.mainAuthor?'· '+meta.mainAuthor:''}</div>
     <div style="color:var(--text);margin-bottom:5px">${meta.summary||''}</div>
