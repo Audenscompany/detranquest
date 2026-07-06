@@ -420,6 +420,10 @@
       </div>
       <input type="file" id="kb-inp" accept=".pdf,.txt,.md,.csv" onchange="uploadKB(event)" style="display:none">
       <div id="kb-list"></div>
+      <div style="margin-top:12px">
+        <button class="ctrl-btn" onclick="FLASHCARD.start(null)" style="width:100%">📋 Revisar Flashcards por Voz</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px">Diga "Alfred, flashcards" para iniciar por voz</div>
+      </div>
     </div>
   </div>
 
@@ -1378,10 +1382,28 @@ let _speakQueue = [];
 let _speakBusy = false;
 
 function speak(text) {
-  if (!sets.autoSpeak) return;
+  if (!sets.autoSpeak || !text||!text.trim()) return;
   try {
-    _speakQueue.push(text);
-    if (!_speakBusy) _processSpeak();
+    if (CONV && CONV.speak) {
+      // Stop any current speech first
+      if (CONV.state === 'speaking') CONV.stop();
+      CONV.speak(text);
+    } else {
+      // Fallback to queue
+      _speakQueue.push(text); if(!_speakBusy)_processSpeak();
+    }
+  } catch(e) {
+    try { _speakQueue.push(text); if(!_speakBusy)_processSpeak(); } catch(e2){}
+  }
+}
+
+function speakImmediate(text) {
+  // For urgent messages — interrupts current speech
+  if (!text||!text.trim()) return;
+  try {
+    if(CONV)CONV.stop();
+    speechSynthesis.cancel();
+    _speakDirect(text, null);
   } catch(e) {}
 }
 
@@ -1450,6 +1472,8 @@ async function handleInput(msg){
   addMsg(msgTrim,'u');
   // Track behavioral patterns
   BEHAV.add(msgTrim, currentMode);
+  // Flashcard voice routing (highest priority when active)
+  if (FLASHCARD.active && FLASHCARD.handleVoice(msgTrim)) return;
   // Check for feedback acceptance
   if(ld('behavPendingFeedback',false)&&msgTrim.toLowerCase().match(/^(sim|pode|claro|vai|quero|ok|positivo)/)){
     await generateBehaviorFeedback(); return;
@@ -1894,6 +1918,236 @@ setInterval(async () => {
   }
 }, 15 * 60 * 1000);
 
+
+// ================================================================
+// ALFRED OS — NATURAL CONVERSATION ENGINE v4
+// Interruption, clarification, continue, flashcards
+// ================================================================
+
+let _interruptRec = null;
+let _interruptActive = false;
+
+function _speakDirect(text, onEnd) {
+  try {
+    speechSynthesis.cancel();
+    const clean = (text||'').replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27FF}]/gu,'');
+    if (!clean.trim()) { if(onEnd)onEnd(); return; }
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'pt-BR'; u.rate = vRate; u.pitch = 0.88;
+    if (selVoice) u.voice = selVoice;
+    u.onend = ()=>{ if(onEnd)onEnd(); };
+    u.onerror = ()=>{ if(onEnd)onEnd(); };
+    speechSynthesis.speak(u);
+  } catch(e) { if(onEnd)onEnd(); }
+}
+
+function _startInterrupt() {
+  if (_interruptActive) return;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) return;
+  _interruptActive = true;
+  function mk() {
+    const r = new SR();
+    r.lang = 'pt-BR'; r.continuous = false; r.interimResults = false;
+    r.onresult = (e) => {
+      try { _handleInterrupt(e.results[0][0].transcript.toLowerCase().trim()); } catch(x){}
+    };
+    r.onerror = ()=>{};
+    r.onend = ()=>{
+      if (_interruptActive && CONV.state==='speaking')
+        setTimeout(()=>{ try{ _interruptRec=mk(); _interruptRec.start(); }catch(x){} },200);
+    };
+    return r;
+  }
+  _interruptRec = mk();
+  try { _interruptRec.start(); } catch(e) { _interruptActive=false; }
+}
+
+function _stopInterrupt() {
+  _interruptActive = false;
+  if (_interruptRec) { try { _interruptRec.abort(); } catch(e){} _interruptRec=null; }
+}
+
+function _handleInterrupt(text) {
+  const t = text.toLowerCase().trim();
+  if (/^(para|espera|aguarda|stop|alto|calma|momento|para alfred|espera alfred)/.test(t)) {
+    CONV.interrupt();
+    _speakDirect('Senhor.', null);
+    addMsg('(Alfred pausado — diga "continua" para retomar)', 'a');
+    return;
+  }
+  if (/^(continua|pode continuar|continue|segue|siga|vai alfred|pode ir|ok continua)/.test(t)) {
+    CONV.continue(); return;
+  }
+  if (/^(repete|de novo|repetir|pode repetir|repetir isso)/.test(t)) {
+    CONV.repeat(); return;
+  }
+  if (/^(mais devagar|fala mais devagar|devagar)/.test(t)) {
+    vRate=Math.max(0.5,vRate-0.15); sv('voiceRate',vRate);
+    CONV.interrupt(); _speakDirect('Senhor.',()=>CONV.continue()); return;
+  }
+  if (/^(mais rapido|fala mais rapido|acelera)/.test(t)) {
+    vRate=Math.min(1.8,vRate+0.15); sv('voiceRate',vRate);
+    CONV.interrupt(); _speakDirect('Senhor.',()=>CONV.continue()); return;
+  }
+  if (/^(proximo|proxima|pula|passa|skip|avanca)/.test(t)) {
+    CONV.interrupt();
+    if (FLASHCARD.active) FLASHCARD.next();
+    return;
+  }
+  if (/como assim|o que (quer|quis) dizer|explica (mais|isso|melhor)|nao entendi|o que significa/.test(t)) {
+    CONV.interrupt();
+    const last = CONV.getLastContext();
+    if (last) {
+      addMsg('(pediu esclarecimento)', 'u');
+      callAlfred('Explique de forma mais simples o que voce acabou de dizer: "'+last+'"').then(reply=>{
+        addMsg(reply,'a'); CONV.speak(reply);
+      });
+    }
+    return;
+  }
+  // New input while Alfred was speaking
+  if (t.length>3) {
+    CONV.interrupt();
+    addMsg(text,'u');
+    BEHAV.add(text,currentMode);
+    callAlfred(text).then(reply=>{ addMsg(reply,'a'); CONV.speak(reply); });
+  }
+}
+
+const CONV = {
+  state: 'idle',
+  chunks: [], idx: 0, history: [],
+
+  speak(text) {
+    if (!text||!text.trim()) return;
+    speechSynthesis.cancel();
+    this.chunks = this._split(text);
+    this.idx = 0; this.history = [];
+    this.state = 'speaking';
+    isSpeaking = true;
+    setOrb('S'); setWv('sp');
+    this._next();
+    _startInterrupt();
+  },
+
+  _split(text) {
+    return text
+      .replace(/([.!?:])\s*\n/g,'$1|||')
+      .replace(/([.!?])\s+(?=[A-Z])/g,'$1|||')
+      .split('|||')
+      .map(s=>s.trim()).filter(s=>s.length>2);
+  },
+
+  _next() {
+    if (this.idx>=this.chunks.length||this.state!=='speaking') {
+      this.state='idle'; isSpeaking=false; _stopInterrupt();
+      if(sets.autoListen&&isListening){setOrb('L');setWv('listening');}
+      else{setOrb('I');setWv('');}
+      return;
+    }
+    const chunk=this.chunks[this.idx];
+    this.history.push(chunk);
+    if(this.history.length>5)this.history.shift();
+    this.idx++;
+    _speakDirect(chunk,()=>{ if(this.state==='speaking')this._next(); });
+  },
+
+  interrupt() {
+    this.state='paused'; isSpeaking=false;
+    speechSynthesis.cancel(); _stopInterrupt();
+    setOrb(isListening?'L':'I'); setWv(isListening?'listening':'');
+  },
+
+  continue() {
+    if(this.state!=='paused'){_speakDirect('Senhor, nao havia nada pausado.',null);return;}
+    if(this.idx>=this.chunks.length){_speakDirect('Senhor, ja terminei.',null);this.state='idle';return;}
+    this.state='speaking'; isSpeaking=true;
+    setOrb('S'); setWv('sp');
+    this._next(); _startInterrupt();
+  },
+
+  repeat() {
+    if(!this.history.length)return;
+    this.idx=Math.max(0,this.idx-1);
+    if(this.state!=='speaking'){this.state='speaking';isSpeaking=true;}
+    setOrb('S');setWv('sp');
+    this._next(); _startInterrupt();
+  },
+
+  stop() {
+    this.state='idle'; isSpeaking=false;
+    this.chunks=[];this.idx=0;
+    speechSynthesis.cancel(); _stopInterrupt();
+    setOrb(isListening?'L':'I'); setWv(isListening?'listening':'');
+  },
+
+  getLastContext() { return this.history.slice(-2).join(' '); }
+};
+
+// FLASHCARD SESSION (VOICE-DRIVEN SPACED REPETITION)
+const FLASHCARD = {
+  active:false, cards:[], idx:0, docName:'', score:{correct:0,skip:0},
+
+  start(docName) {
+    let cards=[];
+    for(const doc of(kb.docs||[])){
+      if(!docName||doc.name.toLowerCase().includes((docName||'').toLowerCase())){
+        if(doc.meta&&doc.meta.flashcards&&doc.meta.flashcards.length)
+          cards.push(...doc.meta.flashcards.map(c=>({...c,source:doc.name})));
+      }
+    }
+    cards=cards.sort(()=>Math.random()-0.5);
+    if(!cards.length){
+      const msg='Senhor, nao encontrei flashcards. Envie um PDF pela aba Saber para gerar automaticamente.';
+      addMsg(msg,'a');CONV.speak(msg);return;
+    }
+    this.cards=cards;this.idx=0;this.active=true;this.score={correct:0,skip:0};
+    const intro=`Senhor, ${cards.length} flashcards carregados${docName?' de '+docName:''}. Diga: "resposta" para ver a resposta, "proximo" para avancar, "pula" para pular, "para" para encerrar. Comecando.`;
+    addMsg(intro,'a');CONV.speak(intro);
+    setTimeout(()=>this.askCurrent(),3500);
+  },
+
+  askCurrent(){
+    if(!this.active||this.idx>=this.cards.length){this.end();return;}
+    const c=this.cards[this.idx];
+    const q=`Pergunta ${this.idx+1} de ${this.cards.length}: ${c.q}`;
+    addMsg(q,'a');CONV.speak(q);
+  },
+
+  showAnswer(){
+    if(!this.active||this.idx>=this.cards.length)return;
+    const c=this.cards[this.idx];
+    addMsg('Resposta: '+c.a,'a');CONV.speak('Resposta: '+c.a);
+    setTimeout(()=>{
+      CONV.speak('Diga "proximo" para avancar.');
+    },Math.max(2000,c.a.length*55));
+  },
+
+  next(){
+    this.score.correct++;this.idx++;
+    if(this.idx>=this.cards.length){this.end();return;}
+    setTimeout(()=>this.askCurrent(),600);
+  },
+
+  skip(){this.score.skip++;this.next();},
+
+  end(){
+    this.active=false;
+    const msg=`Senhor, sessao encerrada. ${this.idx} de ${this.cards.length} cards. ${this.score.skip} pulados.`;
+    addMsg(msg,'a');CONV.speak(msg);
+  },
+
+  handleVoice(text){
+    const t=text.toLowerCase();
+    if(/^(resposta|ver resposta|qual e|qual a resposta|nao sei)/.test(t)){this.showAnswer();return true;}
+    if(/^(proximo|proxima|pula|passa|skip|continua|certo|estava certo|entendi)/.test(t)){this.next();return true;}
+    if(/^(para|encerrar|fim|chega|fechar|sair)/.test(t)){this.end();return true;}
+    if(/^(repete|de novo|repetir)/.test(t)){this.askCurrent();return true;}
+    return false;
+  }
+};
+
 async function generateBehaviorFeedback() {
   const snap = ld('behavSnapshot', null);
   if (!snap) { addMsg('Senhor, ainda não tenho dados suficientes para gerar feedback. Continue usando o Alfred.', 'a'); return; }
@@ -2121,6 +2375,10 @@ function processWakeWord(text) {
     if (!isListening) { toggleListen(); }
     return;
   }
+  // Continue paused speech
+  if (text.match(/^(continua|pode continuar|retoma|continue alfred)/)) {
+    CONV.continue(); return;
+  }
   // Deactivate
   if (text.match(/^alfred[,\s]*(desligar?|parar?|pausar?|silenciar?)/)) {
     setAlfredMode(false);
@@ -2172,6 +2430,12 @@ const VOICE_ROUTES = [
   {p:/ativ[ae].*escuta|modo escuta|começar.*ouvir/i, fn: ()=>{swp('escuta');startSession();}},
   {p:/par.*escuta|encerr.*sessão|para.*ouvir/i, fn: ()=>stopSession()},
   {p:/(?:me dê|quero|pode.*dar|gerar).*feedback|como (?:eu|o senhor) está|como estou me saindo|análise.*comportamento|padrão.*comportamento/i, fn: ()=>generateBehaviorFeedback()},
+  {p:/flashcard|revisar.*card|treinar.*card|cards.*de|começar.*revisão|rever.*flashcard/i, fn: (t)=>{
+    const m=t.match(/(?:de|sobre|do|da)\s+(.+)/);
+    FLASHCARD.start(m?m[1]:null);
+  }},
+  {p:/^(continua|continue|pode continuar|retoma|vai alfred)/i, fn: ()=>CONV.continue()},
+  {p:/^(para alfred|espera alfred|pause alfred)/i, fn: ()=>{CONV.interrupt();addMsg('Alfred pausado.','a');}},
   {p:/modo mentalista|analisa.*comportamento.*(?:dele|dela|deles)|leitura.*sinais/i, fn: ()=>setMode('analista')},
   {p:/modo.*política|analisa.*política|me explica.*política/i, fn: ()=>{setMode('professor'); speak('Senhor, modo política ativo. O senhor pode pedir análise de qualquer tema político e Alfred apresentará perspectivas equilibradas.')}},
   // Alfred mode
