@@ -248,6 +248,13 @@
 
     /* KEYFRAMES */
 
+
+    /* TOAST NOTIFICATION */
+    #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(20,15,24,0.95);border:1px solid var(--c);border-radius:12px;padding:10px 18px;font-size:12.5px;color:var(--text);z-index:9990;opacity:0;transition:all 0.35s ease;pointer-events:none;max-width:90vw;text-align:center;backdrop-filter:blur(10px);}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    #toast.err{border-color:var(--r);color:var(--r);}
+    #toast.ok{border-color:var(--g);color:var(--g);}
+
     /* ALFRED MODE BADGE */
     #alf-badge{position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(220,25,50,0.93);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:white;font-size:9px;font-weight:800;letter-spacing:2px;padding:4px 18px 5px;border-radius:0 0 12px 12px;z-index:7000;display:none;cursor:pointer;white-space:nowrap;}
     #alf-badge.show{display:block;}
@@ -280,6 +287,8 @@
 </head>
 <body>
 <div id="root">
+  
+  <div id="toast"></div>
   <div id="alf-badge" onclick="setAlfredMode(false)">🔴 ALFRED ATIVO — toque para desligar</div>
 
   <!-- AUTH -->
@@ -729,7 +738,7 @@ async function tryBioAuto(){
 
 async function tryBio(){
   try{
-    if(!window.PublicKeyCredential){alert('Biometria não disponível.');return;}
+    if(!window.PublicKeyCredential){alfAlert('Biometria não disponível.');return;}
     const credId=localStorage.getItem('alf_credId');
     const challenge=crypto.getRandomValues(new Uint8Array(32));
     if(!credId){
@@ -810,7 +819,9 @@ const TONES={
 };
 let currentMode='conversa',currentTone='estrategico';
 
-function buildSys(){
+function buildSys(extraCtx){
+  const kbInject=extraCtx?getKB(extraCtx):'';
+
   const t=TONES[currentTone]||TONES.estrategico;
   const mc=buildMC();
   return`Você é Alfred OS — assistente pessoal estratégico exclusivo.
@@ -926,7 +937,7 @@ async function callAlfred(userMsg,maxTok,customSys){
   const now=Date.now();
   if(now-_apiLastErr<API_COOLDOWN)return'Senhor, aguarde um momento antes de tentar novamente.';
   const kbCtx=searchKB(userMsg);
-  const sys=(customSys||buildSys())+(kbCtx?'\n\nCONHECIMENTO RELEVANTE:\n'+kbCtx:'');
+  const sys=(customSys||buildSys(userMsg))+(kbCtx?'\n\nDOC RELEVANTE:\n'+kbCtx:'');
   const hints={decisao:'[MODO DECISÃO — use formato completo 7 componentes]\n\n',relacao:'[MODO RELAÇÃO — análise Alfred de relacionamento]\n\n',analista:'[MODO ANALISTA — formato Fato/Interpretação/Risco/Oportunidade/Ação]\n\n',professor:'[MODO PROFESSOR — formato didático 5 componentes]\n\n',radar:'[MODO RADAR — formato radar diário 6 componentes]\n\n'};
   const hint=hints[currentMode]||'';
   const msgs=[...hist.slice(-8).map(m=>({role:m.role,content:m.content})),{role:'user',content:hint+userMsg}];
@@ -1258,7 +1269,7 @@ function genCalEvent(){
   const title=document.getElementById('cal-title').value.trim()||'Evento Alfred OS';
   const date=document.getElementById('cal-date').value;
   const time=document.getElementById('cal-time').value||'09:00';
-  if(!date){alert('Senhor, selecione a data do evento.');return;}
+  if(!date){alfAlert('Senhor, selecione a data do evento.');return;}
   const[y,mo,d]=date.split('-').map(Number);
   const[h,m]=time.split(':').map(Number);
   const start=new Date(y,mo-1,d,h,m);
@@ -1287,7 +1298,7 @@ function genReminder(){
   const title=document.getElementById('rem-title').value.trim()||'Lembrete Alfred';
   const date=document.getElementById('rem-date').value;
   const time=document.getElementById('rem-time').value||'09:00';
-  if(!date){alert('Senhor, selecione a data do lembrete.');return;}
+  if(!date){alfAlert('Senhor, selecione a data do lembrete.');return;}
   const[y,mo,d]=date.split('-').map(Number);
   const[h,m]=time.split(':').map(Number);
   const dt=new Date(y,mo-1,d,h,m);
@@ -1298,7 +1309,7 @@ function genReminder(){
 
 function runShortcut(){
   const n=document.getElementById('shortcut-name').value.trim();
-  if(!n){alert('Senhor, insira o nome do atalho.');return;}
+  if(!n){alfAlert('Senhor, insira o nome do atalho.');return;}
   window.location.href='shortcuts://run-shortcut?name='+encodeURIComponent(n);
 }
 
@@ -1343,6 +1354,20 @@ function setupRec(){
   r.onend=()=>{if(isListening&&!isSpeaking&&!isThinking)setTimeout(()=>{try{r.start();}catch(e){}},200);};
   return r;
 }
+
+
+// ======================== TOAST NOTIFICATIONS ========================
+let _toastTimer=null;
+function toast(msg,type,dur){
+  type=type||'info';dur=dur||3500;
+  const el=document.getElementById('toast');if(!el)return;
+  el.textContent=msg;el.className='show '+(type==='err'?'err':type==='ok'?'ok':'');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{el.className='';},dur);
+}
+function toastOk(msg){toast(msg,'ok');}
+function toastErr(msg){toast(msg,'err',4000);}
+function alfAlert(msg){toast(msg,'info',4000);}
 
 // ======================== UTILS ========================
 function escHtml(str) {
@@ -1399,17 +1424,7 @@ function toggleListen(){
   }
 }
 
-// [REPLACED BY NEW_UTILS SPEAK ABOVE]
-function _oldSpeak_unused(text){
-  if(!sets.autoSpeak)return;
-  try{
-    speechSynthesis.cancel();
-    const clean=text.replace(/[🔍🧠⚡✅🕊️🔥🎯📌🔎📋🔀📊⏭️💡📚❓📅🚨📈]/g,'');
-    const u=new SpeechSynthesisUtterance(clean);
-    u.lang='pt-BR';u.rate=vRate;u.pitch=0.88;
-    if(selVoice)u.voice=selVoice;
-    isSpeaking=true;setOrb('S');setWv('sp');
-    u.onend=()=>{isSpeaking=false;if(sets.autoListen&&isListening){setOrb('L');setWv('listening');}else{setOrb('I');setWv('');}};
+// speak() function handled by _speakQueue system aboveelse{setOrb('I');setWv('');}};
     u.onerror=()=>{isSpeaking=false;setOrb('I');setWv('');};
     speechSynthesis.speak(u);
   }catch(e){isSpeaking=false;}
@@ -1431,22 +1446,30 @@ function loadVoices(){
 async function handleInput(msg){
   if(!msg||!msg.trim())return;
   spBuf='';clearTimeout(silT);
-  addMsg(msg,'u');
-  const t=msg.toLowerCase();
-  // Call command
-  if(t.match(/ligue? para|ligar? para|liga para/)){handleCallCommand(msg);return;}
+  const msgTrim=msg.trim();
+  addMsg(msgTrim,'u');
+  const t=msgTrim.toLowerCase();
+  // Call command (high priority)
+  if(t.match(/ligue? para|ligar? para|liga para/)){handleCallCommand(msgTrim);return;}
   // Alfred mode on/off
   if(t.match(/^alfred[,\s]*(ligar?|ativar?)/)||t==='alfred ligar'||t==='alfred liga'){setAlfredMode(true);return;}
   if(t.match(/^alfred[,\s]*(desligar?|pausar?)/)){setAlfredMode(false);return;}
-  // Check app commands
-  const cmd=detectCmd(msg);
-  if(cmd&&execCmd(cmd,msg))return;
+  // Check app commands (open app, calculator)
+  const cmd=detectCmd(msgTrim);
+  if(cmd&&execCmd(cmd,msgTrim))return;
+  // Voice command router — may set mode or navigate
+  const handled=routeVoiceCommand(msgTrim);
+  if(handled)return;
   // Check self-update request
-  const isSelfUpdate=UPDATE_PATTERNS.test(msg)&&(t.includes('alfred')||t.includes('função')||t.includes('tela')||t.includes('app')||t.includes('código'));
+  const isSelfUpdate=UPDATE_PATTERNS.test(msgTrim)&&(t.includes('função')||t.includes('tela')||t.includes('app')||t.includes('código')||t.includes('melhor'));
   setOrb('T');isThinking=true;setStat('Alfred processando...');setWv('th');
   let reply;
-  if(isSelfUpdate){reply=await handleSelfUpdate(msg);}
-  else{reply=await callAlfred(msg);}
+  try{
+    if(isSelfUpdate){reply=await handleSelfUpdate(msgTrim);}
+    else{reply=await callAlfred(msgTrim);}
+  }catch(e){
+    reply='Senhor, erro inesperado: '+(e.message||'Tente novamente.');
+  }
   isThinking=false;
   addMsg(reply,'a');
   if(sets.autoSpeak){speak(reply);}
@@ -1464,8 +1487,8 @@ document.getElementById('ti').addEventListener('keydown',e=>{if(e.key==='Enter')
 // ======================== RELATIONSHIP ========================
 async function analyzeRel(){
   const conv=document.getElementById('rel-inp').value.trim();
-  if(!conv){alert('Senhor, cole uma conversa ou situação para analisar.');return;}
-  const key=apiKey();if(!key){alert('Senhor, configure a API key em Configurações.');return;}
+  if(!conv){alfAlert('Senhor, cole uma conversa ou situação para analisar.');return;}
+  const key=apiKey();if(!key){alfAlert('Senhor, configure a API key em Configurações.');return;}
   const btn=document.querySelector('.rel-btn');
   const res=document.getElementById('rel-res');
   btn.textContent='🔍 Alfred analisando...';btn.disabled=true;res.style.display='none';
@@ -1520,7 +1543,7 @@ REGRA DE ESTILO PESSOAL DO SENHOR:
 
 // ======================== RADAR ========================
 async function genRadar(){
-  const key=apiKey();if(!key){alert('Senhor, configure a API key em Configurações.');return;}
+  const key=apiKey();if(!key){alfAlert('Senhor, configure a API key em Configurações.');return;}
   const btn=document.querySelector('.rad-gen');
   btn.textContent='⚡ Alfred gerando radar...';btn.disabled=true;
   document.getElementById('rad-content').innerHTML='<div class="em">Processando...</div>';
@@ -1576,7 +1599,7 @@ function addTaskPrompt(){const t=prompt('Senhor, qual tarefa?');if(t&&t.trim()){
 async function uploadKB(evt){
   const file=evt.target.files[0];if(!file)return;
   evt.target.value='';
-  if(file.size>5*1024*1024){alert('Senhor, arquivo maior que 5MB.');return;}
+  if(file.size>5*1024*1024){alfAlert('Senhor, arquivo maior que 5MB.');return;}
   setStat('Senhor, lendo '+file.name+'...');
   try{
     let text='';
@@ -1672,14 +1695,14 @@ function updateDash(){
 }
 
 // ======================== CONFIG ========================
-function saveApiKey(){const v=document.getElementById('api-i').value.trim();if(!v){alert('Senhor, cole a API key.');return;}try{localStorage.setItem('alf_key',v);}catch(e){alert('Erro ao salvar. Tente novamente.');}document.getElementById('api-i').value='';alert('Senhor, API key salva com sucesso.');}
-function saveProfile(){const v=document.getElementById('profile-i').value.trim();if(v){sv('profile_text',v);alert('Senhor, perfil salvo.');}}
+function saveApiKey(){const v=document.getElementById('api-i').value.trim();if(!v){alert('Senhor, cole a API key.');return;}try{localStorage.setItem('alf_key',v);}catch(e){alert('Erro ao salvar. Tente novamente.');}document.getElementById('api-i').value='';toastOk('Senhor, API key salva com sucesso.');}
+function saveProfile(){const v=document.getElementById('profile-i').value.trim();if(v){sv('profile_text',v);toastOk('Senhor, perfil salvo.');}}
 function saveVoice(){try{const n=document.getElementById('voice-s').value;sv('voiceName',n);const vs=speechSynthesis.getVoices();selVoice=n?vs.find(v=>v.name===n):null;if(!selVoice)selVoice=vs.find(v=>v.lang==='pt-BR')||null;}catch(e){}}
 function updRate(){try{vRate=parseFloat(document.getElementById('rate-r').value);document.getElementById('rate-l').textContent=vRate.toFixed(1)+'x';sv('voiceRate',vRate);}catch(e){}}
 function saveTone(){currentTone=document.getElementById('tone-s').value;sv('tone',currentTone);}
 function togSet(k){sets[k]=!sets[k];const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');sv('sets',sets);}
 function exportAll(){try{const d={mem,kb,hist,sets,version:'2.0',date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='alfred-backup-'+Date.now()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}catch(e){alert('Erro ao exportar: '+e.message);}}
-function clearAll(){if(confirm('Senhor, apagar TODOS os dados do Alfred OS? Irreversível.')){['alf_mem','alf_kb','alf_hist','alf_sets','alf_key','alf_voiceName','alf_voiceRate','alf_tone','alf_seen','alf_pin','alf_credId','alf_lastRadar','alf_profile_text'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});try{sessionStorage.clear();}catch(e){}location.reload();}}
+function clearAll(){if(window.confirm('Senhor, apagar TODOS os dados do Alfred OS? Irreversível.')){['alf_mem','alf_kb','alf_hist','alf_sets','alf_key','alf_voiceName','alf_voiceRate','alf_tone','alf_seen','alf_pin','alf_credId','alf_lastRadar','alf_profile_text'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});try{sessionStorage.clear();}catch(e){}location.reload();}}
 
 // ======================== INIT ========================
 function init(){
@@ -1717,6 +1740,55 @@ function init(){
       else if(!document.hidden&&alfredModeOn&&!standbyActive)setTimeout(startStandby,500);
     });
   }catch(e){console.error('Init error:',e);}
+}
+
+
+
+// ================================================================
+// ALFRED OS — BASE DE CONHECIMENTO INTEGRADA v3 Final
+// 15 domínios | 30+ frameworks | conhecimento aplicável
+// ================================================================
+const AK={
+ps:`PSICOLOGIA:Sistema 1 (Kahneman)=automático,emocional,rápido. Sistema 2=deliberativo,lento,racional. Vieses:Ancoragem(primeira info domina),Disponibilidade(o que lembro parece provável),Confirmação(busco evidências que confirmam),Dunning-Kruger(incompetentes superestimam),Status Quo(prefiro atual mesmo pior),Perda(perder dói 2x mais que ganhar). Regulação emocional:nomear emoção reduz amígdala,distanciamento("por que [nome] está sentindo isso?"),reappraisal,surfar impulso 90s. TDAH/VAST(Hallowell):atenção VARIÁVEL não deficiente—ativa com Novidade,Urgência,Desafio,Interesse. Autocontrole:implementar intenções("Quando X,farei Y"),pré-compromisso,remove o objeto de tentação.`,
+rel:`TEORIA DO APEGO(Bowlby/Ainsworth):Ansioso=hiperativa ameaça,busca reasseguramento,interpreta silêncio como rejeição,loop mental. Evitativo=desativa apego quando ameaçado,fecha com pressão,abre com leveza/humor/gestos silenciosos sem demanda. Seguro=confortável com intimidade E autonomia. CNV(Rosenberg):Observação→Sentimento("eu sinto")→Necessidade("porque preciso de")→Pedido concreto. Gottman—4 Cavaleiros que destroem:Crítica,Desprezo,Defensividade,Stonewalling. Antídotos:startup suave,assumir responsabilidade,validar ANTES de defender,pausa 20min quando ativado. Linguagens do Amor(Chapman):Palavras de Afirmação,Toque Físico,Atos de Serviço,Presentes,Tempo de Qualidade. Confiança=responsividade micro-momentânea acumulada,não grandes gestos.`,
+phi:`ESTOICISMO:Epicteto—Enchiridion:"Algumas coisas dependem de nós(julgamentos,impulsos,desejos),outras não(corpo,reputação,riqueza)." Marco Aurélio—Meditações:"Você tem poder sobre sua mente,não sobre eventos externos." Amor fati:ame o que acontece. Memento mori:lembre da morte—clarifica prioridades. Sêneca:"Omnia aliena sunt,tempus tantum nostrum est"—só o tempo é nosso. Aristóteles:Eudaimonia=viver virtuosamente. Phronesis=sabedoria prática. Virtudes cardeais:Prudência,Justiça,Coragem,Temperança. Platão:Alegoria da Caverna—percepções são sombras. Pensamento crítico:identifique premissas,avalie evidências,considere alternativas,evite falácias.`,
+teo:`TEOLOGIA:Bíblia—princípios:Amor a Deus e ao próximo(Mt22:37-39). Identidade em Cristo≠performance. Transformação pela renovação da mente(Rm12:2). Provérbios:sabedoria prática. Virtudes teológicas:fé,esperança,amor. Agostinho—Confissões:"Nosso coração é inquieto até repousar em Ti." Pecado=desordem do amor. Tomás de Aquino:razão e fé complementares,lei natural,bem comum. Hermenêutica:contexto histórico-gramatical,gênero literário,progressão canônica. Apologética:evidências históricas,argumento cosmológico Kalam,argumento moral.`,
+com:`PERSUASÃO:Cialdini—6+1:Reciprocidade,Compromisso/Consistência,Prova Social,Autoridade,Afinidade,Escassez,Unidade. Pre-Suasion:prime estado mental antes da mensagem—atenção=importância. Never Split the Difference(Voss):Espelhamento(repetir 1-3 últimas palavras),Labelização("parece que você está..."),Perguntas calibradas(Como?/O quê? nunca Por quê?),Silêncio estratégico. Carnegie:interesse genuíno,escutar muito,falar sobre interesses do outro. StoryBrand(Miller):Herói(cliente)→Problema→Guia(empatia+autoridade)→Plano→CTA→Evitar fracasso→Transformação. Oratória:Ethos(credibilidade),Pathos(emoção),Logos(argumento)—primeira e última impressão duram.`,
+neg:`NEGÓCIOS:Hormozi—$100M Offers:Valor=(Sonho×Probabilidade)÷(Tempo×Esforço). Grand Slam Offer=ninguém pode comparar. Preço premium=posicionamento. Garantia inverte risco. $100M Leads:conteúdo gratuito que resolve=melhor lead gen. Lean Startup(Ries):Build-Measure-Learn loop rápido. MVP=mínimo para aprender máximo. Pivot quando métricas contradizem premissas. Good to Great(Collins):Hedgehog(melhor em,apaixona,gera dinheiro). Level 5 liderança. Flywheel:momentum acumulado. Traction(Weinberg):19 canais crescimento,ICE score. Meta Ads:CPL,CPM,CTR,ROAS,CPA. Criativo É o targeting. Lookalike 1-2%. Delivery/iFood:ticket médio,conversão,NPS,tempo entrega,custo por pedido,foto+descrição+rating=visibilidade. DRE:Receita-CMV=Margem Bruta-Despesas=EBITDA.`,
+fin:`FINANÇAS:Renda Fixa:Selic(referência),IPCA+(proteção inflação),prefixado(aposta queda juros). CDI≈Selic. Renda Variável:ações(participação empresa),FIIs(imóveis fracionados),ETFs(diversificação barata). Análise:P/L,P/VP,DY,ROE,ROIC,EV/EBITDA. Risco:Beta(sensibilidade mercado). Sharpe=retorno ajustado risco. Diversificação elimina risco não-sistemático. Valuation:DCF(descontar fluxos futuros),múltiplos. CFA/CPA/CEA:ética,gestão carteiras,análise crédito,derivativos hedge. Finanças pessoais:pagar-se primeiro(10-20%),fundo emergência(6 meses),dívida cara primeiro,investir sistematicamente.`,
+lea:`APRENDIZAGEM:Make It Stick(Brown):Retrieval practice>rereading,Spaced repetition,Interleaving(alternar assuntos acelera),Elaboração(conectar ao que já sabe),Desirable difficulties(esforço=retenção). Feynman:1)Estude 2)Explique como para criança 3)Identifique lacunas 4)Revise. Oakley—A Mind for Numbers:modo focado(deliberado) vs difuso(insights). Chunking=agrupar conceitos. Art of Learning(Waitzkin):investimento em perda,menor círculo,soft zone. Pomodoro:25min foco+5min pausa.`,
+pro:`PRODUTIVIDADE:Deep Work(Newport):trabalho cognitivo profundo sem distração=vantagem competitiva. Time blocking,local dedicado,shutdown ritual. GTD(Allen):Capturar tudo→Clarificar→Organizar→Revisar→Fazer. 2min rule. Revisão semanal obrigatória. Eisenhower:Urgente+Importante(faça),Não-Urgente+Importante(agende—MAIS IMPORTANTE),Urgente+Não-Importante(delegue),Nem-Nem(elimine). Parkinson:trabalho expande para o tempo—defina prazo agressivo. "Sapo":tarefa mais difícil primeiro.`,
+hab:`HÁBITOS:Atomic Habits(Clear):Deixa→Desejo→Resposta→Recompensa. 4 Leis:1)Torne Óbvio(visível),2)Torne Atrativo(bundle com prazer),3)Torne Fácil(reduce friction),4)Torne Satisfatório(recompensa imediata). Identidade:"Sou alguém que___">objetivo. 1% melhor/dia=37x ao ano. Habit stacking:"Após[ATUAL],farei[NOVO]". Marshmallow Test(Mischel):autocontrole=habilidade treinável. Willpower Instinct(McGonigal):surfar impulso,autoperdão após falha(culpa paralisa).`,
+sau:`SAÚDE:Sono:7-9h,ciclos 90min,luz solar matinal sincroniza relógio,sem luz azul 1h antes,temperatura fria,consistência de horário>duração. Exercício:BDNF+dopamina+serotonina imediatos,150min cardio moderado/sem ou 75min intenso,resistência 2x,melhor antidepressivo natural. Nutrição:proteína 1.6-2.2g/kg,déficit calórico moderado,ômega-3,vegetais coloridos,reduzir processados/açúcar. Estresse crônico=cortisol eleva→hipocampo prejudicado. Técnicas:respiração 4-7-8,cold exposure 15s,exercício aeróbico,natureza.`,
+ait:`IA & TECNOLOGIA:RAG=Retrieval-Augmented Generation:busca docs relevantes→injeta contexto→resposta mais precisa. Prompt Engineering:1)Persona 2)Contexto 3)Exemplos(few-shot) 4)Formato 5)Restrições 6)Chain-of-thought. Temperature:0-0.3 precisão,0.7-1.0 criatividade. Agentes:loop Observe→Plan→Act→Observe. Multi-agentes:especialização por papel. Memória:working(contexto),episódica(histórico),semântica(conhecimento). Segurança:prompt injection(isolar contexto usuário),prompt leakage(não revelar system),jailbreak(red teaming).`,
+sof:`SOFTWARE:Clean Architecture:domínio no centro,infraestrutura na periferia. SOLID:Single Responsibility,Open/Closed,Liskov,Interface Segregation,Dependency Inversion. DRY,KISS,YAGNI. React:componentes puros,estado mínimo,efeitos controlados. React Native:performance evita JS thread. APIs:REST vs GraphQL,JWT stateless,rate limiting,versioning. Segurança web:XSS(sanitizar output),CSRF(tokens),SQL Injection(prepared statements),HTTPS obrigatório. TDD:Red-Green-Refactor.`,
+sec:`SEGURANÇA:CIA Triad:Confidencialidade,Integridade,Disponibilidade. Criptografia:AES-256(repouso),TLS 1.3(trânsito),bcrypt/argon2(senhas),SHA-256(integridade). Zero Trust:nunca confie,sempre verifique. Menor privilégio. MFA obrigatório. Backup 3-2-1:3 cópias,2 mídias,1 offsite. Privacidade:minimização dados,consentimento,direito ao esquecimento. OWASP Top 10:Injection,Broken Auth,XSS,IDOR,Security Misconfig,XXE,Insecure Deserialization,Vulnerable Components,Logging Failures.`
+};
+
+const TOPIC_MAP=[
+  {p:/julia|namorad|relacionam|apego|amor|sentimen|dela|evitativ|conversa.*dela/i,d:['rel']},
+  {p:/hábito|disciplin|autocontrol|willpower|atomic habits|vontade/i,d:['hab','ps']},
+  {p:/produtiv|foco|deep work|gtd|pomodoro|prioridad|urgente|importante/i,d:['pro','hab']},
+  {p:/negócio|empresa|market|venda|client|hamburguer|pizza|audens|burger|iFood|agência|campanha|anúnci|meta ads/i,d:['neg']},
+  {p:/invest|finanç|dinheiro|mercado|ação|rend|cpa|cea|cnpi|cfa|ativo|drE|balanço/i,d:['fin']},
+  {p:/aprender|estudar|estudo|memoriz|aprend|certificação|prova|flashcard|revisão/i,d:['lea']},
+  {p:/decid|decisão|escolha|risco|consequên|dilema|incerteza|viés/i,d:['ps','phi']},
+  {p:/filosof|estoic|virtude|ética|sabedor|marco.*aurélio|sêneca|epicteto|aristót/i,d:['phi']},
+  {p:/bíblia|fé|deus|cristão|espiritual|igreja|oração|evangel|teolog/i,d:['teo']},
+  {p:/saúde|dormir|exercício|alimentação|estresse|treino|suplemento|nutri/i,d:['sau']},
+  {p:/código|program|software|app|api|react|swift|node|bug|arquitetura/i,d:['sof','ait']},
+  {p:/comunic|persuad|convinc|negoci|argum|retóric|oratór|falar|influênci/i,d:['com']},
+  {p:/ai|inteligência artificial|prompt|modelo|llm|rag|agente|openai|anthropic/i,d:['ait']},
+  {p:/segurança|criptograf|privacidade|proteção|backup|autenticação|hack/i,d:['sec']},
+  {p:/psicolog|emoção|ansied|depressão|tdah|distração|viés cognitiv|cognit/i,d:['ps']},
+];
+
+function getKB(text){
+  const matched=new Set();
+  for(const t of TOPIC_MAP){if(t.p.test(text||''))t.d.forEach(d=>matched.add(d));}
+  if(!matched.size)return'';
+  const order=['rel','ps','phi','com','neg','fin','hab','pro','lea','sau','ait','sof','sec','teo'];
+  return order.filter(d=>matched.has(d)&&AK[d]).map(d=>AK[d]).join(' | ');
 }
 
 
@@ -1835,10 +1907,56 @@ function processWakeWord(text) {
   }
 }
 
+
+// ======================== VOICE-FIRST COMMAND ROUTER ========================
+// Maps natural language to specific Alfred actions
+const VOICE_ROUTES = [
+  // Mode switching
+  {p:/modo decisão|modo alfred|me ajuda.*decid|o que (?:eu )?faz/i, fn: ()=>setMode('decisao')},
+  {p:/modo relação|modo relacionamento|analisa.*julia|julia.*analisa/i, fn: ()=>{setMode('relacao');swp('rel');}},
+  {p:/modo professor|me ensina|explica.*senhor|me (?:fale|conte) sobre/i, fn: ()=>setMode('professor')},
+  {p:/radar do dia|como está meu dia|minha situação|organiz.*dia/i, fn: ()=>{swp('dash');genRadar();}},
+  // Navigation
+  {p:/abr.*calendário|abre.*agenda|meu calendário/i, fn: ()=>openApp('Calendário','calshow://','https://calendar.google.com')},
+  {p:/abr.*whatsapp|abre.*zap/i, fn: ()=>openApp('WhatsApp','whatsapp://','https://web.whatsapp.com')},
+  {p:/abr.*instagram|abre.*insta/i, fn: ()=>openApp('Instagram','instagram://','https://instagram.com')},
+  {p:/abr.*spotify|abre.*música/i, fn: ()=>openApp('Spotify','spotify://','https://open.spotify.com')},
+  {p:/abr.*maps|abre.*mapa/i, fn: ()=>openApp('Mapas','maps://','https://maps.google.com')},
+  // Memory
+  {p:/registr[ae]|anot[ae]|salv[ae]|guard[ae]/i, fn: null}, // pass-through to AI
+  {p:/(?:me )?lembr[ae]|cri[ae].*tarefa|lembrete/i, fn: null}, // pass-through to AI
+  {p:/o que tenho pra fazer|minhas tarefas|minha lista/i, fn: ()=>{swp('mem');setCat('tarefas');}},
+  // Session
+  {p:/ativ[ae].*escuta|modo escuta|começar.*ouvir/i, fn: ()=>{swp('escuta');startSession();}},
+  {p:/par.*escuta|encerr.*sessão|para.*ouvir/i, fn: ()=>stopSession()},
+  // Alfred mode
+  {p:/^alfred[,\s]+ligar?$|^alfred liga$/i, fn: ()=>setAlfredMode(true)},
+  {p:/^alfred[,\s]+desligar?$|^alfred desliga$/i, fn: ()=>setAlfredMode(false)},
+  // App control
+  {p:/ligue?\s+(?:para\s+)?(.+)/i, fn: (m)=>handleCallCommand(m)},
+];
+
+function routeVoiceCommand(text) {
+  const t = text.toLowerCase().trim();
+  for (const route of VOICE_ROUTES) {
+    if (route.p.test(t)) {
+      if (route.fn) {
+        try { route.fn(t); } catch(e) { console.warn('Route error:', e); }
+        // Still pass to AI for context (except navigation-only routes)
+        const navOnly = [/abr.*(calendário|whatsapp|instagram|spotify|maps|zap)/i];
+        if (navOnly.some(p => p.test(t))) return true; // Don't forward to AI
+      }
+      return false; // Forward to AI with current mode
+    }
+  }
+  return false; // Not matched — forward to AI
+}
+
+
 // ======================== CONTACTS ========================
 function parseContacts() {
   const raw = document.getElementById('contacts-raw').value.trim();
-  if (!raw) { alert('Senhor, cole a lista de contatos.'); return; }
+  if (!raw) { alfAlert('Senhor, cole a lista de contatos.'); return; }
   const lines = raw.split(/
 /);
   const parsed = [];
@@ -1856,7 +1974,7 @@ function parseContacts() {
       }
     }
   }
-  if (!parsed.length) { alert('Senhor, nenhum contato identificado. Use o formato: "Número 1 — Nome — +55 XX XXXXX-XXXX"'); return; }
+  if (!parsed.length) { alfAlert('Senhor, nenhum contato identificado. Use o formato: "Número 1 — Nome — +55 XX XXXXX-XXXX"'); return; }
   contacts = [...contacts, ...parsed];
   sv('contacts', contacts);
   renderContacts();
@@ -1914,9 +2032,9 @@ function isValidPhone(ph) {
 
 function callRawNumber() {
   const num = document.getElementById('call-num').value.trim();
-  if (!num) { alert('Senhor, insira o número.'); return; }
+  if (!num) { alfAlert('Senhor, insira o número.'); return; }
   const clean = cleanPhone(num);
-  if (!isValidPhone(clean)) { alert('Senhor, número inválido: ' + num + '. Use formato +55 XX XXXXX-XXXX.'); return; }
+  if (!isValidPhone(clean)) { alfAlert('Senhor, número inválido: ' + num + '. Use formato +55 XX XXXXX-XXXX.'); return; }
   requestConf('📞', 'Ligar para ' + clean + '?', 'Final: ' + clean.slice(-4) + '. Alfred abrirá o app Telefone.',
     () => { window.location.href = 'tel:' + clean; });
 }
