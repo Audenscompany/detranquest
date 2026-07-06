@@ -245,6 +245,26 @@
     .nb span{font-size:8px;letter-spacing:0.2px;font-weight:800;}
 
     /* KEYFRAMES */
+
+    /* ALFRED MODE BADGE */
+    #alf-badge{position:fixed;top:0;left:50%;transform:translateX(-50%);background:rgba(220,25,50,0.93);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:white;font-size:9px;font-weight:800;letter-spacing:2px;padding:4px 18px 5px;border-radius:0 0 12px 12px;z-index:7000;display:none;cursor:pointer;white-space:nowrap;}
+    #alf-badge.show{display:block;}
+    .alf-tog{padding:4px 10px;border-radius:99px;font-size:9px;font-weight:800;cursor:pointer;border:1px solid;transition:all 0.2s;flex-shrink:0;}
+    .alf-tog.on{background:rgba(255,58,92,0.12);border-color:var(--r);color:var(--r);}
+    .alf-tog.off{background:rgba(0,208,255,0.06);border-color:var(--c);color:var(--c);}
+    /* CONTACTS */
+    .cnt-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px;margin-bottom:6px;display:flex;align-items:center;gap:9px;}
+    .cnt-ico{width:32px;height:32px;border-radius:50%;background:rgba(0,208,255,0.09);border:1px solid rgba(0,208,255,0.18);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--c);flex-shrink:0;}
+    .cnt-nm{font-size:12.5px;font-weight:600;color:var(--text);}
+    .cnt-ph{font-size:9.5px;color:var(--muted);margin-top:1px;}
+    .call-b{padding:6px 11px;border-radius:8px;border:none;background:var(--g);color:#000;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;}
+    /* SELF-UPDATE */
+    .upd-card{background:rgba(196,162,74,0.06);border:1px solid rgba(196,162,74,0.25);border-radius:12px;padding:13px;margin-top:8px;white-space:pre-wrap;font-size:12px;color:var(--text);line-height:1.75;}
+    /* ENHANCED REL */
+    .rel-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+    .rel-tab{padding:4px 11px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;}
+    .rel-tab.act{background:rgba(255,58,92,0.1);border-color:var(--r);color:var(--r);}
+
     @keyframes rs{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     @keyframes pr{0%,100%{transform:scale(1);opacity:0.2}50%{transform:scale(1.03);opacity:0.1}}
     @keyframes st{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -258,6 +278,7 @@
 </head>
 <body>
 <div id="root">
+  <div id="alf-badge" onclick="setAlfredMode(false)">🔴 ALFRED ATIVO — toque para desligar</div>
 
   <!-- AUTH -->
   <div id="auth-sc">
@@ -313,6 +334,7 @@
     <span class="t-logo">ALFRED OS</span>
     <div class="t-right">
       <span class="m-pill c" id="m-pill">CONVERSA</span>
+      <button class="alf-tog off" id="alf-tog" onclick="setAlfredMode(!alfredModeOn)">⭘ LIGAR</button>
       <div class="live-dot" id="live-dot"></div>
     </div>
   </div>
@@ -477,6 +499,23 @@
       </div>
 
       <div class="ctrl-sec">
+        <div class="ctrl-sec-title">📞 CONTATOS ALFRED</div>
+        <div class="ctrl-info-box">Importe uma lista de contatos. Depois diga "Alfred, ligue para João" ou "Alfred, ligue para o número 1".</div>
+        <textarea id="contacts-raw" class="ctrl-inp" rows="4" placeholder="Número 1 — João — +55 31 99999-9999&#10;Número 2 — Pedro — +55 31 98888-8888" style="resize:vertical;font-family:monospace;font-size:12px"></textarea>
+        <div class="ctrl-row">
+          <button class="ctrl-btn" onclick="parseContacts()">📥 Importar Lista</button>
+          <button class="ctrl-btn c" onclick="clearContacts()">✕ Limpar</button>
+        </div>
+        <div id="contacts-list"><div class="em">Nenhum contato importado</div></div>
+      </div>
+      <div class="ctrl-sec">
+        <div class="ctrl-sec-title">📞 LIGAR AGORA</div>
+        <div class="ctrl-row" style="margin-bottom:8px">
+          <input type="tel" class="ctrl-inp" id="call-num" placeholder="+55 31 99999-9999" style="margin-bottom:0;flex:1">
+          <button class="ctrl-btn" onclick="callRawNumber()" style="flex:none">📞 Ligar</button>
+        </div>
+      </div>
+      <div class="ctrl-sec">
         <div class="ctrl-sec-title">⚙️ SIRI SHORTCUTS</div>
         <div style="font-size:11.5px;color:var(--muted);line-height:1.65;margin-bottom:10px">
           Para máxima integração com o iPhone, crie Atalhos do Siri que o Alfred pode acionar via URL <code style="color:var(--c)">shortcuts://run-shortcut?name=NOME</code>.
@@ -489,10 +528,17 @@
 
   <!-- RELATIONSHIP PANEL -->
   <div id="rel" class="panel">
-    <div class="ph"><div class="pt">Motor de Relacionamento</div><div class="ps">Análise Alfred completa de 8 componentes</div></div>
+    <div class="ph"><div class="pt">Motor de Relacionamento</div><div class="ps">10 dimensões de análise + 5 estilos de resposta</div></div>
     <div class="pb">
       <div style="background:rgba(255,58,92,0.04);border:1px solid rgba(255,58,92,0.18);border-radius:11px;padding:10px;font-size:11.5px;color:rgba(255,100,130,0.85);margin-bottom:10px;line-height:1.55">
-        🔴 Cole a conversa, mensagem ou situação. Alfred analisa: padrão, emoção, risco, resposta ideal, versão calma, versão firme, recomendação e padrão detectado.
+        🔴 Cole conversa, mensagem ou situação. Alfred analisa padrão, emoção, risco e gera 5 estilos de resposta.
+      </div>
+      <div class="rel-tabs" id="rel-tabs">
+        <button class="rel-tab act" data-style="completo" onclick="setRelStyle('completo')">Análise Completa</button>
+        <button class="rel-tab" data-style="leve" onclick="setRelStyle('leve')">Versão Leve</button>
+        <button class="rel-tab" data-style="engracada" onclick="setRelStyle('engracada')">Engraçada</button>
+        <button class="rel-tab" data-style="inteligente" onclick="setRelStyle('inteligente')">Inteligente</button>
+        <button class="rel-tab" data-style="carinhosa" onclick="setRelStyle('carinhosa')">Carinhosa</button>
       </div>
       <textarea class="rel-ta" id="rel-inp" placeholder="Cole aqui a conversa com a Julia, situação ou mensagem..."></textarea>
       <button class="rel-btn" onclick="analyzeRel()">🔍 Analisar com Alfred</button>
@@ -1280,10 +1326,21 @@ async function handleInput(msg){
   if(!msg||!msg.trim())return;
   spBuf='';clearTimeout(silT);
   addMsg(msg,'u');
+  const t=msg.toLowerCase();
+  // Call command
+  if(t.match(/ligue? para|ligar? para|liga para/)){handleCallCommand(msg);return;}
+  // Alfred mode on/off
+  if(t.match(/^alfred[,\s]*(ligar?|ativar?)/)||t==='alfred ligar'||t==='alfred liga'){setAlfredMode(true);return;}
+  if(t.match(/^alfred[,\s]*(desligar?|pausar?)/)){setAlfredMode(false);return;}
+  // Check app commands
   const cmd=detectCmd(msg);
   if(cmd&&execCmd(cmd,msg))return;
+  // Check self-update request
+  const isSelfUpdate=UPDATE_PATTERNS.test(msg)&&(t.includes('alfred')||t.includes('função')||t.includes('tela')||t.includes('app')||t.includes('código'));
   setOrb('T');isThinking=true;setStat('Alfred processando...');setWv('th');
-  const reply=await callAlfred(msg);
+  let reply;
+  if(isSelfUpdate){reply=await handleSelfUpdate(msg);}
+  else{reply=await callAlfred(msg);}
   isThinking=false;
   addMsg(reply,'a');
   if(sets.autoSpeak){speak(reply);}
@@ -1306,38 +1363,40 @@ async function analyzeRel(){
   const btn=document.querySelector('.rel-btn');
   const res=document.getElementById('rel-res');
   btn.textContent='🔍 Alfred analisando...';btn.disabled=true;res.style.display='none';
+  const STYLE_MODES = {
+    completo: `Analise com estrutura completa de 10 componentes:
+🔍 LEITURA: [situação real]
+🧠 ELA PODE ESTAR SENTINDO (hipótese): [estado emocional — hipótese]
+⚡ RISCO DE ERRAR: [consequência]
+📊 MEU PADRÃO NESSA CONVERSA: [o que estou fazendo de certo/errado]
+✅ MELHOR RESPOSTA (estilo natural do senhor): [pronta para copiar]
+🕊️ VERSÃO LEVE: [suave]
+😄 VERSÃO ENGRAÇADA: [humor leve, natural]
+🧠 VERSÃO INTELIGENTE: [elaborada mas não forçada]
+💙 VERSÃO CARINHOSA: [afetiva]
+🎯 RECOMENDAÇÃO FINAL: [o que fazer agora]`,
+    leve: `Gere APENAS uma resposta no estilo leve e natural do senhor. Pronta para copiar. 2-3 linhas. Mostre também 1 linha com o "por que funciona".`,
+    engracada: `Gere APENAS uma resposta engraçada, leve e no jeito do senhor — humor natural, não forçado. Pronta para copiar. Mostre também 1 linha com o "por que funciona".`,
+    inteligente: `Gere APENAS uma resposta inteligente e articulada, mas que pareça natural, não acadêmica. No jeito do senhor. Pronta para copiar. Mostre também 1 linha com o "por que funciona".`,
+    carinhosa: `Gere APENAS uma resposta carinhosa e afetuosa, no jeito do senhor — não dramática. Pronta para copiar. Mostre também 1 linha com o "por que funciona".`
+  };
   const REL_SYS=`Você é Alfred OS analisando situação de relacionamento.
 SEMPRE "senhor". HIPÓTESES — nunca certeza sobre terceiros. NUNCA afirme que alguém mentiu.
 Use: "pode indicar", "há sinais de", "com base no contexto".
 
-Julia: evitativa. "Intensa só na cabeça." Vocabulário: mb, nuuu, blzinha, hehehe, sim sim, sla.
+Julia: apego evitativo. "Intensa só na cabeça, deixo muito pouco sair." 6 meses (jan 2026).
+Vocabulário: mb, nuuu, blzinha, hehehe, sim sim, vrdd, sla, fazer oq.
 Marcos: "você é o cara certo pra isso" (jun 2026). "Vamos conseguir" (jul 2026).
-Fecha com pressão. Abre com leveza e humor.
+Fecha com pressão. Abre com leveza e humor. Pai influencia disposição.
 
-Estrutura EXATA:
-🔍 LEITURA:
-[o que está acontecendo de verdade]
+ESTILO DE RESPOSTA ATIVO: ${STYLE_MODES[relStyle]||STYLE_MODES.completo}
 
-🧠 ELA PODE ESTAR SENTINDO (hipótese):
-[estado emocional provável — use hipótese]
-
-⚡ RISCO DE ERRAR:
-[consequência de responder mal]
-
-✅ MELHOR RESPOSTA (no estilo do senhor):
-[resposta pronta para copiar]
-
-🕊️ VERSÃO CALMA:
-[alternativa suave]
-
-🔥 VERSÃO FIRME:
-[alternativa assertiva]
-
-🎯 RECOMENDAÇÃO FINAL:
-[o que fazer agora em 2 frases]
-
-📊 PADRÃO DETECTADO:
-[1 insight sobre padrão de comunicação]`;
+REGRA DE ESTILO PESSOAL DO SENHOR:
+- Gosta que o assunto renda naturalmente
+- Gosta de ser leve, engraçado sem forçar
+- Quer parecer inteligente sem ser pesado
+- Evita respostas ansiosas, longas ou excessivas
+- Quer que as respostas pareçam dele, não de um coach`;
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -1531,13 +1590,256 @@ function init(){
     const pi=document.getElementById('profile-i');if(pi)pi.value=pt;
     Object.keys(sets).forEach(k=>{const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');});
     renderMem();renderKB();updateDash();
+    // Restore Alfred mode and contacts
+    renderContacts();
+    if(alfredModeOn){
+      const tog=document.getElementById('alf-tog');if(tog){tog.textContent='🔴 ATIVO';tog.className='alf-tog on';}
+      const badge=document.getElementById('alf-badge');if(badge)badge.className='show';
+      setTimeout(startStandby,1000);
+    }
     if(!ld('seen',false)){
       sv('seen',true);
-      setTimeout(()=>{addMsg('Senhor, Alfred OS v2.0 inicializado.\n\nNovidades: Modo Escuta Ativa (análise contínua), Controle iPhone, criação de eventos e lembretes.\n\nToque no orbe para falar, ou escreva abaixo. Diga "Alfred, o que você pode fazer?" para saber mais.','a');},700);
+      setTimeout(()=>{addMsg('Senhor, Alfred OS v3.0 inicializado.\n\nNovo: Modo Alfred Sempre Ativo (diga "Alfred ligar"), Contatos com ligação direta, 5 estilos de resposta para o relacionamento, Autoatualização assistida.\n\nToque em ⭘ LIGAR para ativar o modo sempre-ativo.','a');},700);
     }
     document.addEventListener('touchstart',()=>{try{const a=new(window.AudioContext||window.webkitAudioContext)();a.resume();a.close();}catch(e){}},{once:true});
   }catch(e){console.error('Init error:',e);}
 }
+
+
+// ======================== ALFRED MODE (ALWAYS-ON) ========================
+let alfredModeOn = ld('alfMode', false);
+let standbyRec = null;
+let standbyActive = false;
+let contacts = ld('contacts', []);
+
+function setAlfredMode(on) {
+  alfredModeOn = on;
+  sv('alfMode', on);
+  const badge = document.getElementById('alf-badge');
+  const tog = document.getElementById('alf-tog');
+  const dot = document.getElementById('live-dot');
+  if (badge) badge.className = on ? 'show' : '';
+  if (tog) { tog.textContent = on ? '🔴 ATIVO' : '⭘ LIGAR'; tog.className = 'alf-tog ' + (on ? 'on' : 'off'); }
+  if (dot) dot.className = 'live-dot' + (on ? ' rec' : '');
+  if (on) {
+    startStandby();
+    speak('Senhor, Alfred ligado. Estou ouvindo. Diga "Alfred" seguido de qualquer comando.');
+  } else {
+    stopStandby();
+    if (isListening) toggleListen();
+    if (sessionActive) stopSession();
+    speak('Senhor, Alfred desligado.');
+  }
+}
+
+function startStandby() {
+  if (standbyActive) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  standbyActive = true;
+  function createRec() {
+    const r = new SR();
+    r.lang = 'pt-BR'; r.continuous = false; r.interimResults = false;
+    r.onresult = (e) => {
+      try {
+        const t = e.results[0][0].transcript.toLowerCase().trim();
+        processWakeWord(t);
+      } catch(err) {}
+    };
+    r.onerror = () => {};
+    r.onend = () => {
+      if (alfredModeOn && standbyActive && !isListening)
+        setTimeout(() => { try { standbyRec = createRec(); standbyRec.start(); } catch(e) {} }, 500);
+    };
+    return r;
+  }
+  standbyRec = createRec();
+  try { standbyRec.start(); } catch(e) { standbyActive = false; }
+}
+
+function stopStandby() {
+  standbyActive = false;
+  if (standbyRec) try { standbyRec.abort(); } catch(e) {}
+  standbyRec = null;
+}
+
+function processWakeWord(text) {
+  // Activate full listening
+  if (text.match(/^alfred[,\s]*(ligar?|ativar?|acord[ae]r?|escutar?|ouvir?)/)) {
+    if (!isListening) { toggleListen(); }
+    return;
+  }
+  // Deactivate
+  if (text.match(/^alfred[,\s]*(desligar?|parar?|pausar?|silenciar?)/)) {
+    setAlfredMode(false);
+    return;
+  }
+  // Call command (in active listening or standby)
+  if (text.match(/ligue? para|ligar? para|liga para/)) {
+    handleCallCommand(text);
+    return;
+  }
+  // Any "alfred [command]"
+  if (text.startsWith('alfred')) {
+    const cmd = text.replace(/^alfred[,\s]+/, '').trim();
+    if (cmd.length > 2) {
+      // If not in active listening mode, answer directly
+      if (!isListening) {
+        addMsg(cmd, 'u');
+        setOrb('T'); isThinking = true;
+        callAlfred(cmd).then(reply => {
+          isThinking = false; addMsg(reply, 'a');
+          if (sets.autoSpeak) speak(reply);
+          else { setOrb('I'); setWv(''); }
+        });
+      }
+    }
+  }
+}
+
+// ======================== CONTACTS ========================
+function parseContacts() {
+  const raw = document.getElementById('contacts-raw').value.trim();
+  if (!raw) { alert('Senhor, cole a lista de contatos.'); return; }
+  const lines = raw.split(/
+/);
+  const parsed = [];
+  let idx = contacts.length ? Math.max(...contacts.map(c => c.index)) + 1 : 1;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    const m1 = t.match(/(?:n[uú]mero)?\s*(\d+)\s*[—\-–]\s*([^—\-–+\d][^—\-–+]*?)\s*[—\-–]\s*(\+?[\d\s\-\(\)]{8,})/i);
+    if (m1) {
+      parsed.push({ id: Date.now() + Math.random(), index: parseInt(m1[1]), name: m1[2].trim(), phone: cleanPhone(m1[3]) });
+    } else {
+      const m2 = t.match(/([a-záéíóúàâêîôûãõçA-Z][a-zA-Záéíóúàâêîôûãõç\s]+?)\s*[—\-:]\s*(\+?[\d\s\-\(\)]{8,})/);
+      if (m2) {
+        parsed.push({ id: Date.now() + Math.random(), index: idx++, name: m2[1].trim(), phone: cleanPhone(m2[2]) });
+      }
+    }
+  }
+  if (!parsed.length) { alert('Senhor, nenhum contato identificado. Use o formato: "Número 1 — Nome — +55 XX XXXXX-XXXX"'); return; }
+  contacts = [...contacts, ...parsed];
+  sv('contacts', contacts);
+  renderContacts();
+  document.getElementById('contacts-raw').value = '';
+  speak('Senhor, ' + parsed.length + ' contato' + (parsed.length > 1 ? 's' : '') + ' importado' + (parsed.length > 1 ? 's' : '') + '.');
+}
+
+function cleanPhone(raw) {
+  return (raw || '').replace(/[\s\-\(\)\.]/g, '').trim();
+}
+
+function clearContacts() {
+  if (!contacts.length) return;
+  if (confirm('Senhor, apagar todos os ' + contacts.length + ' contatos?')) {
+    contacts = []; sv('contacts', contacts); renderContacts();
+  }
+}
+
+function findContact(text) {
+  const t = text.toLowerCase();
+  const nm = t.match(/n[uú]mero\s+(\d+)|(\d+)[ºo°]\s+contato/);
+  if (nm) { const n = parseInt(nm[1] || nm[2]); return contacts.find(c => c.index === n); }
+  return contacts.find(c => t.includes(c.name.toLowerCase()));
+}
+
+function handleCallCommand(text) {
+  const contact = findContact(text);
+  if (contact) { callContact(contact); return; }
+  const nm = text.match(/(\+?55[\d\s\-]{10,}|\d[\d\s\-]{9,})/);
+  if (nm) {
+    const ph = cleanPhone(nm[1]);
+    requestConf('📞', 'Ligar para ' + ph + '?', 'Alfred abrirá o app Telefone.', () => { window.location.href = 'tel:' + ph; });
+  } else {
+    speak('Senhor, não encontrei esse contato. Verifique a lista em Controle.');
+  }
+}
+
+function callContact(c) {
+  requestConf('📞', 'Ligar para ' + c.name + '?', 'Número final ' + c.phone.slice(-4) + '. Alfred abrirá o app Telefone agora.',
+    () => {
+      window.location.href = 'tel:' + c.phone;
+      addItem('decisoes', 'Ligação: ' + c.name + ' (' + new Date().toLocaleTimeString('pt-BR') + ')', true);
+    });
+}
+
+function callRawNumber() {
+  const num = document.getElementById('call-num').value.trim();
+  if (!num) { alert('Senhor, insira o número.'); return; }
+  requestConf('📞', 'Ligar para ' + num + '?', 'Alfred abrirá o app Telefone.',
+    () => { window.location.href = 'tel:' + cleanPhone(num); });
+}
+
+function renderContacts() {
+  const el = document.getElementById('contacts-list');
+  if (!el) return;
+  if (!contacts.length) { el.innerHTML = '<div class="em">Nenhum contato importado</div>'; return; }
+  el.innerHTML = contacts.map(c => `
+    <div class="cnt-card">
+      <div class="cnt-ico">${c.index}</div>
+      <div style="flex:1"><div class="cnt-nm">${c.name}</div><div class="cnt-ph">${c.phone}</div></div>
+      <button class="call-b" onclick="callContact({name:'${c.name.replace(/'/g,"\'")}',phone:'${c.phone}'})">📞</button>
+      <button class="kd" style="margin-left:4px" onclick="delContact(${JSON.stringify(c.id)})">✕</button>
+    </div>`).join('');
+}
+
+function delContact(id) {
+  contacts = contacts.filter(c => c.id !== id);
+  sv('contacts', contacts);
+  renderContacts();
+}
+
+// ======================== SELF-UPDATE ASSISTANT ========================
+const UPDATE_PATTERNS = /adicione|crie uma nova|melhore|modifique|adiciona|corrija|adicionar|nova função|nova tela|mude o|altere o|nova função|atualiz/i;
+
+async function handleSelfUpdate(request) {
+  const key = apiKey();
+  if (!key) return 'Senhor, configure a API key para usar a autoatualização.';
+  const UPD_SYS = `Você é Alfred OS em modo autoatualização assistida.
+SEMPRE "senhor". O senhor pediu uma modificação, nova função ou melhoria.
+Gere um plano completo com código funcional.
+
+Formato OBRIGATÓRIO:
+📋 PLANO DE ATUALIZAÇÃO:
+[o que será modificado/adicionado]
+
+💻 CÓDIGO COMPLETO:
+\`\`\`javascript
+[código JavaScript/HTML funcional, completo, pronto para usar]
+\`\`\`
+
+✅ COMO IMPLEMENTAR:
+1. [passo]
+2. [passo]
+
+⚠️ PONTOS DE ATENÇÃO:
+[bugs possíveis, compatibilidade, segurança]
+
+🔍 REVISÃO FINAL:
+[funciona? tem erro? é seguro?]
+
+❓ Senhor, aprova esta atualização?`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1400, system: UPD_SYS, messages: [{ role: 'user', content: request }] })
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || 'Erro ao processar.';
+  } catch(e) { return 'Senhor, erro: ' + e.message; }
+}
+
+// ======================== RELATIONSHIP STYLE ========================
+let relStyle = 'completo';
+
+function setRelStyle(style) {
+  relStyle = style;
+  document.querySelectorAll('.rel-tab').forEach(b => b.classList.toggle('act', b.dataset.style === style));
+}
+
+// ======================== ENHANCED RELATIONSHIP ANALYSIS ========================
 
 window.addEventListener('error',e=>{console.error('Alfred OS error:',e.message);});
 window.addEventListener('unhandledrejection',e=>{console.warn('Unhandled promise:',e.reason);});
