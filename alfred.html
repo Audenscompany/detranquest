@@ -414,7 +414,7 @@
         <div class="o-lbl" id="o-lbl">TOQUE</div>
       </div>
       <div class="a-stat" id="a-stat">Aguardando o senhor</div>
-      <div class="s-name">SENHOR LUCAS</div>
+      <div class="s-name"><span id="user-name-display">SENHOR</span></div>
       <div class="wvz" id="wvz">
         <div class="wv" style="height:4px"></div><div class="wv" style="height:9px"></div>
         <div class="wv" style="height:4px"></div><div class="wv" style="height:14px"></div>
@@ -661,6 +661,18 @@
         <button class="cb" onclick="changePIN()">🔐 Alterar PIN</button>
         <button class="cb" onclick="tryBio()">⬡ Registrar Biometria</button>
       </div>
+      <div class="cg"><div class="cl">IDENTIDADE</div>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">NOME</div>
+            <input type="text" id="cfg-name" class="ci" style="padding:6px 8px;font-size:12px" placeholder="Seu nome" oninput="saveUserName(this.value)">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">EMAIL</div>
+            <input type="email" id="cfg-email" class="ci" style="padding:6px 8px;font-size:12px" placeholder="seu@email.com" oninput="sv('user_email',this.value)">
+          </div>
+        </div>
+      </div>
       <div class="cg"><div class="cl">MEU PERFIL</div>
         <textarea class="ci" id="profile-i" rows="5" placeholder="Nome, objetivos, negócios, rotina, estilo..." style="resize:vertical"></textarea>
         <button class="cb" onclick="saveProfile()" style="margin-top:6px">Salvar Perfil</button>
@@ -895,7 +907,7 @@ function buildSys(extraCtx){
   const mc=buildMC();
   return`Você é Alfred OS — assistente pessoal estratégico exclusivo.
 
-REGRA ABSOLUTA: SEMPRE chame o usuário de "senhor". Nunca omita.
+REGRA ABSOLUTA: SEMPRE chame o usuário de "senhor" + nome configurado (ld('user_name','') se disponível). Nunca omita.
 
 ${t}
 
@@ -1030,17 +1042,17 @@ async function callAlfred(userMsg,maxTok,customSys){
   const now=Date.now();
   if(now-_apiLastErr<API_COOLDOWN)return'Senhor, aguarde um momento antes de tentar novamente.';
   const kbCtx=searchKB(userMsg);
-  const sys=(customSys||buildSys(userMsg))+(kbCtx?'\n\nDOCUMENTOS RELEVANTES DA BASE:\n'+kbCtx:'');
+  const sys=(customSys||buildSys(userMsg))+(kbCtx?'\n\nDOCUMENTOS RELEVANTES:\n'+kbCtx:'');
   const hints={decisao:'[MODO DECISÃO]\n\n',relacao:'[MODO RELAÇÃO]\n\n',analista:'[MODO ANALISTA]\n\n',professor:'[MODO PROFESSOR]\n\n',radar:'[MODO RADAR]\n\n'};
   const hint=hints[currentMode]||'';
   const msgs=[...hist.slice(-10).map(m=>({role:m.role,content:m.content})),{role:'user',content:hint+userMsg}];
   const ctrl=new AbortController();
-  const timeout=setTimeout(()=>ctrl.abort(),60000);
+  const timeout=setTimeout(()=>ctrl.abort(),45000);
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||1500,system:sys,messages:msgs,stream:true}),
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||1500,system:sys,messages:msgs}),
       signal:ctrl.signal
     });
     clearTimeout(timeout);
@@ -1048,41 +1060,11 @@ async function callAlfred(userMsg,maxTok,customSys){
       _apiLastErr=Date.now();
       const e=await res.json().catch(()=>({}));
       const errMsg=API_ERRORS[res.status]||('Erro '+res.status);
-      alfLog('error','API erro '+res.status);
+      alfLog('error','API '+res.status);
       return'Senhor, '+errMsg+(e.error?.message?' — '+e.error.message:'');
     }
-    // Streaming
-    const reader=res.body.getReader();
-    const decoder=new TextDecoder();
-    let fullText='';
-    let streamDiv=addMsg('...','a',true);
-    while(true){
-      const{done,value}=await reader.read();
-      if(done)break;
-      const chunk=decoder.decode(value,{stream:true});
-      for(const line of chunk.split('\n')){
-        if(!line.startsWith('data: '))continue;
-        const raw=line.slice(6).trim();
-        if(raw==='[DONE]')break;
-        try{
-          const parsed=JSON.parse(raw);
-          if(parsed.type==='content_block_delta'&&parsed.delta?.type==='text_delta'){
-            fullText+=parsed.delta.text;
-            updateMsgStreaming(streamDiv,fullText);
-          }
-        }catch(e){}
-      }
-    }
-    if(streamDiv){
-      streamDiv.classList.remove('msg-streaming');
-      updateMsgStreaming(streamDiv,fullText);
-      // Adicionar botão copiar
-      const cp=document.createElement('button');
-      cp.className='msg-copy';cp.textContent='⎘';cp.title='Copiar';
-      cp.onclick=()=>{navigator.clipboard?.writeText(fullText).then(()=>toastOk('Copiado')).catch(()=>{});};
-      streamDiv.appendChild(cp);
-    }
-    const reply=fullText||'Senhor, resposta vazia.';
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Senhor, resposta vazia. Tente novamente.';
     hist.push({role:'user',content:userMsg});
     hist.push({role:'assistant',content:reply});
     saveHist();
@@ -1092,10 +1074,10 @@ async function callAlfred(userMsg,maxTok,customSys){
   }catch(e){
     clearTimeout(timeout);
     _apiLastErr=Date.now();
-    alfLog('error',e.message||'Erro API');
-    if(e.name==='AbortError')return'Senhor, a requisição excedeu 60 segundos.';
+    alfLog('error','callAlfred: '+(e.message||'erro'));
+    if(e.name==='AbortError')return'Senhor, a requisição excedeu 45 segundos. Verifique sua conexão.';
     if(!navigator.onLine)return'Senhor, sem conexão com a internet.';
-    return'Senhor, erro de conexão: '+(e.message||'Verifique a internet.');
+    return'Senhor, erro de conexão: '+(e.message||'Verifique a internet e tente novamente.');
   }
 }
 
@@ -1593,8 +1575,8 @@ async async function handleInput(msg){
   spBuf='';clearTimeout(silT);
   const msgTrim=msg.trim();
   addMsg(msgTrim,'u');
-  BEHAV.add(msgTrim, currentMode);
-  alfLog('info','Usuário: '+msgTrim.slice(0,60));
+  BEHAV.add(msgTrim,currentMode);
+  alfLog('info','MSG: '+msgTrim.slice(0,60));
   if(FLASHCARD.active&&FLASHCARD.handleVoice(msgTrim))return;
   if(ld('behavPendingFeedback',false)&&msgTrim.toLowerCase().match(/^(sim|pode|claro|vai|quero|ok|positivo)/)){
     await generateBehaviorFeedback();return;
@@ -1609,26 +1591,22 @@ async async function handleInput(msg){
   if(handled)return;
   const isSelfUpdate=UPDATE_PATTERNS.test(msgTrim)&&(t.includes('função')||t.includes('tela')||t.includes('app')||t.includes('código')||t.includes('melhor'));
   setOrb('T');isThinking=true;setStat('Alfred processando...');setWv('th');
+  let reply='';
   try{
-    let reply;
-    if(isSelfUpdate){
-      reply=await handleSelfUpdate(msgTrim);
-      addMsg(reply,'a');
-    }else{
-      // callAlfred já adiciona a mensagem streaming — só pegar o retorno para TTS
-      reply=await callAlfred(msgTrim);
-    }
-    isThinking=false;
-    if(sets.autoSpeak&&reply){speak(reply);}
-    else{setOrb(isListening?'L':'I');setWv(isListening?'listening':'');}
-    setStat('Aguardando o senhor');
+    reply=isSelfUpdate?await handleSelfUpdate(msgTrim):await callAlfred(msgTrim);
   }catch(e){
-    isThinking=false;
-    const errMsg='Senhor, erro inesperado: '+(e.message||'Tente novamente.');
-    addMsg(errMsg,'a');
-    setOrb(isListening?'L':'I');
-    alfLog('error',e.message||'handleInput error');
+    reply='Senhor, erro inesperado: '+(e.message||'Tente novamente.');
+    alfLog('error','handleInput: '+e.message);
   }
+  isThinking=false;
+  if(reply){
+    addMsg(reply,'a');
+    if(sets.autoSpeak)speak(reply);
+    else{setOrb(isListening?'L':'I');setWv(isListening?'listening':'');}
+  }else{
+    setOrb(isListening?'L':'I');setWv(isListening?'listening':'');
+  }
+  setStat('Aguardando o senhor');
 }
 
 function sendTxt(){
@@ -1967,45 +1945,36 @@ function bibTab(t){
 }
 
 // ======================== UI ========================
-function addMsg(text,role,streaming){
+function addMsg(text,role){
   const el=document.getElementById('trsc');if(!el)return;
   const div=document.createElement('div');
-  div.className='msg '+role+(streaming?' msg-streaming':'');
-  const label=role==='u'?'SENHOR':'ALFRED';
-  const bodyDiv=document.createElement('div');
-  bodyDiv.className='msg-body';
-  if(role==='a'&&typeof marked!=='undefined'){
-    try{bodyDiv.innerHTML=marked.parse(text||'');}
-    catch(e){bodyDiv.textContent=text;}
-  }else{
-    bodyDiv.textContent=text;
-  }
+  div.className='msg '+role;
+  const uname=ld('user_name','');
+  const label=role==='u'?(uname?'SENHOR '+uname.toUpperCase():'SENHOR'):'ALFRED';
   const ml=document.createElement('div');
   ml.className='ml';ml.textContent=label;
+  const bodyDiv=document.createElement('div');
+  bodyDiv.className='msg-body';
+  const safeText=text||'';
+  if(role==='a'&&typeof marked!=='undefined'){
+    try{
+      marked.setOptions({breaks:true,gfm:true});
+      bodyDiv.innerHTML=marked.parse(safeText);
+    }catch(e){bodyDiv.textContent=safeText;}
+  }else{
+    bodyDiv.textContent=safeText;
+  }
   div.appendChild(ml);
   div.appendChild(bodyDiv);
-  if(role==='a'&&text){
+  if(role==='a'&&safeText){
     const cp=document.createElement('button');
     cp.className='msg-copy';cp.textContent='⎘';cp.title='Copiar';
-    cp.onclick=()=>{navigator.clipboard?.writeText(text).then(()=>toastOk('Copiado')).catch(()=>{});};
+    cp.onclick=()=>{navigator.clipboard?.writeText(safeText).then(()=>toastOk('Copiado!')).catch(()=>{});};
     div.appendChild(cp);
   }
   el.appendChild(div);
   el.scrollTop=el.scrollHeight;
-  while(el.children.length>30)el.removeChild(el.firstChild);
-  return div;
-}
-
-function updateMsgStreaming(div,text){
-  if(!div)return;
-  const body=div.querySelector('.msg-body');
-  if(!body)return;
-  if(typeof marked!=='undefined'){
-    try{body.innerHTML=marked.parse(text);}
-    catch(e){body.textContent=text;}
-  }else{body.textContent=text;}
-  const el=document.getElementById('trsc');
-  if(el)el.scrollTop=el.scrollHeight;
+  while(el.children.length>40)el.removeChild(el.firstChild);
 }
 
 const ORB_MAP={I:{ico:'🎙️',lbl:'TOQUE',cls:''},L:{ico:'👂',lbl:'OUVINDO',cls:'L'},T:{ico:'⚡',lbl:'PENSANDO',cls:'T'},S:{ico:'🔊',lbl:'FALANDO',cls:'S'}};
@@ -2057,6 +2026,13 @@ function updateDash(){
 // ======================== CONFIG ========================
 function saveApiKey(){const v=document.getElementById('api-i').value.trim();if(!v){alert('Senhor, cole a API key.');return;}try{localStorage.setItem('alf_key',v);}catch(e){alert('Erro ao salvar. Tente novamente.');}document.getElementById('api-i').value='';toastOk('Senhor, API key salva com sucesso.');}
 function saveProfile(){const v=document.getElementById('profile-i').value.trim();if(v){sv('profile_text',v);toastOk('Senhor, perfil salvo.');}}
+
+function saveUserName(name){
+  const n=(name||'').trim();
+  sv('user_name',n);
+  const el=document.getElementById('user-name-display');
+  if(el)el.textContent=n?'SENHOR '+n.toUpperCase():'SENHOR';
+}
 function saveVoice(){try{const n=document.getElementById('voice-s').value;sv('voiceName',n);const vs=speechSynthesis.getVoices();selVoice=n?vs.find(v=>v.name===n):null;if(!selVoice)selVoice=vs.find(v=>v.lang==='pt-BR')||null;}catch(e){}}
 function updRate(){try{vRate=parseFloat(document.getElementById('rate-r').value);document.getElementById('rate-l').textContent=vRate.toFixed(1)+'x';sv('voiceRate',vRate);}catch(e){}}
 function saveTone(){currentTone=document.getElementById('tone-s').value;sv('tone',currentTone);}
@@ -2116,6 +2092,13 @@ function init(){
     const ts=document.getElementById('tone-s');if(ts)ts.value=st;
     const pt=ld('profile_text','');
     const pi=document.getElementById('profile-i');if(pi)pi.value=pt;
+    // Carregar nome e email
+    const uname=ld('user_name','');
+    const uemail=ld('user_email','');
+    const cfgN=document.getElementById('cfg-name');if(cfgN)cfgN.value=uname;
+    const cfgE=document.getElementById('cfg-email');if(cfgE)cfgE.value=uemail;
+    const dispEl=document.getElementById('user-name-display');
+    if(dispEl)dispEl.textContent=uname?'SENHOR '+uname.toUpperCase():'SENHOR';
     Object.keys(sets).forEach(k=>{const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');});
     loadIDBLibrary(); // Carrega livros do IndexedDB em memória
   renderMem();updateDash();
