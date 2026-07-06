@@ -9,6 +9,9 @@
   <meta name="theme-color" content="#000A16">
   <title>Alfred OS</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" onerror="window.pdfFailed=true"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
     :root{--c:#F4C542;--gold:#D4A020;--g:#48C774;--o:#FF9900;--r:#FF3A4A;--v:#7B3FA8;
@@ -158,6 +161,41 @@
     .abs-job.done{border-color:rgba(76,175,80,0.3);background:rgba(76,175,80,0.05);}
     .abs-job.error{border-color:rgba(255,90,90,0.3);background:rgba(255,90,90,0.05);}
     .abs-job.processing{border-color:rgba(196,162,74,0.4);background:rgba(196,162,74,0.1);}
+
+
+    /* CHAT MARKDOWN & UI MELHORADO */
+    .msg{position:relative;margin-bottom:10px;animation:fu 0.3s ease;}
+    .msg.u .msg-body{background:rgba(244,197,66,0.08);border:1px solid rgba(244,197,66,0.2);border-radius:12px 12px 3px 12px;padding:10px 13px;font-size:12.5px;color:var(--text);line-height:1.6;white-space:pre-wrap;}
+    .msg.a .msg-body{background:var(--bg2);border:1px solid var(--border);border-radius:3px 12px 12px 12px;padding:10px 13px;font-size:12.5px;color:var(--text);line-height:1.7;}
+    .msg.a .msg-body h1,.msg.a .msg-body h2,.msg.a .msg-body h3{color:var(--gold);margin:10px 0 5px;font-size:13px;}
+    .msg.a .msg-body h1{font-size:14px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+    .msg.a .msg-body p{margin:5px 0;line-height:1.7;}
+    .msg.a .msg-body ul,.msg.a .msg-body ol{padding-left:16px;margin:4px 0;}
+    .msg.a .msg-body li{margin:2px 0;line-height:1.6;}
+    .msg.a .msg-body strong{color:var(--gold);font-weight:700;}
+    .msg.a .msg-body em{color:rgba(244,197,66,0.75);font-style:italic;}
+    .msg.a .msg-body code{background:rgba(196,162,74,0.12);color:var(--gold);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px;}
+    .msg.a .msg-body pre{background:#0a080f;border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;margin:6px 0;}
+    .msg.a .msg-body pre code{background:none;padding:0;color:#e2c97e;font-size:11px;line-height:1.5;}
+    .msg.a .msg-body table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px;}
+    .msg.a .msg-body th{background:rgba(196,162,74,0.15);color:var(--gold);padding:5px 8px;text-align:left;border:1px solid var(--border);}
+    .msg.a .msg-body td{padding:4px 8px;border:1px solid var(--border);color:var(--text);}
+    .msg.a .msg-body tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+    .msg.a .msg-body blockquote{border-left:3px solid var(--gold);padding:4px 10px;margin:6px 0;color:var(--muted);font-style:italic;}
+    .msg.a .msg-body hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+    .msg.a .msg-body a{color:var(--c);text-decoration:underline;}
+    .msg-copy{position:absolute;top:4px;right:4px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;opacity:0;transition:opacity 0.2s;padding:2px 5px;border-radius:4px;}
+    .msg:hover .msg-copy{opacity:1;}
+    .msg-copy:hover{background:rgba(196,162,74,0.15);color:var(--gold);}
+    .msg-streaming .msg-body::after{content:'▋';animation:blink 0.7s step-end infinite;color:var(--gold);}
+    /* LOGS */
+    .log-entry{font-size:10px;font-family:monospace;padding:3px 8px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--muted);display:flex;gap:8px;}
+    .log-time{color:rgba(196,162,74,0.5);flex-shrink:0;}
+    .log-err{color:#ff6b6b;}
+    .log-ok{color:#6bffb8;}
+    .log-info{color:rgba(196,162,74,0.7);}
+    /* UPLOAD drag zone */
+    .uz.drag-over{border-color:var(--gold);background:rgba(196,162,74,0.1);}
 
     /* ESCUTA — ACTIVE LISTENING */
     #escuta{background:var(--bg);}
@@ -434,7 +472,7 @@
           <div style="font-size:28px;margin-bottom:4px">📚</div>
           <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Toque para selecionar PDFs<br><small style="color:rgba(196,162,74,0.7)">Múltiplos arquivos · Sem limite de tamanho · Sem limite de quantidade</small></div>
         </div>
-        <input type="file" id="kb-inp" accept=".pdf,.txt,.md" multiple onchange="uploadKB(event)" style="display:none">
+        <input type="file" id="kb-inp" accept=".pdf,.txt,.md,.docx,.csv,.json,.html,.htm,.png,.jpg,.jpeg,.webp" multiple onchange="uploadKB(event)" style="display:none">
         <div id="bib-queue"></div>
       </div>
 
@@ -630,6 +668,16 @@
       <div class="cg"><div class="cl">DADOS</div>
         <button class="cb" onclick="exportAll()">⬇ Exportar Backup JSON</button>
         <button class="cb dn" onclick="clearAll()">✕ Apagar Todos os Dados</button>
+      </div>
+    
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          <span>📋 LOGS DO SISTEMA</span>
+          <button class="ctrl-btn" style="padding:3px 8px;font-size:10px" onclick="clearLogs()">Limpar</button>
+        </div>
+        <div id="log-list" style="max-height:200px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px">
+          <div class="em">Nenhum log ainda</div>
+        </div>
       </div>
     </div>
   </div>
@@ -928,15 +976,39 @@ function buildMC(){
 }
 
 function searchKB(q){
-  if(!kb.docs||!kb.docs.length)return'';
-  const w=q.toLowerCase().split(/\s+/).filter(x=>x.length>3);
+  if(!q)return'';
+  const words=q.toLowerCase().split(/\s+/).filter(x=>x.length>3);
+  if(!words.length)return'';
   let best=[];
-  for(const d of kb.docs){for(const c of(d.chunks||[])){
-    const s=w.filter(x=>c.toLowerCase().includes(x)).length;
-    if(s>0)best.push({s,text:c,name:d.name});
-  }}
+
+  // Buscar em chunks do localStorage (legado)
+  if(kb.docs?.length){
+    for(const d of kb.docs){
+      for(const c of(d.chunks||[])){
+        const cl=c.toLowerCase();
+        const s=words.filter(x=>cl.includes(x)).length;
+        if(s>0)best.push({s,text:c,name:d.name,src:'local'});
+      }
+    }
+  }
+
+  // Buscar no IndexedDB cache (_idbLib)
+  for(const book of Object.values(window._idbLib||{})){
+    const searchable=[book.title,book.author,book.core,book.apps,book.summary,book.keyQuote].filter(Boolean).join(' ');
+    const sl=searchable.toLowerCase();
+    let s=words.filter(x=>sl.includes(x)).length;
+    // Boost por tag match
+    try{if(book.tagPattern&&new RegExp(book.tagPattern,'i').test(q))s+=5;}catch(e){}
+    if(s>0){
+      best.push({s,text:(book.core||'').slice(0,600)+(book.apps?' | '+book.apps.slice(0,200):''),name:book.title||book.key,src:'idb'});
+    }
+  }
+
   best.sort((a,b)=>b.s-a.s);
-  return best.slice(0,3).map(b=>'['+b.name+']: '+b.text).join('\n\n');
+  const top=best.slice(0,4);
+  if(!top.length)return'';
+  alfLog('info','RAG: '+top.length+' chunks relevantes para "'+q.slice(0,40)+'"');
+  return top.map(b=>'['+b.name+']: '+b.text).join('\n\n');
 }
 
 // ======================== API ========================
@@ -958,17 +1030,17 @@ async function callAlfred(userMsg,maxTok,customSys){
   const now=Date.now();
   if(now-_apiLastErr<API_COOLDOWN)return'Senhor, aguarde um momento antes de tentar novamente.';
   const kbCtx=searchKB(userMsg);
-  const sys=(customSys||buildSys(userMsg))+(kbCtx?'\n\nDOC RELEVANTE:\n'+kbCtx:'');
-  const hints={decisao:'[MODO DECISÃO — use formato completo 7 componentes]\n\n',relacao:'[MODO RELAÇÃO — análise Alfred de relacionamento]\n\n',analista:'[MODO ANALISTA — formato Fato/Interpretação/Risco/Oportunidade/Ação]\n\n',professor:'[MODO PROFESSOR — formato didático 5 componentes]\n\n',radar:'[MODO RADAR — formato radar diário 6 componentes]\n\n'};
+  const sys=(customSys||buildSys(userMsg))+(kbCtx?'\n\nDOCUMENTOS RELEVANTES DA BASE:\n'+kbCtx:'');
+  const hints={decisao:'[MODO DECISÃO]\n\n',relacao:'[MODO RELAÇÃO]\n\n',analista:'[MODO ANALISTA]\n\n',professor:'[MODO PROFESSOR]\n\n',radar:'[MODO RADAR]\n\n'};
   const hint=hints[currentMode]||'';
-  const msgs=[...hist.slice(-8).map(m=>({role:m.role,content:m.content})),{role:'user',content:hint+userMsg}];
+  const msgs=[...hist.slice(-10).map(m=>({role:m.role,content:m.content})),{role:'user',content:hint+userMsg}];
   const ctrl=new AbortController();
-  const timeout=setTimeout(()=>ctrl.abort(),30000);
+  const timeout=setTimeout(()=>ctrl.abort(),60000);
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||850,system:sys,messages:msgs}),
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||1500,system:sys,messages:msgs,stream:true}),
       signal:ctrl.signal
     });
     clearTimeout(timeout);
@@ -976,23 +1048,57 @@ async function callAlfred(userMsg,maxTok,customSys){
       _apiLastErr=Date.now();
       const e=await res.json().catch(()=>({}));
       const errMsg=API_ERRORS[res.status]||('Erro '+res.status);
+      alfLog('error','API erro '+res.status);
       return'Senhor, '+errMsg+(e.error?.message?' — '+e.error.message:'');
     }
-    const data=await res.json();
-    const reply=data.content?.[0]?.text||'Senhor, resposta vazia. Tente novamente.';
+    // Streaming
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let fullText='';
+    let streamDiv=addMsg('...','a',true);
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      const chunk=decoder.decode(value,{stream:true});
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data: '))continue;
+        const raw=line.slice(6).trim();
+        if(raw==='[DONE]')break;
+        try{
+          const parsed=JSON.parse(raw);
+          if(parsed.type==='content_block_delta'&&parsed.delta?.type==='text_delta'){
+            fullText+=parsed.delta.text;
+            updateMsgStreaming(streamDiv,fullText);
+          }
+        }catch(e){}
+      }
+    }
+    if(streamDiv){
+      streamDiv.classList.remove('msg-streaming');
+      updateMsgStreaming(streamDiv,fullText);
+      // Adicionar botão copiar
+      const cp=document.createElement('button');
+      cp.className='msg-copy';cp.textContent='⎘';cp.title='Copiar';
+      cp.onclick=()=>{navigator.clipboard?.writeText(fullText).then(()=>toastOk('Copiado')).catch(()=>{});};
+      streamDiv.appendChild(cp);
+    }
+    const reply=fullText||'Senhor, resposta vazia.';
     hist.push({role:'user',content:userMsg});
     hist.push({role:'assistant',content:reply});
     saveHist();
     autoExtract(userMsg,reply);
+    alfLog('ok','Resposta: '+reply.length+' chars');
     return reply;
   }catch(e){
     clearTimeout(timeout);
     _apiLastErr=Date.now();
-    if(e.name==='AbortError')return'Senhor, a requisição excedeu 30 segundos. Verifique sua conexão.';
-    if(!navigator.onLine)return'Senhor, sem conexão com a internet. Verifique sua rede.';
-    return'Senhor, erro de conexão: '+(e.message||'Verifique a internet e tente novamente.');
+    alfLog('error',e.message||'Erro API');
+    if(e.name==='AbortError')return'Senhor, a requisição excedeu 60 segundos.';
+    if(!navigator.onLine)return'Senhor, sem conexão com a internet.';
+    return'Senhor, erro de conexão: '+(e.message||'Verifique a internet.');
   }
 }
+
 
 function autoExtract(msg,reply){
   const m=msg.toLowerCase();
@@ -1482,45 +1588,47 @@ function loadVoices(){
 }
 
 // ======================== INPUT HANDLING ========================
-async function handleInput(msg){
+async async function handleInput(msg){
   if(!msg||!msg.trim())return;
   spBuf='';clearTimeout(silT);
   const msgTrim=msg.trim();
   addMsg(msgTrim,'u');
-  // Track behavioral patterns
   BEHAV.add(msgTrim, currentMode);
-  // Flashcard voice routing (highest priority when active)
-  if (FLASHCARD.active && FLASHCARD.handleVoice(msgTrim)) return;
-  // Check for feedback acceptance
+  alfLog('info','Usuário: '+msgTrim.slice(0,60));
+  if(FLASHCARD.active&&FLASHCARD.handleVoice(msgTrim))return;
   if(ld('behavPendingFeedback',false)&&msgTrim.toLowerCase().match(/^(sim|pode|claro|vai|quero|ok|positivo)/)){
-    await generateBehaviorFeedback(); return;
+    await generateBehaviorFeedback();return;
   }
   const t=msgTrim.toLowerCase();
-  // Call command (high priority)
   if(t.match(/ligue? para|ligar? para|liga para/)){handleCallCommand(msgTrim);return;}
-  // Alfred mode on/off
   if(t.match(/^alfred[,\s]*(ligar?|ativar?)/)||t==='alfred ligar'||t==='alfred liga'){setAlfredMode(true);return;}
   if(t.match(/^alfred[,\s]*(desligar?|pausar?)/)){setAlfredMode(false);return;}
-  // Check app commands (open app, calculator)
   const cmd=detectCmd(msgTrim);
   if(cmd&&execCmd(cmd,msgTrim))return;
-  // Voice command router — may set mode or navigate
   const handled=routeVoiceCommand(msgTrim);
   if(handled)return;
-  // Check self-update request
   const isSelfUpdate=UPDATE_PATTERNS.test(msgTrim)&&(t.includes('função')||t.includes('tela')||t.includes('app')||t.includes('código')||t.includes('melhor'));
   setOrb('T');isThinking=true;setStat('Alfred processando...');setWv('th');
-  let reply;
   try{
-    if(isSelfUpdate){reply=await handleSelfUpdate(msgTrim);}
-    else{reply=await callAlfred(msgTrim);}
+    let reply;
+    if(isSelfUpdate){
+      reply=await handleSelfUpdate(msgTrim);
+      addMsg(reply,'a');
+    }else{
+      // callAlfred já adiciona a mensagem streaming — só pegar o retorno para TTS
+      reply=await callAlfred(msgTrim);
+    }
+    isThinking=false;
+    if(sets.autoSpeak&&reply){speak(reply);}
+    else{setOrb(isListening?'L':'I');setWv(isListening?'listening':'');}
+    setStat('Aguardando o senhor');
   }catch(e){
-    reply='Senhor, erro inesperado: '+(e.message||'Tente novamente.');
+    isThinking=false;
+    const errMsg='Senhor, erro inesperado: '+(e.message||'Tente novamente.');
+    addMsg(errMsg,'a');
+    setOrb(isListening?'L':'I');
+    alfLog('error',e.message||'handleInput error');
   }
-  isThinking=false;
-  addMsg(reply,'a');
-  if(sets.autoSpeak){speak(reply);}
-  else{setOrb(isListening?'L':'I');setWv(isListening?'listening':'');}
 }
 
 function sendTxt(){
@@ -1653,23 +1761,126 @@ function addTaskPrompt(){const t=prompt('Senhor, qual tarefa?');if(t&&t.trim()){
 
 // ======================== KB OPS ========================
 // ======================== BIBLIOTECA — UPLOAD ILIMITADO ========================
+const SUPPORTED_TYPES = {
+  pdf:    ['.pdf'],
+  text:   ['.txt','.md','.csv','.json','.html','.htm','.xml','.yaml','.yml'],
+  doc:    ['.docx'],
+  image:  ['.png','.jpg','.jpeg','.webp','.gif'],
+};
+
 async function uploadKB(evt){
   const files=Array.from(evt.target.files||[]);
   evt.target.value='';
   if(!files.length)return;
   bibTab('upload');
   setStat('Senhor, preparando '+files.length+' arquivo(s)...');
+  alfLog('info','Upload: '+files.length+' arquivo(s)');
   for(const file of files){
     try{
       setStat('Senhor, lendo '+file.name+'...');
-      let text='';
       const nm=file.name.toLowerCase();
-      if(nm.endsWith('.pdf')){text=await extractPDF(file);}
-      if(!text.trim()){text=await file.text().catch(()=>'');}
-      if(!text.trim()){toastErr('Não consegui extrair texto: '+file.name);continue;}
-      queueAbsorb({name:file.name, text, source:'pdf', status:'waiting'});
-    }catch(e){toastErr('Erro em '+file.name+': '+(e.message||''));}
+      const ext='.'+nm.split('.').pop();
+      let text='';
+      let isImage=false;
+      let imageData=null;
+
+      // PDF
+      if(SUPPORTED_TYPES.pdf.includes(ext)){
+        text=await extractPDF(file);
+      }
+      // DOCX via mammoth
+      else if(ext==='.docx'){
+        text=await extractDOCX(file);
+      }
+      // CSV via PapaParse
+      else if(ext==='.csv'){
+        text=await extractCSV(file);
+      }
+      // JSON
+      else if(ext==='.json'){
+        const raw=await file.text();
+        try{text=JSON.stringify(JSON.parse(raw),null,2);}
+        catch(e){text=raw;}
+      }
+      // HTML — extrair só o texto
+      else if(['.html','.htm'].includes(ext)){
+        const raw=await file.text();
+        const tmp=document.createElement('div');
+        tmp.innerHTML=raw;
+        text=tmp.innerText||tmp.textContent||'';
+      }
+      // Imagens — enviar via Vision API
+      else if(SUPPORTED_TYPES.image.includes(ext)){
+        isImage=true;
+        imageData=await fileToBase64(file);
+        const mediaType=ext==='.jpg'||ext==='.jpeg'?'image/jpeg':ext==='.png'?'image/png':ext==='.webp'?'image/webp':'image/gif';
+        text=await analyzeImageKB(imageData, mediaType, file.name);
+      }
+      // Texto puro
+      else{
+        text=await file.text().catch(()=>'');
+      }
+
+      if(!text.trim()){toastErr('Não consegui extrair texto: '+file.name);alfLog('warn','Extração falhou: '+file.name);continue;}
+      alfLog('ok','Lido: '+file.name+' ('+Math.round(text.length/1000)+'k chars)');
+      queueAbsorb({name:file.name, text, source:isImage?'image':'file', status:'waiting'});
+    }catch(e){
+      alfLog('error','Erro '+file.name+': '+e.message);
+      toastErr('Erro em '+file.name+': '+(e.message||''));
+    }
   }
+}
+
+// DOCX via mammoth.js
+async function extractDOCX(file){
+  if(typeof mammoth==='undefined')return await file.text().catch(()=>'');
+  try{
+    const buf=await file.arrayBuffer();
+    const result=await mammoth.extractRawText({arrayBuffer:buf});
+    return result.value||'';
+  }catch(e){alfLog('error','DOCX: '+e.message);return'';}
+}
+
+// CSV via PapaParse
+async function extractCSV(file){
+  const raw=await file.text().catch(()=>'');
+  if(typeof Papa==='undefined')return raw;
+  try{
+    const result=Papa.parse(raw,{header:true,skipEmptyLines:true});
+    const rows=result.data.map(r=>Object.entries(r).map(([k,v])=>k+': '+v).join(' | ')).join('\n');
+    const headers=result.meta?.fields?.join(', ')||'';
+    return(headers?'Colunas: '+headers+'\n\n':'')+rows;
+  }catch(e){return raw;}
+}
+
+// Converter arquivo para base64
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>res(e.target.result.split(',')[1]);
+    reader.onerror=rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Analisar imagem via Claude Vision
+async function analyzeImageKB(base64, mediaType, fileName){
+  const k=apiKey();if(!k)return'[Imagem sem análise — API key não configurada]';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:800,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+          {type:'text',text:'Descreva detalhadamente esta imagem. Extraia todo o texto visível. Identifique gráficos, tabelas, dados e contexto. Responda em português de forma estruturada para indexação.'}
+        ]}]
+      })
+    });
+    const d=await r.json();
+    return'[Análise de imagem: '+fileName+']\n'+(d.content?.[0]?.text||'Sem descrição');
+  }catch(e){return'[Erro ao analisar imagem: '+e.message+']';}
 }
 
 // Extração PDF sem limite de páginas, sem limite de tamanho
@@ -1756,14 +1967,45 @@ function bibTab(t){
 }
 
 // ======================== UI ========================
-function addMsg(text,role){
+function addMsg(text,role,streaming){
   const el=document.getElementById('trsc');if(!el)return;
   const div=document.createElement('div');
-  div.className='msg '+role;
-  div.innerHTML=`<div class="ml">${role==='u'?'SENHOR':'ALFRED'}</div>${text}`;
+  div.className='msg '+role+(streaming?' msg-streaming':'');
+  const label=role==='u'?'SENHOR':'ALFRED';
+  const bodyDiv=document.createElement('div');
+  bodyDiv.className='msg-body';
+  if(role==='a'&&typeof marked!=='undefined'){
+    try{bodyDiv.innerHTML=marked.parse(text||'');}
+    catch(e){bodyDiv.textContent=text;}
+  }else{
+    bodyDiv.textContent=text;
+  }
+  const ml=document.createElement('div');
+  ml.className='ml';ml.textContent=label;
+  div.appendChild(ml);
+  div.appendChild(bodyDiv);
+  if(role==='a'&&text){
+    const cp=document.createElement('button');
+    cp.className='msg-copy';cp.textContent='⎘';cp.title='Copiar';
+    cp.onclick=()=>{navigator.clipboard?.writeText(text).then(()=>toastOk('Copiado')).catch(()=>{});};
+    div.appendChild(cp);
+  }
   el.appendChild(div);
   el.scrollTop=el.scrollHeight;
-  while(el.children.length>8)el.removeChild(el.firstChild);
+  while(el.children.length>30)el.removeChild(el.firstChild);
+  return div;
+}
+
+function updateMsgStreaming(div,text){
+  if(!div)return;
+  const body=div.querySelector('.msg-body');
+  if(!body)return;
+  if(typeof marked!=='undefined'){
+    try{body.innerHTML=marked.parse(text);}
+    catch(e){body.textContent=text;}
+  }else{body.textContent=text;}
+  const el=document.getElementById('trsc');
+  if(el)el.scrollTop=el.scrollHeight;
 }
 
 const ORB_MAP={I:{ico:'🎙️',lbl:'TOQUE',cls:''},L:{ico:'👂',lbl:'OUVINDO',cls:'L'},T:{ico:'⚡',lbl:'PENSANDO',cls:'T'},S:{ico:'🔊',lbl:'FALANDO',cls:'S'}};
@@ -1823,6 +2065,45 @@ function exportAll(){try{const d={mem,kb,hist,sets,version:'2.0',date:new Date()
 function clearAll(){if(window.confirm('Senhor, apagar TODOS os dados do Alfred OS? Irreversível.')){['alf_mem','alf_kb','alf_hist','alf_sets','alf_key','alf_voiceName','alf_voiceRate','alf_tone','alf_seen','alf_pin','alf_credId','alf_lastRadar','alf_profile_text'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});try{sessionStorage.clear();}catch(e){}location.reload();}}
 
 // ======================== INIT ========================
+
+// ======================== SISTEMA DE LOGS ========================
+const _logs = [];
+const MAX_LOGS = 200;
+
+function alfLog(type, msg){
+  const entry = {
+    time: new Date().toLocaleTimeString('pt-BR'),
+    type, // 'info' | 'ok' | 'error' | 'warn'
+    msg: String(msg).slice(0, 300)
+  };
+  _logs.push(entry);
+  if(_logs.length > MAX_LOGS) _logs.shift();
+  // Console também
+  if(type === 'error') console.error('[Alfred]', msg);
+  else if(type === 'warn') console.warn('[Alfred]', msg);
+  // Atualizar painel de logs se visível
+  const el = document.getElementById('log-list');
+  if(el && el.closest('.panel.active')) renderLogs();
+}
+
+function renderLogs(){
+  const el = document.getElementById('log-list');
+  if(!el) return;
+  if(!_logs.length){ el.innerHTML='<div class="em">Nenhum log ainda</div>'; return; }
+  el.innerHTML = [..._logs].reverse().map(l =>
+    `<div class="log-entry"><span class="log-time">${l.time}</span><span class="log-${l.type}">[${l.type.toUpperCase()}]</span><span>${escHtml(l.msg)}</span></div>`
+  ).join('');
+}
+
+function clearLogs(){
+  _logs.length = 0;
+  renderLogs();
+}
+
+// Capturar erros globais
+window.addEventListener('error', e => alfLog('error', e.message + ' @ ' + e.filename + ':' + e.lineno));
+window.addEventListener('unhandledrejection', e => alfLog('error', 'Promise: ' + (e.reason?.message || e.reason)));
+
 function init(){
   try{
     initAuth();
@@ -1837,7 +2118,14 @@ function init(){
     const pi=document.getElementById('profile-i');if(pi)pi.value=pt;
     Object.keys(sets).forEach(k=>{const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');});
     loadIDBLibrary(); // Carrega livros do IndexedDB em memória
-  renderMem();renderKB();updateDash();
+  renderMem();updateDash();
+  // Configurar marked.js
+  if(typeof marked!=='undefined'){
+    marked.setOptions({breaks:true, gfm:true});
+  }
+  alfLog('ok','Alfred OS inicializado — '+new Date().toLocaleString('pt-BR'));
+  // Abrir no painel Alfred (chat principal)
+  swp('alfred');
     // Restore Alfred mode and contacts
     renderContacts();
     if(alfredModeOn){
