@@ -20,7 +20,7 @@
     #root{height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;overflow:hidden;}
 
     /* AUTH */
-    #auth-sc{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(244,197,66,0.08) 0%,#06040A 65%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;transition:opacity 0.5s;}
+    #auth-sc{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(244,197,66,0.08) 0%,#06040A 65%);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px;transition:opacity 0.5s;}
     .a-logo{font-size:10px;letter-spacing:8px;color:var(--c);font-weight:800;opacity:0.65;margin-bottom:8px;}
     .a-title{font-size:26px;font-weight:900;margin-bottom:5px;text-align:center;}
     .a-sub{font-size:12px;color:var(--muted);margin-bottom:36px;text-align:center;line-height:1.5;}
@@ -749,8 +749,7 @@ function changePIN(){
   pinMode='change';pinBuf='';
   document.getElementById('a-title').textContent='Novo PIN';
   document.getElementById('a-sub').textContent='Senhor, defina seu novo PIN';
-  document.getElementById('auth-sc').style.cssText='display:flex;opacity:1;';
-  updDots();
+  // auth desativado
 }
 
 async function tryBioAuto(){
@@ -797,10 +796,7 @@ function resetInact(){
     if(recognition)try{recognition.abort();}catch(e){}
     stopSession();
     pinBuf='';pinMode='verify';
-    document.getElementById('a-title').textContent='Sessão expirada';
-    document.getElementById('a-sub').textContent='Senhor, insira o PIN para continuar';
-    document.getElementById('auth-sc').style.cssText='display:flex;opacity:1;';
-    updDots();
+    // Auth desativado — sem bloqueio por inatividade
   },INACT);
 }
 
