@@ -681,17 +681,9 @@ async function sha256(s){
 }
 
 function initAuth(){
-  try{
-    const sess=sessionStorage.getItem(SESS_K);
-    if(sess==='ok'){hideAuth();return;}
-    document.getElementById('auth-sc').style.display='flex';
-    if(!localStorage.getItem(PIN_K)){
-      pinMode='setup';
-      document.getElementById('a-title').textContent='Criar PIN';
-      document.getElementById('a-sub').textContent='Senhor, defina seu PIN de 4 dígitos';
-    }
-    tryBioAuto();
-  }catch(e){hideAuth();}
+  // Auth desativado — acesso direto
+  try{sessionStorage.setItem(SESS_K,'ok');}catch(e){}
+  hideAuth();
 }
 
 function pp(d){
