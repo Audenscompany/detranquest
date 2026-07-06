@@ -6,406 +6,545 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Alfred OS">
-  <meta name="theme-color" content="#000B18">
+  <meta name="theme-color" content="#000A16">
   <title>Alfred OS</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" onerror="window.pdfFailed=true"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    :root{
-      --c:#00D4FF; --gold:#C4A24A; --g:#00E57A; --o:#FF8C42; --r:#FF3A5C;
-      --v:#7B6FFF; --bg:#000B18; --bg2:#040F1E; --bg3:#081525;
-      --border:rgba(0,212,255,0.12); --text:#DCF0FF; --muted:rgba(220,240,255,0.4);
-    }
-    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif;min-height:100dvh;overflow:hidden;}
-    #root{height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;}
+    :root{--c:#00D0FF;--gold:#C4A24A;--g:#00E07A;--o:#FF8C42;--r:#FF3A5C;--v:#8A70FF;
+      --bg:#000A16;--bg2:#03101E;--bg3:#071624;--border:rgba(0,208,255,0.13);
+      --text:#D8EEFF;--muted:rgba(216,238,255,0.4);}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif;height:100dvh;overflow:hidden;}
+    #root{height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;overflow:hidden;}
 
-    /* AUTH SCREEN */
-    #auth-screen{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#031A35 0%,#000B18 70%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
-    .auth-logo{font-size:12px;letter-spacing:8px;color:var(--c);font-weight:800;opacity:0.7;margin-bottom:10px;}
-    .auth-title{font-size:28px;font-weight:900;color:var(--text);margin-bottom:6px;text-align:center;}
-    .auth-sub{font-size:12px;color:var(--muted);margin-bottom:44px;text-align:center;}
-    .auth-dots{display:flex;gap:16px;margin-bottom:32px;}
-    .auth-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);transition:all 0.2s;}
-    .auth-dot.filled{background:var(--c);border-color:var(--c);box-shadow:0 0 12px var(--c);}
-    .auth-dot.error{background:var(--r);border-color:var(--r);}
-    .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:280px;}
-    .pin-btn{aspect-ratio:1;border-radius:50%;border:1px solid var(--border);background:rgba(0,212,255,0.04);color:var(--text);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;transition:all 0.15s;}
-    .pin-btn:active{background:rgba(0,212,255,0.15);transform:scale(0.95);}
-    .pin-btn-sub{font-size:8px;letter-spacing:1.5px;color:var(--muted);font-weight:600;}
-    .pin-del{border-color:rgba(255,58,92,0.2);color:var(--r);}
-    .pin-ok{border-color:rgba(0,212,255,0.3);background:rgba(0,212,255,0.08);color:var(--c);}
-    .auth-bio-btn{margin-top:20px;padding:12px 24px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;}
-    .auth-bio-btn:hover{border-color:var(--c);color:var(--c);}
-    .auth-setup-label{font-size:13px;color:var(--muted);margin-bottom:16px;text-align:center;}
+    /* AUTH */
+    #auth-sc{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#031828 0%,#000A16 70%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;transition:opacity 0.5s;}
+    .a-logo{font-size:10px;letter-spacing:8px;color:var(--c);font-weight:800;opacity:0.65;margin-bottom:8px;}
+    .a-title{font-size:26px;font-weight:900;margin-bottom:5px;text-align:center;}
+    .a-sub{font-size:12px;color:var(--muted);margin-bottom:36px;text-align:center;line-height:1.5;}
+    .a-dots{display:flex;gap:14px;margin-bottom:28px;}
+    .a-dot{width:17px;height:17px;border-radius:50%;border:2px solid rgba(0,208,255,0.25);transition:all 0.2s;}
+    .a-dot.f{background:var(--c);border-color:var(--c);box-shadow:0 0 10px var(--c);}
+    .a-dot.e{background:var(--r);border-color:var(--r);}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:270px;}
+    .p-btn{aspect-ratio:1;border-radius:50%;border:1px solid rgba(0,208,255,0.15);background:rgba(0,208,255,0.03);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;transition:all 0.15s;-webkit-touch-callout:none;}
+    .p-btn:active{background:rgba(0,208,255,0.12);transform:scale(0.94);}
+    .p-del{border-color:rgba(255,58,92,0.2);color:var(--r);}
+    .p-ok{border-color:rgba(0,208,255,0.3);background:rgba(0,208,255,0.07);color:var(--c);}
+    .p-sub{font-size:7.5px;letter-spacing:1px;color:var(--muted);}
+    .bio-btn{margin-top:18px;padding:11px 22px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12.5px;cursor:pointer;display:none;}
 
-    /* STATUS BAR */
-    .status-bar{padding:48px 18px 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
-    .status-logo{font-size:10px;letter-spacing:5px;color:var(--c);font-weight:800;opacity:0.75;}
-    .status-right{display:flex;gap:8px;align-items:center;}
-    .mode-pill{font-size:9px;letter-spacing:1.5px;font-weight:800;padding:3px 10px;border-radius:99px;border:1px solid var(--border);color:var(--muted);}
-    .mode-pill.active-m{color:var(--c);border-color:rgba(0,212,255,0.35);}
-    .mode-pill.decisao-m{color:var(--gold);border-color:rgba(196,162,74,0.35);}
-    .mode-pill.relacao-m{color:var(--r);border-color:rgba(255,58,92,0.35);}
-    .mode-pill.professor-m{color:var(--g);border-color:rgba(0,229,122,0.35);}
-    .mode-pill.radar-m{color:var(--v);border-color:rgba(123,111,255,0.35);}
-    .auth-dot-status{width:7px;height:7px;border-radius:50%;background:var(--g);box-shadow:0 0 6px var(--g);}
+    /* TOP */
+    .top-bar{padding:44px 18px 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+    .t-logo{font-size:9.5px;letter-spacing:5px;color:var(--c);font-weight:800;opacity:0.7;}
+    .t-right{display:flex;gap:8px;align-items:center;}
+    .m-pill{font-size:9px;letter-spacing:1px;font-weight:800;padding:3px 9px;border-radius:99px;border:1px solid var(--border);color:var(--muted);white-space:nowrap;}
+    .m-pill.c{color:var(--c);border-color:rgba(0,208,255,0.3);}
+    .m-pill.d{color:var(--gold);border-color:rgba(196,162,74,0.3);}
+    .m-pill.r{color:var(--r);border-color:rgba(255,58,92,0.3);}
+    .m-pill.p{color:var(--g);border-color:rgba(0,224,122,0.3);}
+    .m-pill.v{color:var(--v);border-color:rgba(138,112,255,0.3);}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 5px var(--g);}
+    .live-dot.rec{background:var(--r);box-shadow:0 0 8px var(--r);animation:blink 1s ease infinite;}
 
-    /* MODE SELECTOR */
-    .mode-bar{display:flex;gap:5px;padding:10px 18px;flex-shrink:0;overflow-x:auto;}
+    /* MODE BAR */
+    .mode-bar{display:flex;gap:5px;padding:8px 18px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
     .mode-bar::-webkit-scrollbar{display:none;}
-    .mode-btn{flex:none;padding:5px 13px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;font-weight:800;cursor:pointer;letter-spacing:0.5px;white-space:nowrap;transition:all 0.2s;}
-    .mode-btn.on{border-color:var(--c);color:var(--c);background:rgba(0,212,255,0.08);}
-    .mode-btn[data-m="decisao"].on{border-color:var(--gold);color:var(--gold);background:rgba(196,162,74,0.08);}
-    .mode-btn[data-m="relacao"].on{border-color:var(--r);color:var(--r);background:rgba(255,58,92,0.08);}
-    .mode-btn[data-m="professor"].on{border-color:var(--g);color:var(--g);background:rgba(0,229,122,0.08);}
-    .mode-btn[data-m="radar"].on{border-color:var(--v);color:var(--v);background:rgba(123,111,255,0.08);}
+    .m-btn{flex:none;padding:4px 12px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:9.5px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+    .m-btn.on{border-color:var(--c);color:var(--c);background:rgba(0,208,255,0.07);}
+    .m-btn[data-m="decisao"].on{border-color:var(--gold);color:var(--gold);background:rgba(196,162,74,0.07);}
+    .m-btn[data-m="relacao"].on{border-color:var(--r);color:var(--r);background:rgba(255,58,92,0.07);}
+    .m-btn[data-m="professor"].on{border-color:var(--g);color:var(--g);background:rgba(0,224,122,0.07);}
+    .m-btn[data-m="radar"].on{border-color:var(--v);color:var(--v);background:rgba(138,112,255,0.07);}
 
     /* PANELS */
-    .panel{position:absolute;inset:0;bottom:58px;display:none;flex-direction:column;overflow:hidden;}
+    .panel{position:absolute;inset:0;bottom:56px;display:none;flex-direction:column;overflow:hidden;}
     .panel.active{display:flex;}
+    .ph{padding:48px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .pt{font-size:16px;font-weight:800;color:var(--gold);}
+    .ps{font-size:11px;color:var(--muted);margin-top:2px;}
+    .pb{flex:1;overflow-y:auto;padding:14px 18px;-webkit-overflow-scrolling:touch;}
+    .pb::-webkit-scrollbar{width:3px;}
+    .pb::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
 
     /* ALFRED PANEL */
-    #alfred{background:radial-gradient(ellipse at 50% 30%,#041830 0%,var(--bg) 65%);}
+    #alfred{background:radial-gradient(ellipse at 50% 30%,#041A30 0%,var(--bg) 65%);}
     .orb-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:0;}
-    .orb-ring3{position:absolute;width:270px;height:270px;border-radius:50%;border:1px solid rgba(0,212,255,0.05);animation:rot-slow 30s linear infinite;}
-    .orb-ring2{position:absolute;width:228px;height:228px;border-radius:50%;border:1px solid rgba(0,212,255,0.08);animation:rot-slow 20s linear infinite reverse;}
-    .orb-ring1{position:absolute;width:192px;height:192px;border-radius:50%;border:1px solid rgba(0,212,255,0.15);animation:rot-slow 12s linear infinite;}
-    .orb{width:158px;height:158px;border-radius:50%;border:2px solid var(--c);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;z-index:2;transition:all 0.4s;box-shadow:0 0 35px rgba(0,212,255,0.15),0 0 70px rgba(0,212,255,0.05),inset 0 0 25px rgba(0,212,255,0.04);}
-    .orb::before{content:'';position:absolute;inset:-16px;border-radius:50%;border:1px solid rgba(0,212,255,0.18);animation:pulse-ring 2.5s ease infinite;pointer-events:none;}
-    .orb::after{content:'';position:absolute;inset:-32px;border-radius:50%;border:1px solid rgba(0,212,255,0.07);animation:pulse-ring 2.5s 0.8s ease infinite;pointer-events:none;}
-    .orb-ico{font-size:34px;line-height:1;margin-bottom:3px;}
-    .orb-lbl{font-size:9px;letter-spacing:3px;font-weight:800;color:var(--c);opacity:0.7;}
-    .alfred-status{margin-top:20px;font-size:12.5px;color:var(--muted);text-align:center;z-index:2;padding:0 20px;min-height:18px;}
-    .senhor-name{margin-top:6px;font-size:11px;letter-spacing:3px;color:var(--c);opacity:0.5;font-weight:700;z-index:2;}
-    .wv-zone{display:flex;gap:3px;align-items:center;height:24px;z-index:2;margin-top:8px;opacity:0;transition:opacity 0.3s;}
-    .wv-zone.show{opacity:1;}
+    .r3{position:absolute;width:265px;height:265px;border-radius:50%;border:1px solid rgba(0,208,255,0.05);animation:rs 28s linear infinite;pointer-events:none;}
+    .r2{position:absolute;width:222px;height:222px;border-radius:50%;border:1px solid rgba(0,208,255,0.09);animation:rs 18s linear infinite reverse;pointer-events:none;}
+    .r1{position:absolute;width:187px;height:187px;border-radius:50%;border:1px solid rgba(0,208,255,0.14);animation:rs 10s linear infinite;pointer-events:none;}
+    .orb{width:155px;height:155px;border-radius:50%;border:2px solid var(--c);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;position:relative;z-index:2;transition:all 0.4s ease;box-shadow:0 0 30px rgba(0,208,255,0.12),inset 0 0 20px rgba(0,208,255,0.04);}
+    .orb::before{content:'';position:absolute;inset:-15px;border-radius:50%;border:1px solid rgba(0,208,255,0.16);animation:pr 2.4s ease infinite;pointer-events:none;}
+    .orb::after{content:'';position:absolute;inset:-30px;border-radius:50%;border:1px solid rgba(0,208,255,0.07);animation:pr 2.4s 0.7s ease infinite;pointer-events:none;}
+    .o-ico{font-size:32px;line-height:1;margin-bottom:3px;}
+    .o-lbl{font-size:8.5px;letter-spacing:2.5px;font-weight:800;color:var(--c);opacity:0.65;}
+    .a-stat{margin-top:18px;font-size:12px;color:var(--muted);text-align:center;z-index:2;padding:0 16px;min-height:16px;}
+    .s-name{font-size:9px;letter-spacing:4px;color:var(--c);opacity:0.4;font-weight:700;z-index:2;margin-top:5px;}
+    .wvz{display:flex;gap:3px;align-items:center;height:22px;z-index:2;margin-top:7px;opacity:0;transition:opacity 0.3s;}
+    .wvz.show{opacity:1;}
     .wv{width:3px;border-radius:99px;background:var(--c);}
-    .wv:nth-child(1){animation:wv-an 1s ease infinite 0.0s;}
-    .wv:nth-child(2){animation:wv-an 1s ease infinite 0.1s;}
-    .wv:nth-child(3){animation:wv-an 1s ease infinite 0.2s;}
-    .wv:nth-child(4){animation:wv-an 1s ease infinite 0.15s;}
-    .wv:nth-child(5){animation:wv-an 1s ease infinite 0.05s;}
-    .wv-zone.speaking .wv{background:var(--g);}
-    .wv-zone.thinking .wv{background:var(--v);}
-
-    /* ORB STATES */
-    .orb.listening{border-color:var(--c);box-shadow:0 0 55px rgba(0,212,255,0.3),0 0 100px rgba(0,212,255,0.1),inset 0 0 35px rgba(0,212,255,0.06);}
-    .orb.thinking{border-color:var(--v);box-shadow:0 0 55px rgba(123,111,255,0.3);}
-    .orb.thinking::before{animation:spin-think 1s linear infinite;border-color:var(--v);border-top-color:transparent;}
-    .orb.speaking{border-color:var(--g);box-shadow:0 0 55px rgba(0,229,122,0.3);}
-    .orb.gold-mode{border-color:var(--gold);}
+    .wv:nth-child(1){animation:wa 1s ease infinite 0s;}
+    .wv:nth-child(2){animation:wa 1s ease infinite 0.1s;}
+    .wv:nth-child(3){animation:wa 1s ease infinite 0.2s;}
+    .wv:nth-child(4){animation:wa 1s ease infinite 0.15s;}
+    .wv:nth-child(5){animation:wa 1s ease infinite 0.05s;}
+    .wvz.sp .wv{background:var(--g);}
+    .wvz.th .wv{background:var(--v);}
+    .orb.L{border-color:var(--c);box-shadow:0 0 50px rgba(0,208,255,0.28),inset 0 0 30px rgba(0,208,255,0.05);}
+    .orb.T{border-color:var(--v);box-shadow:0 0 50px rgba(138,112,255,0.28);}
+    .orb.T::before{animation:st 0.9s linear infinite;border-color:var(--v);border-top-color:transparent;}
+    .orb.S{border-color:var(--g);box-shadow:0 0 50px rgba(0,224,122,0.28);}
+    .orb.gm{border-color:var(--gold);}
 
     /* TRANSCRIPT */
-    .transcript{padding:0 16px 8px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;flex-shrink:0;max-height:155px;}
-    .msg{padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.55;animation:fd-up 0.25s ease;}
-    .msg.user{background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.15);align-self:flex-end;max-width:88%;}
-    .msg.alfred{background:rgba(196,162,74,0.07);border:1px solid rgba(196,162,74,0.2);align-self:flex-start;max-width:92%;white-space:pre-wrap;}
-    .msg-l{font-size:8px;font-weight:800;letter-spacing:1px;margin-bottom:3px;opacity:0.55;}
-    .msg.user .msg-l{color:var(--c);}
-    .msg.alfred .msg-l{color:var(--gold);}
-    .inp-row{display:flex;gap:7px;padding:7px 16px 10px;border-top:1px solid var(--border);flex-shrink:0;}
-    .txt-inp{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;color:var(--text);font-size:13px;}
-    .txt-inp:focus{outline:none;border-color:var(--c);}
-    .snd-btn{padding:9px 13px;border-radius:10px;border:none;background:var(--gold);color:#000;font-size:14px;cursor:pointer;font-weight:800;}
+    .trsc{padding:0 15px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;flex-shrink:0;max-height:150px;-webkit-overflow-scrolling:touch;}
+    .msg{padding:7px 11px;border-radius:11px;font-size:12px;line-height:1.5;animation:fu 0.22s ease;}
+    .msg.u{background:rgba(0,208,255,0.07);border:1px solid rgba(0,208,255,0.15);align-self:flex-end;max-width:88%;}
+    .msg.a{background:rgba(196,162,74,0.07);border:1px solid rgba(196,162,74,0.18);align-self:flex-start;max-width:92%;white-space:pre-wrap;}
+    .ml{font-size:8px;font-weight:800;letter-spacing:1px;margin-bottom:3px;opacity:0.5;}
+    .msg.u .ml{color:var(--c);}
+    .msg.a .ml{color:var(--gold);}
+    .ir{display:flex;gap:7px;padding:7px 15px 9px;border-top:1px solid var(--border);flex-shrink:0;}
+    .ti{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 11px;color:var(--text);font-size:13px;}
+    .ti:focus{outline:none;border-color:var(--c);}
+    .sb{padding:8px 12px;border-radius:10px;border:none;background:var(--gold);color:#000;font-size:14px;cursor:pointer;font-weight:800;}
 
-    /* DASHBOARD PANEL */
+    /* DASH */
     #dash{background:var(--bg);}
-    .dash-header{padding:52px 18px 14px;flex-shrink:0;}
-    .dash-greeting{font-size:20px;font-weight:900;color:var(--text);line-height:1.3;}
-    .dash-date{font-size:11px;color:var(--muted);margin-top:3px;}
-    .dash-body{flex:1;overflow-y:auto;padding:0 18px 18px;}
-    .dash-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
-    .dash-card-title{font-size:10px;letter-spacing:2px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
-    .dash-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-    .dash-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
-    .dash-ico{font-size:18px;flex-shrink:0;width:28px;text-align:center;}
-    .dash-txt{font-size:12.5px;color:var(--text);line-height:1.5;}
-    .dash-sub-txt{font-size:11px;color:var(--muted);margin-top:2px;}
-    .add-btn{padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;cursor:pointer;}
-    .pri-badge{padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700;}
-    .pri-hi{background:rgba(255,58,92,0.15);color:var(--r);}
-    .pri-mid{background:rgba(255,140,66,0.15);color:var(--o);}
-    .pri-lo{background:rgba(0,212,255,0.1);color:var(--c);}
-    .radar-item{padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.5;}
-    .radar-item:last-child{border-bottom:none;}
-    .radar-item strong{color:var(--gold);font-weight:700;}
-    .daily-generate-btn{width:100%;padding:12px;border-radius:11px;border:1px solid rgba(196,162,74,0.3);background:rgba(196,162,74,0.06);color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;}
-
-    /* PANEL SHARED */
-    .ph{padding:52px 18px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
-    .pt{font-size:17px;font-weight:800;color:var(--gold);}
-    .ps{font-size:11px;color:var(--muted);margin-top:3px;}
-    .pb{flex:1;overflow-y:auto;padding:16px 18px;}
+    .dh{padding:48px 18px 12px;flex-shrink:0;}
+    .dg{font-size:18px;font-weight:900;color:var(--text);}
+    .dd{font-size:11px;color:var(--muted);margin-top:3px;}
+    .db{flex:1;overflow-y:auto;padding:0 18px 18px;}
+    .dc{background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:9px;}
+    .dct{font-size:9.5px;letter-spacing:1.5px;font-weight:800;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;}
+    .di{display:flex;gap:9px;align-items:flex-start;margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+    .di:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+    .di-ico{font-size:16px;flex-shrink:0;width:26px;text-align:center;}
+    .di-tx{font-size:12px;color:var(--text);line-height:1.45;}
+    .di-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+    .add-b{padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:9.5px;cursor:pointer;}
+    .rad-gen{width:100%;padding:11px;border-radius:11px;border:1px solid rgba(196,162,74,0.25);background:rgba(196,162,74,0.05);color:var(--gold);font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:9px;}
 
     /* MEMORY */
-    .cat-tabs{display:flex;gap:5px;padding:10px 18px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
-    .cat-tabs::-webkit-scrollbar{display:none;}
-    .cat-tab{flex:none;padding:4px 12px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;}
-    .cat-tab.active-cat{background:rgba(0,212,255,0.1);border-color:var(--c);color:var(--c);}
-    .mem-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:7px;position:relative;}
-    .mem-ct{font-size:12px;color:var(--text);line-height:1.55;}
-    .mem-meta{font-size:10px;color:var(--muted);margin-top:5px;display:flex;gap:8px;}
-    .mem-del-btn{position:absolute;top:9px;right:9px;background:rgba(255,58,92,0.08);border:none;color:var(--r);font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;}
-    .task-row{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:7px;display:flex;gap:9px;align-items:flex-start;}
-    .task-chk{width:18px;height:18px;border-radius:4px;border:2px solid var(--c);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;}
-    .task-chk.done{background:var(--g);border-color:var(--g);}
-    .task-tx{font-size:12px;color:var(--text);flex:1;line-height:1.4;}
-    .empty-msg{text-align:center;padding:30px;color:var(--muted);font-size:12px;}
+    .ct{display:flex;gap:4px;padding:9px 18px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+    .ct::-webkit-scrollbar{display:none;}
+    .ctb{flex:none;padding:4px 11px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:9.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+    .ctb.ac{background:rgba(0,208,255,0.09);border-color:var(--c);color:var(--c);}
+    .mc{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:10px;margin-bottom:6px;position:relative;}
+    .mct{font-size:12px;color:var(--text);line-height:1.5;}
+    .mcm{font-size:9.5px;color:var(--muted);margin-top:4px;display:flex;gap:7px;}
+    .md-btn{position:absolute;top:8px;right:8px;background:rgba(255,58,92,0.08);border:none;color:var(--r);font-size:10.5px;padding:2px 6px;border-radius:5px;cursor:pointer;}
+    .tr{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:10px;margin-bottom:6px;display:flex;gap:8px;align-items:flex-start;}
+    .tc{width:17px;height:17px;border-radius:4px;border:2px solid var(--c);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;}
+    .tc.dn{background:var(--g);border-color:var(--g);}
+    .tx{font-size:12px;color:var(--text);flex:1;line-height:1.4;}
+    .em{text-align:center;padding:26px;color:var(--muted);font-size:12px;}
 
     /* KNOWLEDGE */
-    .up-zone{border:2px dashed var(--border);border-radius:14px;padding:22px;text-align:center;cursor:pointer;margin-bottom:13px;}
-    .up-zone:hover{border-color:var(--gold);}
-    .kb-item{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:7px;display:flex;gap:9px;align-items:center;}
-    .kb-ico{font-size:20px;flex-shrink:0;}
-    .kb-nm{font-size:12px;font-weight:600;color:var(--text);}
-    .kb-mt{font-size:10px;color:var(--muted);margin-top:2px;}
-    .kb-dl{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+    .uz{border:2px dashed var(--border);border-radius:13px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;}
+    .uz:hover,.uz:active{border-color:var(--gold);}
+    .ki{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:10px;margin-bottom:6px;display:flex;gap:8px;align-items:center;}
+    .kn{font-size:12px;font-weight:600;color:var(--text);}
+    .km{font-size:9.5px;color:var(--muted);margin-top:2px;}
+    .kd{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12.5px;}
+
+    /* ESCUTA — ACTIVE LISTENING */
+    #escuta{background:var(--bg);}
+    .esc-main{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+    .esc-header{padding:48px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .esc-title{font-size:16px;font-weight:800;color:var(--r);}
+    .esc-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+    .esc-body{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px;}
+    .esc-toggle-zone{background:rgba(255,58,92,0.05);border:1px solid rgba(255,58,92,0.2);border-radius:16px;padding:18px;text-align:center;}
+    .esc-orb{width:90px;height:90px;border-radius:50%;border:2px solid var(--r);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all 0.3s;}
+    .esc-orb.rec-on{box-shadow:0 0 40px rgba(255,58,92,0.35);animation:esc-pulse 1.5s ease infinite;}
+    .esc-status{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+    .esc-status.active{color:var(--r);}
+    .esc-timer{font-size:28px;font-weight:900;color:var(--r);font-variant-numeric:tabular-nums;margin-bottom:10px;}
+    .esc-start-btn{width:100%;padding:13px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--r),#990022);color:white;font-weight:800;font-size:14px;cursor:pointer;}
+    .esc-stop-btn{width:100%;padding:13px;border-radius:11px;border:1px solid rgba(255,58,92,0.4);background:transparent;color:var(--r);font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;}
+    .esc-info{background:rgba(0,208,255,0.04);border:1px solid var(--border);border-radius:11px;padding:11px;font-size:11.5px;color:var(--muted);line-height:1.6;}
+    .esc-info strong{color:var(--c);}
+    .esc-tr-zone{background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:12px;max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    .esc-tr-title{font-size:9.5px;letter-spacing:1.5px;color:var(--c);font-weight:800;margin-bottom:8px;}
+    .esc-entry{margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+    .esc-entry:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+    .esc-ch{font-size:9px;letter-spacing:1px;font-weight:800;padding:1px 7px;border-radius:99px;display:inline-block;margin-bottom:2px;}
+    .esc-ch.me{background:rgba(0,208,255,0.12);color:var(--c);}
+    .esc-ch.ot{background:rgba(196,162,74,0.12);color:var(--gold);}
+    .esc-tx{font-size:12px;color:var(--text);line-height:1.4;}
+    .pro-cards{display:flex;flex-direction:column;gap:7px;}
+    .pro-card{background:rgba(138,112,255,0.09);border:1px solid rgba(138,112,255,0.25);border-radius:12px;padding:11px 13px;animation:fu 0.3s ease;position:relative;}
+    .pro-card-lbl{font-size:8.5px;letter-spacing:1.5px;color:var(--v);font-weight:800;margin-bottom:4px;}
+    .pro-card-txt{font-size:12px;color:var(--text);line-height:1.5;}
+    .pro-close{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+
+    /* SUMMARY MODAL */
+    #sum-modal{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:8000;display:none;align-items:flex-end;justify-content:center;padding:0;}
+    .sum-box{background:var(--bg3);border-top:1px solid var(--gold);border-radius:24px 24px 0 0;padding:20px 18px;width:100%;max-width:480px;max-height:85dvh;overflow-y:auto;}
+    .sum-title{font-size:15px;font-weight:800;color:var(--gold);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+    .sum-content{font-size:12.5px;color:var(--text);line-height:1.75;white-space:pre-wrap;}
+    .sum-btn{width:100%;padding:13px;border-radius:11px;border:none;background:var(--gold);color:#000;font-weight:800;font-size:13px;cursor:pointer;margin-top:16px;}
+    .sum-save{width:100%;padding:13px;border-radius:11px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12.5px;cursor:pointer;margin-top:8px;}
+
+    /* CONTROLE — iPhone control */
+    #controle{background:var(--bg);}
+    .ctrl-sec{background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:10px;}
+    .ctrl-sec-title{font-size:9.5px;letter-spacing:1.5px;color:var(--c);font-weight:800;margin-bottom:10px;}
+    .app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+    .app-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:11px;border:1px solid var(--border);background:rgba(0,208,255,0.03);cursor:pointer;}
+    .app-btn:active{background:rgba(0,208,255,0.1);}
+    .app-btn-ico{font-size:22px;line-height:1;}
+    .app-btn-lbl{font-size:9px;color:var(--muted);font-weight:600;text-align:center;}
+    .ctrl-inp{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;margin-bottom:8px;}
+    .ctrl-inp:focus{outline:none;border-color:var(--c);}
+    .ctrl-row{display:flex;gap:7px;margin-bottom:8px;}
+    .ctrl-btn{flex:1;padding:11px;border-radius:9px;border:1px solid rgba(196,162,74,0.3);background:rgba(196,162,74,0.06);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;}
+    .ctrl-btn.c{border-color:rgba(0,208,255,0.3);background:rgba(0,208,255,0.06);color:var(--c);}
+    .ctrl-info-box{background:rgba(255,140,66,0.05);border:1px solid rgba(255,140,66,0.2);border-radius:9px;padding:9px 11px;font-size:11px;color:rgba(255,180,100,0.8);line-height:1.6;margin-bottom:8px;}
 
     /* RELATIONSHIP */
     #rel{background:var(--bg);}
-    .rel-ta{width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:10px;color:var(--text);font-size:12px;line-height:1.5;resize:vertical;font-family:monospace;margin-bottom:8px;}
+    .rel-ta{width:100%;min-height:110px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:9px;color:var(--text);font-size:12px;line-height:1.5;resize:vertical;font-family:monospace;margin-bottom:7px;}
     .rel-ta:focus{outline:none;border-color:var(--r);}
-    .rel-btn{width:100%;padding:13px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--r),#AA1133);color:white;font-weight:800;font-size:13px;cursor:pointer;margin-bottom:12px;}
-    .rel-res{background:var(--bg3);border:1px solid rgba(255,58,92,0.25);border-radius:13px;padding:13px;font-size:12px;color:var(--text);line-height:1.8;white-space:pre-wrap;display:none;animation:fd-up 0.3s ease;}
+    .rel-btn{width:100%;padding:12px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--r),#990022);color:white;font-weight:800;font-size:13px;cursor:pointer;margin-bottom:10px;}
+    .rel-res{background:var(--bg3);border:1px solid rgba(255,58,92,0.22);border-radius:12px;padding:12px;font-size:12px;color:var(--text);line-height:1.75;white-space:pre-wrap;display:none;}
 
-    /* SETTINGS */
-    .cfg-g{margin-bottom:18px;}
-    .cfg-l{font-size:10px;letter-spacing:2px;color:var(--c);font-weight:800;margin-bottom:9px;}
-    .cfg-i{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px;}
-    .cfg-i:focus{outline:none;border-color:var(--c);}
-    .cfg-s{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px;cursor:pointer;}
-    .cfg-b{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--c);font-size:12.5px;font-weight:700;cursor:pointer;margin-top:6px;}
-    .cfg-b.prim{background:var(--c);color:#000;border-color:var(--c);}
-    .cfg-b.gold{background:var(--gold);color:#000;border-color:var(--gold);}
-    .cfg-b.dan{color:var(--r);border-color:rgba(255,58,92,0.3);}
-    .cfg-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:7px;}
-    .cfg-rl{font-size:12px;color:var(--text);}
-    .tog{width:40px;height:22px;border-radius:99px;background:#111;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
-    .tog.on{background:var(--c);}
-    .tog::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:left 0.2s;}
-    .tog.on::after{left:21px;}
+    /* CONFIG */
+    .cg{margin-bottom:17px;}
+    .cl{font-size:9.5px;letter-spacing:1.8px;color:var(--c);font-weight:800;margin-bottom:8px;}
+    .ci{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px;color:var(--text);font-size:13px;}
+    .ci:focus{outline:none;border-color:var(--c);}
+    .cs{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px;color:var(--text);font-size:13px;cursor:pointer;}
+    .cb{width:100%;padding:11px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--c);font-size:12.5px;font-weight:700;cursor:pointer;margin-top:5px;}
+    .cb.pr{background:var(--c);color:#000;border-color:var(--c);}
+    .cb.gd{background:var(--gold);color:#000;border-color:var(--gold);}
+    .cb.dn{color:var(--r);border-color:rgba(255,58,92,0.25);}
+    .cr{display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px;margin-bottom:6px;}
+    .crl{font-size:12px;color:var(--text);}
+    .tg{width:38px;height:21px;border-radius:99px;background:#111;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+    .tg.on{background:var(--c);}
+    .tg::after{content:'';position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:white;transition:left 0.2s;}
+    .tg.on::after{left:20px;}
 
-    /* CONFIRM MODAL */
-    #conf-ov{position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:8888;display:none;align-items:center;justify-content:center;padding:24px;}
-    .conf-box{background:var(--bg3);border:1px solid var(--gold);border-radius:22px;padding:28px 22px;text-align:center;width:100%;max-width:320px;}
-    .conf-ico{font-size:44px;margin-bottom:10px;}
-    .conf-ti{font-size:17px;font-weight:800;color:var(--gold);margin-bottom:7px;}
-    .conf-de{font-size:12.5px;color:var(--muted);margin-bottom:22px;line-height:1.6;}
-    .conf-btns{display:flex;gap:10px;}
-    .btn-conf{flex:1;padding:13px;border-radius:11px;border:none;background:var(--gold);color:#000;font-weight:800;font-size:13px;cursor:pointer;}
-    .btn-canc{flex:1;padding:13px;border-radius:11px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;}
+    /* CONFIRM */
+    #conf-ov{position:fixed;inset:0;background:rgba(0,0,0,0.91);z-index:8888;display:none;align-items:center;justify-content:center;padding:22px;}
+    .conf-box{background:var(--bg3);border:1px solid var(--gold);border-radius:20px;padding:26px 20px;text-align:center;width:100%;max-width:310px;}
+    .c-ico{font-size:40px;margin-bottom:9px;}
+    .c-ti{font-size:16px;font-weight:800;color:var(--gold);margin-bottom:6px;}
+    .c-de{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.55;}
+    .c-btns{display:flex;gap:9px;}
+    .bc{flex:1;padding:12px;border-radius:10px;border:none;background:var(--gold);color:#000;font-weight:800;font-size:13px;cursor:pointer;}
+    .bx{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;}
 
     /* NAV */
-    .bnav{display:flex;background:rgba(0,11,24,0.97);border-top:1px solid var(--border);height:58px;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0);}
-    .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:color 0.2s;}
+    .bnav{display:flex;background:rgba(0,10,22,0.97);border-top:1px solid var(--border);height:56px;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0);}
+    .nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:color 0.15s;min-width:0;}
     .nb.on{color:var(--gold);}
-    .nb svg{width:19px;height:19px;}
-    .nb span{font-size:8.5px;letter-spacing:0.3px;font-weight:800;}
+    .nb svg{width:18px;height:18px;flex-shrink:0;}
+    .nb span{font-size:8px;letter-spacing:0.2px;font-weight:800;}
 
-    /* ANIMATIONS */
-    @keyframes rot-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-    @keyframes pulse-ring{0%,100%{transform:scale(1);opacity:0.25}50%{transform:scale(1.03);opacity:0.12}}
-    @keyframes spin-think{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-    @keyframes wv-an{0%,100%{height:4px}50%{height:16px}}
-    @keyframes fd-up{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-    .shake{animation:shake 0.4s ease;}
+    /* KEYFRAMES */
+    @keyframes rs{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes pr{0%,100%{transform:scale(1);opacity:0.2}50%{transform:scale(1.03);opacity:0.1}}
+    @keyframes st{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes wa{0%,100%{height:4px}50%{height:15px}}
+    @keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+    @keyframes esc-pulse{0%,100%{box-shadow:0 0 20px rgba(255,58,92,0.2)}50%{box-shadow:0 0 45px rgba(255,58,92,0.5)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .shake{animation:shake 0.35s ease;}
   </style>
 </head>
 <body>
 <div id="root">
+
   <!-- AUTH -->
-  <div id="auth-screen">
-    <div class="auth-logo">ALFRED OS</div>
-    <div class="auth-title" id="auth-title">Identificação</div>
-    <div class="auth-sub" id="auth-sub">Senhor, insira seu PIN para acessar</div>
-    <div class="auth-dots" id="auth-dots">
-      <div class="auth-dot" id="ad0"></div><div class="auth-dot" id="ad1"></div>
-      <div class="auth-dot" id="ad2"></div><div class="auth-dot" id="ad3"></div>
+  <div id="auth-sc">
+    <div class="a-logo">ALFRED OS</div>
+    <div class="a-title" id="a-title">Identificação</div>
+    <div class="a-sub" id="a-sub">Senhor, insira seu PIN para acessar</div>
+    <div class="a-dots" id="a-dots">
+      <div class="a-dot" id="ad0"></div><div class="a-dot" id="ad1"></div>
+      <div class="a-dot" id="ad2"></div><div class="a-dot" id="ad3"></div>
     </div>
     <div class="pin-pad">
-      <button class="pin-btn" onclick="pinPress(1)"><span>1</span></button>
-      <button class="pin-btn" onclick="pinPress(2)"><span>2</span><span class="pin-btn-sub">ABC</span></button>
-      <button class="pin-btn" onclick="pinPress(3)"><span>3</span><span class="pin-btn-sub">DEF</span></button>
-      <button class="pin-btn" onclick="pinPress(4)"><span>4</span><span class="pin-btn-sub">GHI</span></button>
-      <button class="pin-btn" onclick="pinPress(5)"><span>5</span><span class="pin-btn-sub">JKL</span></button>
-      <button class="pin-btn" onclick="pinPress(6)"><span>6</span><span class="pin-btn-sub">MNO</span></button>
-      <button class="pin-btn" onclick="pinPress(7)"><span>7</span><span class="pin-btn-sub">PQRS</span></button>
-      <button class="pin-btn" onclick="pinPress(8)"><span>8</span><span class="pin-btn-sub">TUV</span></button>
-      <button class="pin-btn" onclick="pinPress(9)"><span>9</span><span class="pin-btn-sub">WXYZ</span></button>
-      <button class="pin-btn pin-del" onclick="pinDel()">⌫</button>
-      <button class="pin-btn" onclick="pinPress(0)"><span>0</span></button>
-      <button class="pin-btn pin-ok" onclick="pinOk()">OK</button>
+      <button class="p-btn" onclick="pp(1)">1</button>
+      <button class="p-btn" onclick="pp(2)">2<span class="p-sub">ABC</span></button>
+      <button class="p-btn" onclick="pp(3)">3<span class="p-sub">DEF</span></button>
+      <button class="p-btn" onclick="pp(4)">4<span class="p-sub">GHI</span></button>
+      <button class="p-btn" onclick="pp(5)">5<span class="p-sub">JKL</span></button>
+      <button class="p-btn" onclick="pp(6)">6<span class="p-sub">MNO</span></button>
+      <button class="p-btn" onclick="pp(7)">7<span class="p-sub">PQR</span></button>
+      <button class="p-btn" onclick="pp(8)">8<span class="p-sub">TUV</span></button>
+      <button class="p-btn" onclick="pp(9)">9<span class="p-sub">WXZ</span></button>
+      <button class="p-btn p-del" onclick="pd()">⌫</button>
+      <button class="p-btn" onclick="pp(0)">0</button>
+      <button class="p-btn p-ok" onclick="po()">OK</button>
     </div>
-    <button class="auth-bio-btn" id="bio-btn" onclick="tryBiometric()" style="display:none">⬡ Biometria</button>
+    <button class="bio-btn" id="bio-btn" onclick="tryBio()">⬡ Face ID / Biometria</button>
   </div>
-  <!-- CONFIRM -->
+
+  <!-- SUMMARY MODAL -->
+  <div id="sum-modal">
+    <div class="sum-box">
+      <div class="sum-title"><span>📋 Resumo da Sessão</span><span id="sum-conf" style="font-size:10px;color:var(--muted)"></span></div>
+      <div class="sum-content" id="sum-text">Gerando resumo...</div>
+      <button class="sum-save" onclick="saveSummary()">💾 Salvar na memória</button>
+      <button class="sum-btn" onclick="closeSummary()">Fechar</button>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
   <div id="conf-ov">
     <div class="conf-box">
-      <div class="conf-ico" id="ci">⚡</div>
-      <div class="conf-ti" id="ct">Confirmar?</div>
-      <div class="conf-de" id="cd"></div>
-      <div class="conf-btns">
-        <button class="btn-canc" onclick="cancelConf()">✕ Não</button>
-        <button class="btn-conf" onclick="doConf()">✓ Autorizar</button>
+      <div class="c-ico" id="ci">⚡</div>
+      <div class="c-ti" id="ct">Confirmar?</div>
+      <div class="c-de" id="cd"></div>
+      <div class="c-btns">
+        <button class="bx" onclick="cancelConf()">✕ Não</button>
+        <button class="bc" onclick="doConf()">✓ Autorizar</button>
       </div>
     </div>
   </div>
-  <!-- STATUS + MODE -->
-  <div class="status-bar">
-    <span class="status-logo">ALFRED OS</span>
-    <div class="status-right">
-      <span class="mode-pill active-m" id="mode-pill">CONVERSA</span>
-      <div class="auth-dot-status"></div>
+
+  <!-- STATUS + MODE BAR -->
+  <div class="top-bar">
+    <span class="t-logo">ALFRED OS</span>
+    <div class="t-right">
+      <span class="m-pill c" id="m-pill">CONVERSA</span>
+      <div class="live-dot" id="live-dot"></div>
     </div>
   </div>
   <div class="mode-bar">
-    <button class="mode-btn on" data-m="conversa" onclick="setMode('conversa')">CONVERSA</button>
-    <button class="mode-btn" data-m="decisao" onclick="setMode('decisao')">DECISÃO</button>
-    <button class="mode-btn" data-m="analista" onclick="setMode('analista')">ANALISTA</button>
-    <button class="mode-btn" data-m="relacao" onclick="setMode('relacao')">RELAÇÃO</button>
-    <button class="mode-btn" data-m="professor" onclick="setMode('professor')">PROFESSOR</button>
-    <button class="mode-btn" data-m="radar" onclick="setMode('radar')">RADAR</button>
+    <button class="m-btn on" data-m="conversa" onclick="setMode('conversa')">CONVERSA</button>
+    <button class="m-btn" data-m="decisao" onclick="setMode('decisao')">DECISÃO</button>
+    <button class="m-btn" data-m="analista" onclick="setMode('analista')">ANALISTA</button>
+    <button class="m-btn" data-m="relacao" onclick="setMode('relacao')">RELAÇÃO</button>
+    <button class="m-btn" data-m="professor" onclick="setMode('professor')">PROFESSOR</button>
+    <button class="m-btn" data-m="radar" onclick="setMode('radar')">RADAR</button>
   </div>
+
   <!-- ALFRED PANEL -->
   <div id="alfred" class="panel active">
     <div class="orb-zone">
-      <div class="orb-ring3"></div>
-      <div class="orb-ring2"></div>
-      <div class="orb-ring1"></div>
+      <div class="r3"></div><div class="r2"></div><div class="r1"></div>
       <div class="orb" id="orb" onclick="toggleListen()">
-        <div class="orb-ico" id="o-ico">🎙️</div>
-        <div class="orb-lbl" id="o-lbl">TOQUE</div>
+        <div class="o-ico" id="o-ico">🎙️</div>
+        <div class="o-lbl" id="o-lbl">TOQUE</div>
       </div>
-      <div class="alfred-status" id="alf-status">Aguardando o senhor</div>
-      <div class="senhor-name" id="senhor-name">SENHOR LUCAS</div>
-      <div class="wv-zone" id="wvz">
+      <div class="a-stat" id="a-stat">Aguardando o senhor</div>
+      <div class="s-name">SENHOR LUCAS</div>
+      <div class="wvz" id="wvz">
         <div class="wv" style="height:4px"></div><div class="wv" style="height:9px"></div>
         <div class="wv" style="height:4px"></div><div class="wv" style="height:14px"></div>
         <div class="wv" style="height:4px"></div>
       </div>
     </div>
-    <div class="transcript" id="transcript"></div>
-    <div class="inp-row">
-      <input type="text" class="txt-inp" id="txt-inp" placeholder="Escreva ao Alfred...">
-      <button class="snd-btn" onclick="sendTxt()">→</button>
+    <div class="trsc" id="trsc"></div>
+    <div class="ir">
+      <input type="text" class="ti" id="ti" placeholder="Escreva ao Alfred...">
+      <button class="sb" onclick="sendTxt()">→</button>
     </div>
   </div>
-  <!-- DASHBOARD -->
+
+  <!-- DASH PANEL -->
   <div id="dash" class="panel">
-    <div class="dash-header">
-      <div class="dash-greeting" id="dash-greeting">Senhor, bem-vindo</div>
-      <div class="dash-date" id="dash-date"></div>
+    <div class="dh">
+      <div class="dg" id="dg">Senhor, bem-vindo</div>
+      <div class="dd" id="dd"></div>
     </div>
-    <div class="dash-body">
-      <button class="daily-generate-btn" onclick="generateRadar()">⚡ Gerar Radar Diário com Alfred</button>
-      <div class="dash-card" id="radar-card">
-        <div class="dash-card-title"><span style="color:var(--v)">🛡️ RADAR DO DIA</span></div>
-        <div id="radar-content"><div class="empty-msg">Toque para gerar o radar de hoje</div></div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-title"><span style="color:var(--r)">⚡ TAREFAS HOJE</span><button class="add-btn" onclick="showAddTask()">+ Adicionar</button></div>
-        <div id="dash-tasks"><div class="empty-msg">Nenhuma tarefa. Diga "me lembra X"</div></div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-title"><span style="color:var(--g)">💡 DECISÕES PENDENTES</span></div>
-        <div id="dash-decisions"><div class="empty-msg">Nenhuma decisão pendente</div></div>
-      </div>
+    <div class="db">
+      <button class="rad-gen" onclick="genRadar()">⚡ Gerar Radar Diário</button>
+      <div class="dc"><div class="dct"><span style="color:var(--v)">🛡️ RADAR DO DIA</span></div><div id="rad-content"><div class="em">Toque para gerar o radar</div></div></div>
+      <div class="dc"><div class="dct"><span style="color:var(--r)">⚡ TAREFAS</span><button class="add-b" onclick="addTaskPrompt()">+ Add</button></div><div id="dash-tasks"><div class="em">Nenhuma tarefa</div></div></div>
     </div>
   </div>
-  <!-- MEMORY -->
+
+  <!-- MEMORY PANEL -->
   <div id="mem" class="panel">
     <div class="ph"><div class="pt">Segunda Mente</div><div class="ps">Base de memória organizada</div></div>
-    <div class="cat-tabs" id="cat-tabs">
-      <button class="cat-tab active-cat" data-cat="tarefas" onclick="setCat('tarefas')">Tarefas</button>
-      <button class="cat-tab" data-cat="notas" onclick="setCat('notas')">Notas</button>
-      <button class="cat-tab" data-cat="relacionamento" onclick="setCat('relacionamento')">Relacionamento</button>
-      <button class="cat-tab" data-cat="negocios" onclick="setCat('negocios')">Negócios</button>
-      <button class="cat-tab" data-cat="estudos" onclick="setCat('estudos')">Estudos</button>
-      <button class="cat-tab" data-cat="decisoes" onclick="setCat('decisoes')">Decisões</button>
-      <button class="cat-tab" data-cat="insights" onclick="setCat('insights')">Insights</button>
+    <div class="ct" id="cat-tabs">
+      <button class="ctb ac" data-cat="tarefas" onclick="setCat('tarefas')">Tarefas</button>
+      <button class="ctb" data-cat="notas" onclick="setCat('notas')">Notas</button>
+      <button class="ctb" data-cat="relacionamento" onclick="setCat('relacionamento')">Relação</button>
+      <button class="ctb" data-cat="negocios" onclick="setCat('negocios')">Negócios</button>
+      <button class="ctb" data-cat="estudos" onclick="setCat('estudos')">Estudos</button>
+      <button class="ctb" data-cat="decisoes" onclick="setCat('decisoes')">Decisões</button>
+      <button class="ctb" data-cat="insights" onclick="setCat('insights')">Insights</button>
     </div>
     <div class="pb" id="mem-body"></div>
   </div>
-  <!-- KNOWLEDGE -->
+
+  <!-- KNOWLEDGE PANEL -->
   <div id="know" class="panel">
-    <div class="ph"><div class="pt">Base de Conhecimento</div><div class="ps">Documentos que o Alfred absorveu</div></div>
+    <div class="ph"><div class="pt">Base de Conhecimento</div><div class="ps">Documentos absorvidos pelo Alfred</div></div>
     <div class="pb">
-      <div style="background:rgba(196,162,74,0.05);border:1px solid rgba(196,162,74,0.2);border-radius:10px;padding:10px 12px;font-size:11.5px;color:rgba(196,162,74,0.8);margin-bottom:12px;line-height:1.6">
-        Senhor, envie PDFs, livros, artigos ou anotações. O Alfred vai absorver e consultar automaticamente.
-      </div>
-      <div class="up-zone" onclick="document.getElementById('kb-inp').click()">
-        <div style="font-size:28px;margin-bottom:6px">📚</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.5">Toque para enviar arquivo<br><small>PDF · TXT · MD — máx. 5MB</small></div>
+      <div style="background:rgba(196,162,74,0.05);border:1px solid rgba(196,162,74,0.18);border-radius:10px;padding:9px 11px;font-size:11px;color:rgba(196,162,74,0.8);margin-bottom:10px;line-height:1.55">Senhor, envie PDFs, livros, anotações. O Alfred absorve e consulta automaticamente.</div>
+      <div class="uz" onclick="document.getElementById('kb-inp').click()">
+        <div style="font-size:26px;margin-bottom:5px">📚</div>
+        <div style="font-size:11.5px;color:var(--muted);line-height:1.5">Toque para enviar arquivo<br><small>PDF · TXT · MD — máx. 5MB</small></div>
       </div>
       <input type="file" id="kb-inp" accept=".pdf,.txt,.md,.csv" onchange="uploadKB(event)" style="display:none">
       <div id="kb-list"></div>
     </div>
   </div>
-  <!-- RELATIONSHIP -->
-  <div id="rel" class="panel">
-    <div class="ph"><div class="pt">Motor de Relacionamento</div><div class="ps">Análise completa pela estrutura Alfred</div></div>
-    <div class="pb">
-      <div style="background:rgba(255,58,92,0.05);border:1px solid rgba(255,58,92,0.2);border-radius:11px;padding:11px;font-size:12px;color:rgba(255,120,140,0.85);margin-bottom:12px;line-height:1.6">
-        🔴 Cole a conversa ou situação. Alfred vai analisar: padrão, emoção, risco, melhor resposta, versão calma, versão firme e recomendação final.
+
+  <!-- ESCUTA PANEL (Active Listening) -->
+  <div id="escuta" class="panel">
+    <div class="esc-main">
+      <div class="esc-header">
+        <div class="esc-title">🔴 Modo Escuta Ativa</div>
+        <div class="esc-sub">Alfred analisa continuamente e orienta em tempo real</div>
       </div>
-      <textarea class="rel-ta" id="rel-inp" placeholder="Cole aqui a conversa com a Julia, situação ou mensagem a analisar..."></textarea>
+      <div class="esc-body">
+        <div class="esc-toggle-zone">
+          <div class="esc-orb" id="esc-orb" onclick="toggleSession()">🎤</div>
+          <div class="esc-status" id="esc-status">Alfred em espera</div>
+          <div class="esc-timer" id="esc-timer" style="display:none">00:00</div>
+          <button class="esc-start-btn" id="esc-start-btn" onclick="toggleSession()">🔴 Ativar Escuta Alfred</button>
+          <button class="esc-stop-btn" id="esc-stop-btn" onclick="stopSession()" style="display:none">⏹ Encerrar e Gerar Resumo</button>
+        </div>
+        <div class="esc-info">
+          <strong>Como funciona:</strong> Com o modo ativo, o Alfred transcreve em tempo real e analisa o contexto a cada 45 segundos, sugerindo orientações estratégicas.<br><br>
+          <strong>Privacidade:</strong> Só funciona quando ligado. Nunca grava em modo oculto. Tudo visível na tela.
+        </div>
+        <div class="esc-tr-zone" id="esc-tr-zone" style="display:none">
+          <div class="esc-tr-title">TRANSCRIÇÃO DA SESSÃO</div>
+          <div id="esc-entries"><div class="em" style="padding:10px">Transcrição aparecerá aqui...</div></div>
+        </div>
+        <div class="pro-cards" id="pro-cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLE PANEL (iPhone Control) -->
+  <div id="controle" class="panel">
+    <div class="ph"><div class="pt">Controle iPhone</div><div class="ps">Ações e integrações permitidas pelo iOS</div></div>
+    <div class="pb">
+      <div class="ctrl-sec">
+        <div class="ctrl-sec-title">ACESSOS RÁPIDOS</div>
+        <div class="app-grid">
+          <button class="app-btn" onclick="openApp('WhatsApp','whatsapp://','https://web.whatsapp.com')"><div class="app-btn-ico">💬</div><div class="app-btn-lbl">WhatsApp</div></button>
+          <button class="app-btn" onclick="openApp('Instagram','instagram://','https://instagram.com')"><div class="app-btn-ico">📸</div><div class="app-btn-lbl">Instagram</div></button>
+          <button class="app-btn" onclick="openApp('YouTube','youtube://','https://youtube.com')"><div class="app-btn-ico">▶️</div><div class="app-btn-lbl">YouTube</div></button>
+          <button class="app-btn" onclick="openApp('Spotify','spotify://','https://open.spotify.com')"><div class="app-btn-ico">🎵</div><div class="app-btn-lbl">Spotify</div></button>
+          <button class="app-btn" onclick="openApp('Maps','maps://','https://maps.google.com')"><div class="app-btn-ico">🗺️</div><div class="app-btn-lbl">Mapas</div></button>
+          <button class="app-btn" onclick="openApp('LinkedIn','linkedin://','https://linkedin.com')"><div class="app-btn-ico">💼</div><div class="app-btn-lbl">LinkedIn</div></button>
+          <button class="app-btn" onclick="openApp('Calendário','calshow://','https://calendar.google.com')"><div class="app-btn-ico">📅</div><div class="app-btn-lbl">Calendário</div></button>
+          <button class="app-btn" onclick="openApp('Atalhos','shortcuts://','shortcuts://')"><div class="app-btn-ico">⚡</div><div class="app-btn-lbl">Atalhos</div></button>
+        </div>
+      </div>
+
+      <div class="ctrl-sec">
+        <div class="ctrl-sec-title">📅 CRIAR EVENTO NO CALENDÁRIO</div>
+        <div class="ctrl-info-box">Gera um arquivo .ICS para importar no Calendário do iPhone. Toque no arquivo → Adicionar ao Calendário.</div>
+        <input type="text" class="ctrl-inp" id="cal-title" placeholder="Título do evento">
+        <div class="ctrl-row">
+          <input type="date" class="ctrl-inp" id="cal-date" style="flex:1;margin-bottom:0">
+          <input type="time" class="ctrl-inp" id="cal-time" style="flex:1;margin-bottom:0;margin-left:7px">
+        </div>
+        <div style="margin-top:8px">
+          <button class="ctrl-btn" onclick="genCalEvent()">📅 Gerar arquivo .ICS</button>
+        </div>
+      </div>
+
+      <div class="ctrl-sec">
+        <div class="ctrl-sec-title">⏰ CRIAR ALARME</div>
+        <div class="ctrl-info-box">
+          O iPhone não permite criar alarmes diretamente de sites. O Alfred pode:<br>
+          1. Abrir o app Relógio para você criar<br>
+          2. Gerar um evento de calendário com alerta
+        </div>
+        <input type="text" class="ctrl-inp" id="alarm-label" placeholder="Nome do alarme (ex: Tomar remédio)">
+        <input type="time" class="ctrl-inp" id="alarm-time">
+        <div class="ctrl-row">
+          <button class="ctrl-btn c" onclick="openClockApp()">⏰ Abrir Relógio</button>
+          <button class="ctrl-btn" onclick="genAlarmEvent()">📅 Gerar evento .ICS</button>
+        </div>
+      </div>
+
+      <div class="ctrl-sec">
+        <div class="ctrl-sec-title">📝 CRIAR LEMBRETE</div>
+        <input type="text" class="ctrl-inp" id="rem-title" placeholder="Título do lembrete">
+        <div class="ctrl-row">
+          <input type="date" class="ctrl-inp" id="rem-date" style="flex:1;margin-bottom:0">
+          <input type="time" class="ctrl-inp" id="rem-time" style="flex:1;margin-bottom:0;margin-left:7px">
+        </div>
+        <div style="margin-top:8px">
+          <button class="ctrl-btn" onclick="genReminder()">📝 Gerar .ICS de lembrete</button>
+        </div>
+      </div>
+
+      <div class="ctrl-sec">
+        <div class="ctrl-sec-title">⚙️ SIRI SHORTCUTS</div>
+        <div style="font-size:11.5px;color:var(--muted);line-height:1.65;margin-bottom:10px">
+          Para máxima integração com o iPhone, crie Atalhos do Siri que o Alfred pode acionar via URL <code style="color:var(--c)">shortcuts://run-shortcut?name=NOME</code>.
+        </div>
+        <input type="text" class="ctrl-inp" id="shortcut-name" placeholder="Nome do atalho Siri (ex: Alfred Alarme 7h30)">
+        <button class="ctrl-btn c" onclick="runShortcut()">⚡ Executar Atalho</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RELATIONSHIP PANEL -->
+  <div id="rel" class="panel">
+    <div class="ph"><div class="pt">Motor de Relacionamento</div><div class="ps">Análise Alfred completa de 8 componentes</div></div>
+    <div class="pb">
+      <div style="background:rgba(255,58,92,0.04);border:1px solid rgba(255,58,92,0.18);border-radius:11px;padding:10px;font-size:11.5px;color:rgba(255,100,130,0.85);margin-bottom:10px;line-height:1.55">
+        🔴 Cole a conversa, mensagem ou situação. Alfred analisa: padrão, emoção, risco, resposta ideal, versão calma, versão firme, recomendação e padrão detectado.
+      </div>
+      <textarea class="rel-ta" id="rel-inp" placeholder="Cole aqui a conversa com a Julia, situação ou mensagem..."></textarea>
       <button class="rel-btn" onclick="analyzeRel()">🔍 Analisar com Alfred</button>
       <div class="rel-res" id="rel-res"></div>
     </div>
   </div>
-  <!-- CONFIG -->
+
+  <!-- CONFIG PANEL -->
   <div id="cfg" class="panel">
     <div class="ph"><div class="pt">Configurações</div><div class="ps">Personalize o Alfred OS</div></div>
     <div class="pb">
-      <div class="cfg-g">
-        <div class="cfg-l">API KEY (ANTHROPIC)</div>
-        <input type="password" class="cfg-i" id="api-i" placeholder="sk-ant-...">
-        <button class="cfg-b gold" onclick="saveApiKey()" style="margin-top:8px">Salvar API Key</button>
+      <div class="cg"><div class="cl">API KEY (ANTHROPIC)</div>
+        <input type="password" class="ci" id="api-i" placeholder="sk-ant-...">
+        <button class="cb gd" onclick="saveApiKey()" style="margin-top:7px">Salvar API Key</button>
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">VOZ DO ALFRED</div>
-        <select class="cfg-s" id="voice-s" onchange="saveVoice()"><option>Carregando vozes...</option></select>
+      <div class="cg"><div class="cl">VOZ DO ALFRED</div>
+        <select class="cs" id="voice-s" onchange="saveVoice()"><option>Carregando vozes...</option></select>
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">VELOCIDADE: <span id="rate-l">0.9x</span></div>
+      <div class="cg"><div class="cl">VELOCIDADE: <span id="rate-l">0.9x</span></div>
         <input type="range" id="rate-r" min="0.6" max="1.8" step="0.1" value="0.9" oninput="updRate()" style="width:100%;accent-color:var(--gold)">
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">TOM</div>
-        <select class="cfg-s" id="tone-s" onchange="saveTone()">
+      <div class="cg"><div class="cl">TOM</div>
+        <select class="cs" id="tone-s" onchange="saveTone()">
           <option value="estrategico">Estratégico e Formal</option>
           <option value="calmo">Calmo e Professoral</option>
           <option value="firme">Firme e Direto</option>
           <option value="motivador">Motivador e Preciso</option>
         </select>
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">COMPORTAMENTO</div>
-        <div class="cfg-row"><span class="cfg-rl">Falar automaticamente</span><div class="tog on" id="t-autoSpeak" onclick="togSet('autoSpeak')"></div></div>
-        <div class="cfg-row"><span class="cfg-rl">Loop contínuo de escuta</span><div class="tog on" id="t-autoListen" onclick="togSet('autoListen')"></div></div>
-        <div class="cfg-row"><span class="cfg-rl">Confirmar antes de abrir apps</span><div class="tog on" id="t-confirmApps" onclick="togSet('confirmApps')"></div></div>
-        <div class="cfg-row"><span class="cfg-rl">Análise de personalidade ativa</span><div class="tog on" id="t-trackPers" onclick="togSet('trackPers')"></div></div>
-        <div class="cfg-row"><span class="cfg-rl">Radar diário automático</span><div class="tog on" id="t-dailyRadar" onclick="togSet('dailyRadar')"></div></div>
+      <div class="cg"><div class="cl">COMPORTAMENTO</div>
+        <div class="cr"><span class="crl">Falar automaticamente</span><div class="tg on" id="t-autoSpeak" onclick="togSet('autoSpeak')"></div></div>
+        <div class="cr"><span class="crl">Loop contínuo de escuta</span><div class="tg on" id="t-autoListen" onclick="togSet('autoListen')"></div></div>
+        <div class="cr"><span class="crl">Confirmar antes de abrir apps</span><div class="tg on" id="t-confirmApps" onclick="togSet('confirmApps')"></div></div>
+        <div class="cr"><span class="crl">Análise de personalidade</span><div class="tg on" id="t-trackPers" onclick="togSet('trackPers')"></div></div>
+        <div class="cr"><span class="crl">Sugestões proativas na escuta</span><div class="tg on" id="t-proactive" onclick="togSet('proactive')"></div></div>
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">SEGURANÇA</div>
-        <button class="cfg-b" onclick="changePIN()">🔐 Alterar PIN</button>
-        <button class="cfg-b" onclick="tryBiometric()">⬡ Registrar Biometria</button>
+      <div class="cg"><div class="cl">SEGURANÇA</div>
+        <button class="cb" onclick="changePIN()">🔐 Alterar PIN</button>
+        <button class="cb" onclick="tryBio()">⬡ Registrar Biometria</button>
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">MEU PERFIL</div>
-        <textarea class="cfg-i" id="profile-i" rows="5" placeholder="Nome, objetivos, rotina, estilo de comunicação..." style="resize:vertical"></textarea>
-        <button class="cfg-b" onclick="saveProfile()" style="margin-top:7px">Salvar Perfil</button>
+      <div class="cg"><div class="cl">MEU PERFIL</div>
+        <textarea class="ci" id="profile-i" rows="5" placeholder="Nome, objetivos, negócios, rotina, estilo..." style="resize:vertical"></textarea>
+        <button class="cb" onclick="saveProfile()" style="margin-top:6px">Salvar Perfil</button>
       </div>
-      <div class="cfg-g">
-        <div class="cfg-l">DADOS</div>
-        <button class="cfg-b" onclick="exportAll()">⬇ Exportar Backup</button>
-        <button class="cfg-b dan" onclick="clearAll()">✕ Apagar Tudo</button>
+      <div class="cg"><div class="cl">DADOS</div>
+        <button class="cb" onclick="exportAll()">⬇ Exportar Backup JSON</button>
+        <button class="cb dn" onclick="clearAll()">✕ Apagar Todos os Dados</button>
       </div>
     </div>
   </div>
-  <!-- NAV -->
+
+  <!-- BOTTOM NAV (7 tabs) -->
   <nav class="bnav">
     <button class="nb on" id="n-alfred" onclick="swp('alfred')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
@@ -415,13 +554,17 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>PAINEL</span>
     </button>
+    <button class="nb" id="n-escuta" onclick="swp('escuta')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l14.14 14.14"/><path d="M17.66 17.66A9 9 0 1 0 6.34 6.34"/></svg>
+      <span>ESCUTA</span>
+    </button>
+    <button class="nb" id="n-controle" onclick="swp('controle')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      <span>CONTROLE</span>
+    </button>
     <button class="nb" id="n-mem" onclick="swp('mem')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       <span>MENTE</span>
-    </button>
-    <button class="nb" id="n-know" onclick="swp('know')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      <span>SABER</span>
     </button>
     <button class="nb" id="n-rel" onclick="swp('rel')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -433,868 +576,973 @@
     </button>
   </nav>
 </div>
+
 <script>
-// ======================== AUTH SYSTEM ========================
-const PIN_KEY = 'alf_pin';
-const SESSION_KEY = 'alf_sess';
-const INACTIVITY_MS = 20 * 60 * 1000;
+// ======================== AUTH ========================
+const PIN_K='alf_pin',SESS_K='alf_sess',INACT=20*60*1000;
+let pinBuf='',pinMode='verify',inactTimer=null;
 
-let pinBuffer = '';
-let pinMode = 'verify'; // 'setup' | 'verify' | 'change'
-let inactivityTimer = null;
-
-async function sha256(str) {
-  const buf = new TextEncoder().encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+async function sha256(s){
+  try{
+    const b=new TextEncoder().encode(s);
+    const h=await crypto.subtle.digest('SHA-256',b);
+    return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){return s+s+s;}
 }
 
-function isPINSet() {
-  return !!localStorage.getItem(PIN_KEY);
-}
-
-function initAuth() {
-  const sess = sessionStorage.getItem(SESSION_KEY);
-  if (sess === 'ok') { hideAuth(); return; }
-  const screen = document.getElementById('auth-screen');
-  screen.style.display = 'flex';
-  if (!isPINSet()) {
-    pinMode = 'setup';
-    document.getElementById('auth-title').textContent = 'Configurar PIN';
-    document.getElementById('auth-sub').textContent = 'Senhor, crie seu PIN de 4 dígitos de acesso';
-  }
-  tryBiometricAuto();
-}
-
-function pinPress(d) {
-  if (pinBuffer.length >= 4) return;
-  pinBuffer += d;
-  updatePinDots();
-  if (pinBuffer.length === 4) setTimeout(pinOk, 200);
-}
-
-function pinDel() {
-  pinBuffer = pinBuffer.slice(0, -1);
-  updatePinDots();
-}
-
-function updatePinDots() {
-  for (let i = 0; i < 4; i++) {
-    const dot = document.getElementById('ad' + i);
-    dot.className = 'auth-dot' + (i < pinBuffer.length ? ' filled' : '');
-  }
-}
-
-async function pinOk() {
-  if (pinBuffer.length < 4) return;
-  const hash = await sha256(pinBuffer);
-  if (pinMode === 'setup') {
-    localStorage.setItem(PIN_KEY, hash);
-    pinMode = 'verify';
-    document.getElementById('auth-title').textContent = 'Identificação';
-    document.getElementById('auth-sub').textContent = 'Senhor, PIN criado. Confirmando acesso...';
-    await verifyPIN(hash);
-  } else if (pinMode === 'verify') {
-    await verifyPIN(hash);
-  } else if (pinMode === 'change') {
-    localStorage.setItem(PIN_KEY, hash);
-    pinBuffer = '';
-    updatePinDots();
-    alert('PIN alterado com sucesso, senhor.');
-    swp('cfg');
-  }
-}
-
-async function verifyPIN(hash) {
-  const stored = localStorage.getItem(PIN_KEY);
-  if (hash === stored) {
-    sessionStorage.setItem(SESSION_KEY, 'ok');
-    hideAuth();
-    resetInactivity();
-  } else {
-    pinBuffer = '';
-    for (let i = 0; i < 4; i++) document.getElementById('ad' + i).className = 'auth-dot error';
-    document.getElementById('auth-sub').textContent = 'PIN incorreto. Tente novamente.';
-    setTimeout(() => { updatePinDots(); document.getElementById('auth-sub').textContent = 'Senhor, insira seu PIN para acessar'; }, 1000);
-  }
-}
-
-function hideAuth() {
-  const screen = document.getElementById('auth-screen');
-  screen.style.opacity = '0';
-  screen.style.transition = 'opacity 0.5s';
-  setTimeout(() => { screen.style.display = 'none'; }, 500);
-}
-
-function changePIN() {
-  pinMode = 'change';
-  pinBuffer = '';
-  document.getElementById('auth-title').textContent = 'Novo PIN';
-  document.getElementById('auth-sub').textContent = 'Senhor, defina seu novo PIN de 4 dígitos';
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('auth-screen').style.opacity = '1';
-  updatePinDots();
-}
-
-async function tryBiometricAuto() {
-  if (!window.PublicKeyCredential) return;
-  try {
-    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    if (available) document.getElementById('bio-btn').style.display = 'block';
-  } catch(e) {}
-}
-
-async function tryBiometric() {
-  if (!window.PublicKeyCredential) { alert('Biometria não disponível neste dispositivo.'); return; }
-  try {
-    const stored = localStorage.getItem(PIN_KEY);
-    if (!stored) { alert('Senhor, configure um PIN primeiro.'); return; }
-    // Use webauthn get if credential is stored
-    const credId = localStorage.getItem('alf_credId');
-    if (!credId) {
-      // Register
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const cred = await navigator.credentials.create({
-        publicKey: {
-          challenge, rp: { name: 'Alfred OS', id: location.hostname || 'localhost' },
-          user: { id: new Uint8Array(16), name: 'senhor', displayName: 'Senhor' },
-          pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
-          authenticatorSelection: { userVerification: 'required' },
-          timeout: 30000
-        }
-      });
-      localStorage.setItem('alf_credId', btoa(String.fromCharCode(...new Uint8Array(cred.rawId))));
-      sessionStorage.setItem(SESSION_KEY, 'ok');
-      hideAuth();
-      resetInactivity();
-    } else {
-      const rawId = Uint8Array.from(atob(credId), c => c.charCodeAt(0));
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      await navigator.credentials.get({
-        publicKey: {
-          challenge, allowCredentials: [{ id: rawId, type: 'public-key' }],
-          userVerification: 'required', timeout: 30000
-        }
-      });
-      sessionStorage.setItem(SESSION_KEY, 'ok');
-      hideAuth();
-      resetInactivity();
+function initAuth(){
+  try{
+    const sess=sessionStorage.getItem(SESS_K);
+    if(sess==='ok'){hideAuth();return;}
+    document.getElementById('auth-sc').style.display='flex';
+    if(!localStorage.getItem(PIN_K)){
+      pinMode='setup';
+      document.getElementById('a-title').textContent='Criar PIN';
+      document.getElementById('a-sub').textContent='Senhor, defina seu PIN de 4 dígitos';
     }
-  } catch(e) {
-    if (e.name !== 'NotAllowedError') alert('Biometria falhou: ' + e.message);
+    tryBioAuto();
+  }catch(e){hideAuth();}
+}
+
+function pp(d){
+  if(pinBuf.length>=4)return;
+  pinBuf+=d;updDots();
+  if(pinBuf.length===4)setTimeout(po,180);
+}
+function pd(){pinBuf=pinBuf.slice(0,-1);updDots();}
+function updDots(){
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('ad'+i);
+    if(el)el.className='a-dot'+(i<pinBuf.length?' f':'');
   }
 }
 
-function resetInactivity() {
-  clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(() => {
-    sessionStorage.removeItem(SESSION_KEY);
-    speechSynthesis.cancel();
-    isListening = false;
-    if (recognition) try { recognition.abort(); } catch(e) {}
-    pinBuffer = '';
-    pinMode = 'verify';
-    document.getElementById('auth-title').textContent = 'Sessão expirada';
-    document.getElementById('auth-sub').textContent = 'Senhor, insira o PIN para continuar';
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('auth-screen').style.opacity = '1';
-    updatePinDots();
-  }, INACTIVITY_MS);
+async function po(){
+  if(pinBuf.length<4)return;
+  const h=await sha256(pinBuf);
+  const stored=localStorage.getItem(PIN_K);
+  if(pinMode==='setup'){
+    localStorage.setItem(PIN_K,h);
+    pinMode='verify';
+    document.getElementById('a-title').textContent='PIN criado!';
+    document.getElementById('a-sub').textContent='Confirmando acesso...';
+    await verPin(h);
+  }else if(pinMode==='verify'){
+    await verPin(h);
+  }else{
+    localStorage.setItem(PIN_K,h);
+    pinBuf='';updDots();
+    alert('Senhor, PIN alterado.');
+    swp('cfg');
+    document.getElementById('auth-sc').style.display='none';
+  }
 }
 
-document.addEventListener('touchstart', resetInactivity);
-document.addEventListener('click', resetInactivity);
+async function verPin(h){
+  const stored=localStorage.getItem(PIN_K);
+  if(!stored||h===stored){
+    try{sessionStorage.setItem(SESS_K,'ok');}catch(e){}
+    hideAuth();resetInact();
+  }else{
+    pinBuf='';
+    for(let i=0;i<4;i++){const el=document.getElementById('ad'+i);if(el)el.className='a-dot e';}
+    document.getElementById('a-sub').textContent='PIN incorreto. Tente novamente.';
+    document.getElementById('auth-sc').classList.add('shake');
+    setTimeout(()=>{
+      document.getElementById('auth-sc').classList.remove('shake');
+      updDots();
+      document.getElementById('a-sub').textContent='Senhor, insira seu PIN para acessar';
+    },800);
+  }
+}
+
+function hideAuth(){
+  const sc=document.getElementById('auth-sc');
+  if(!sc)return;
+  sc.style.opacity='0';
+  setTimeout(()=>{sc.style.display='none';},480);
+}
+
+function changePIN(){
+  pinMode='change';pinBuf='';
+  document.getElementById('a-title').textContent='Novo PIN';
+  document.getElementById('a-sub').textContent='Senhor, defina seu novo PIN';
+  document.getElementById('auth-sc').style.cssText='display:flex;opacity:1;';
+  updDots();
+}
+
+async function tryBioAuto(){
+  try{
+    if(!window.PublicKeyCredential)return;
+    const ok=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if(ok){const b=document.getElementById('bio-btn');if(b)b.style.display='block';}
+  }catch(e){}
+}
+
+async function tryBio(){
+  try{
+    if(!window.PublicKeyCredential){alert('Biometria não disponível.');return;}
+    const credId=localStorage.getItem('alf_credId');
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    if(!credId){
+      const cred=await navigator.credentials.create({publicKey:{
+        challenge,rp:{name:'Alfred OS',id:location.hostname||'localhost'},
+        user:{id:new Uint8Array(16),name:'senhor',displayName:'Senhor'},
+        pubKeyCredParams:[{alg:-7,type:'public-key'}],
+        authenticatorSelection:{userVerification:'required'},timeout:30000
+      }});
+      localStorage.setItem('alf_credId',btoa(String.fromCharCode(...new Uint8Array(cred.rawId))));
+      try{sessionStorage.setItem(SESS_K,'ok');}catch(e){}
+      hideAuth();resetInact();
+    }else{
+      const rawId=Uint8Array.from(atob(credId),c=>c.charCodeAt(0));
+      await navigator.credentials.get({publicKey:{
+        challenge,allowCredentials:[{id:rawId,type:'public-key'}],
+        userVerification:'required',timeout:30000
+      }});
+      try{sessionStorage.setItem(SESS_K,'ok');}catch(e){}
+      hideAuth();resetInact();
+    }
+  }catch(e){if(e.name!=='NotAllowedError')console.warn('Bio error:',e.message);}
+}
+
+function resetInact(){
+  clearTimeout(inactTimer);
+  inactTimer=setTimeout(()=>{
+    try{sessionStorage.removeItem(SESS_K);}catch(e){}
+    speechSynthesis.cancel();
+    isListening=false;sessionActive=false;
+    if(recognition)try{recognition.abort();}catch(e){}
+    stopSession();
+    pinBuf='';pinMode='verify';
+    document.getElementById('a-title').textContent='Sessão expirada';
+    document.getElementById('a-sub').textContent='Senhor, insira o PIN para continuar';
+    document.getElementById('auth-sc').style.cssText='display:flex;opacity:1;';
+    updDots();
+  },INACT);
+}
+
+['touchstart','mousedown','keydown'].forEach(ev=>document.addEventListener(ev,resetInact,{passive:true}));
 
 // ======================== STORAGE ========================
-function ld(k, d) { try { const r = localStorage.getItem('alf_' + k); return r ? JSON.parse(r) : d; } catch(e) { return d; } }
-function sv(k, v) { try { localStorage.setItem('alf_' + k, JSON.stringify(v)); } catch(e) {} }
+function ld(k,d){try{const r=localStorage.getItem('alf_'+k);return r?JSON.parse(r):d;}catch(e){return d;}}
+function sv(k,v){try{localStorage.setItem('alf_'+k,JSON.stringify(v));}catch(e){console.warn('Storage full');}}
 
-let mem = ld('mem', { tarefas: [], notas: [], relacionamento: [], negocios: [], estudos: [], decisoes: [], insights: [] });
-let kb = ld('kb', { docs: [] });
-let hist = ld('hist', []);
-let sets = ld('sets', { autoSpeak: true, autoListen: true, confirmApps: true, trackPers: true, dailyRadar: true });
+let mem=ld('mem',{tarefas:[],notas:[],relacionamento:[],negocios:[],estudos:[],decisoes:[],insights:[]});
+let kb=ld('kb',{docs:[]});
+let hist=ld('hist',[]);
+let sets=ld('sets',{autoSpeak:true,autoListen:true,confirmApps:true,trackPers:true,proactive:true});
 
-function saveMem() { sv('mem', mem); }
-function saveKB() { sv('kb', kb); }
-function saveHist() { sv('hist', hist.slice(-24)); }
+function saveMem(){sv('mem',mem);}
+function saveKB(){sv('kb',kb);}
+function saveHist(){sv('hist',hist.slice(-24));}
+
+function apiKey(){try{return localStorage.getItem('alf_key')||'';}catch(e){return '';}}
 
 // ======================== SYSTEM PROMPT ========================
-const TONES = {
-  estrategico: 'Tom: extremamente formal, estratégico, analítico. Fala como um chefe de gabinete de alto nível.',
-  calmo: 'Tom: calmo, professoral, reflexivo. Pace lento, linguagem clara e pedagógica.',
-  firme: 'Tom: firme, assertivo, sem rodeios. Vai direto ao ponto.',
-  motivador: 'Tom: motivador, energético, inspira o senhor a agir com coragem e clareza.'
+const TONES={
+  estrategico:'Tom: extremamente formal, estratégico, analítico. Chefe de gabinete de elite.',
+  calmo:'Tom: calmo, professoral, pedagógico. Mentor paciente.',
+  firme:'Tom: firme, assertivo, sem rodeios. Militar estratégico.',
+  motivador:'Tom: motivador, energético, acredita no potencial do senhor.'
 };
+let currentMode='conversa',currentTone='estrategico';
 
-let currentMode = 'conversa';
-let currentTone = 'estrategico';
+function buildSys(){
+  const t=TONES[currentTone]||TONES.estrategico;
+  const mc=buildMC();
+  return`Você é Alfred OS — assistente pessoal estratégico exclusivo.
 
-function buildSysPrompt() {
-  const tone = TONES[currentTone] || TONES.estrategico;
-  const memCtx = buildMemCtx();
-  const kbCtx = '';
+REGRA ABSOLUTA: SEMPRE chame o usuário de "senhor". Nunca omita.
 
-  return `Você é Alfred OS — assistente pessoal estratégico exclusivo do senhor.
+${t}
 
-REGRA FUNDAMENTAL: SEMPRE chame o usuário de "senhor". Nunca use seu nome sozinho. Sempre "senhor".
-
-${tone}
-
-MISSÃO: Ser a segunda mente do senhor. Chefe de gabinete, professor, analista, conselheiro, estrategista e organizador pessoal.
+MISSÃO: Ser a segunda mente do senhor. Chefe de gabinete, professor, analista, conselheiro e estrategista pessoal.
 
 PERFIL DO SENHOR:
-${mem.notas.slice(0,3).map(n=>n.content).join(' | ') || 'Lucas Ramon, 24 anos, Belo Horizonte. Fundador da Audens Company (marketing iFood). Dono de hamburgueria. Objetivos: autoridade no mercado delivery, crescimento Audens. Estudo G: CFA, CPA-20, CEA, CNPI, oratória, persuasão. Projeto HOMEM: autodomínio, disciplina, controle emocional. Relacionamento: Julia (6 meses, ele ansioso, ela evitativa).'}
+${ld('profile_text','Lucas Ramon, 24 anos, Belo Horizonte. Fundador da Audens Company (marketing iFood — hamburguerias e pizzerias). Dono de hamburgueria. Objetivos: autoridade no mercado de delivery, crescimento da Audens. Estudo G: CFA, CPA-20, CEA, CNPI, oratória, persuasão. Projeto HOMEM: autodomínio, disciplina, controle emocional. Relacionamento: Julia (6 meses, ele ansioso-evitativo). Risco: over-engineer antes de executar.')}
 
-PERFIL DA JULIA (para análise de relacionamento):
+PERFIL DA JULIA:
 Apego evitativo. "Intensa só na cabeça, deixo muito pouco sair." 6 meses (jan 2026).
 Vocabulário: mb, nuuu, blzinha, hehehe, sim sim, vrdd, sla, fazer oq.
-Março 2026: primeiro "te amo" por iniciativa. Junho 2026: "você é o cara certo pra isso." Julho 2026: "Vamos conseguir."
-Fecha com pressão. Abre com leveza e humor. Pai influencia disposição.
+Mar 2026: primeiro "te amo" por iniciativa. Jun 2026: "você é o cara certo pra isso." Jul 2026: "Vamos conseguir."
+Fecha com pressão. Abre com leveza e humor.
 
 MEMÓRIA ATIVA:
-${memCtx}
+${mc}
 
 REGRAS OBRIGATÓRIAS:
-1. SEMPRE chame de "senhor".
+1. SEMPRE "senhor".
 2. NUNCA execute ação sensível sem confirmação.
-3. NUNCA peça senhas, dados bancários, autenticações.
-4. NUNCA manipule pessoas.
-5. Em relacionamento: clareza, respeito, maturidade.
-6. Quando houver risco, avise proativamente.
-7. Revise sempre antes de finalizar uma análise.
-8. Separe fato de interpretação.
-9. Sempre ofereça o próximo passo prático.
+3. NUNCA peça senhas, banco, autenticações.
+4. NUNCA manipule ninguém.
+5. Use linguagem de hipótese para terceiros: "pode indicar", "há sinais de", "com base no contexto".
+6. Nunca afirme que alguém mentiu — aponte inconsistências.
+7. Em relacionamento: clareza, respeito, maturidade.
+8. Avise proativamente sobre riscos.
+9. Revise sempre antes de finalizar análise importante.
 
-FORMATO MODO DECISÃO (ative quando pedirem "o que eu faço" ou análise de decisão):
+FORMATO DECISÃO:
 📋 SITUAÇÃO: [contexto real]
-🔀 OPÇÕES: [2-3 caminhos]
-✅ MELHOR CAMINHO: [recomendação]
+🔀 OPÇÕES: [2-3 caminhos possíveis]
+✅ MELHOR CAMINHO: [recomendação clara]
 ⚡ RISCOS: [o que pode dar errado]
-📊 CONSEQUÊNCIAS: [o que acontece em cada cenário]
+📊 CONSEQUÊNCIAS: [resultado provável de cada cenário]
 🎯 RECOMENDAÇÃO: [ação específica]
 ⏭️ PRÓXIMO PASSO: [o que fazer agora]
 
-FORMATO MODO RELAÇÃO (ative para análise de conversa com Julia ou outra pessoa):
+FORMATO RELAÇÃO:
 🔍 LEITURA: [o que está acontecendo de verdade]
-🧠 ELA ESTÁ SENTINDO: [estado emocional provável]
+🧠 ELA ESTÁ SENTINDO (hipótese): [estado emocional provável]
 ⚡ RISCO DE ERRAR: [consequência de responder mal]
-✅ MELHOR RESPOSTA (no estilo do senhor): [resposta pronta para copiar]
+✅ MELHOR RESPOSTA (no estilo do senhor): [resposta pronta]
 🕊️ VERSÃO CALMA: [alternativa suave]
 🔥 VERSÃO FIRME: [alternativa assertiva]
 🎯 RECOMENDAÇÃO FINAL: [o que fazer agora]
+📊 PADRÃO DETECTADO: [insight sobre padrão de comunicação]
 
-FORMATO MODO ANALISTA (análise de fatos e oportunidades):
-📌 FATO: [o que é verificável]
-🔎 INTERPRETAÇÃO: [o que isso significa]
-⚡ RISCO: [pontos de atenção]
+FORMATO ANALISTA:
+📌 FATO: [verificável]
+🔎 INTERPRETAÇÃO: [o que significa]
+⚡ RISCO: [ameaças]
 💡 OPORTUNIDADE: [o que aproveitar]
-🎯 MELHOR AÇÃO: [próximo passo concreto]
+🎯 MELHOR AÇÃO: [próximo passo]
 
-FORMATO MODO PROFESSOR:
+FORMATO PROFESSOR:
 📚 ASSUNTO: [tema]
 💡 CONCEITO: [ideia central]
 🔎 EXEMPLO: [aplicação prática]
-🎯 COMO APLICAR: [ação específica do senhor]
-❓ REFLEXÃO: [pergunta para pensar]
+🎯 APLICAR: [ação do senhor]
+❓ REFLEXÃO: [pergunta]
 
-FORMATO MODO RADAR (sugestões diárias proativas):
-📅 ANÁLISE DO DIA: [contexto atual]
-⚡ PRIORIDADE #1: [a tarefa mais importante]
-🚨 ALERTAS: [riscos ou urgências]
-💡 OPORTUNIDADE: [algo a aproveitar hoje]
-📈 MELHORIA SUGERIDA: [algo para implementar]
-🎯 AÇÃO IMEDIATA: [o que fazer agora]
-
-FORMATO VOZ: Para respostas faladas, seja conciso e natural. Para análises pedidas, use a estrutura completa.
-
-DETECÇÃO AUTOMÁTICA DE COMANDOS:
-- "me lembra X" / "cria tarefa X" → confirmar e registrar tarefa
-- "registra X" / "anota X" → salvar nota
-- "o que eu faço?" → usar formato DECISÃO completo
-- "o que eu respondo?" / "analise essa conversa" → usar formato RELAÇÃO
-- "me ensine" / "explica" → usar formato PROFESSOR
-- "qual minha prioridade" → consultar tarefas e sugerir foco`;
+FORMATO RADAR:
+📅 ANÁLISE: [contexto do dia]
+⚡ PRIORIDADE #1: [tarefa mais importante]
+🚨 ALERTAS: [riscos]
+💡 OPORTUNIDADE: [algo a aproveitar]
+📈 MELHORIA: [algo para implementar]
+🎯 AÇÃO IMEDIATA: [o que fazer agora]`;
 }
 
-function buildMemCtx() {
-  const parts = [];
-  const tasks = mem.tarefas.filter(t => !t.done);
-  if (tasks.length) parts.push('TAREFAS PENDENTES: ' + tasks.map(t => t.content).join(' | '));
-  if (mem.notas.length) parts.push('NOTAS RECENTES: ' + mem.notas.slice(-4).map(n => n.content).join(' | '));
-  if (mem.insights.length) parts.push('INSIGHTS: ' + mem.insights.slice(-2).map(i => i.content).join(' | '));
-  if (mem.decisoes.length) parts.push('DECISÕES RECENTES: ' + mem.decisoes.slice(-2).map(d => d.content).join(' | '));
-  return parts.join('\n') || '(base de memória vazia — o senhor pode registrar informações falando com Alfred)';
+function buildMC(){
+  const p=[];
+  const tk=mem.tarefas.filter(t=>!t.done);
+  if(tk.length)p.push('TAREFAS PENDENTES: '+tk.map(t=>t.content).join(' | '));
+  if(mem.notas.length)p.push('NOTAS: '+mem.notas.slice(-4).map(n=>n.content).join(' | '));
+  if(mem.insights.length)p.push('INSIGHTS: '+mem.insights.slice(-2).map(i=>i.content).join(' | '));
+  return p.join('\n')||'(memória vazia)';
 }
 
-// ======================== KB SEARCH ========================
-function searchKB(query) {
-  if (!kb.docs.length) return '';
-  const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-  let best = [];
-  for (const doc of kb.docs) {
-    for (const chunk of (doc.chunks || [])) {
-      const score = words.filter(w => chunk.toLowerCase().includes(w)).length;
-      if (score > 0) best.push({ score, text: chunk, name: doc.name });
-    }
-  }
-  best.sort((a, b) => b.score - a.score);
-  return best.slice(0, 3).map(b => '[' + b.name + ']: ' + b.text).join('\n\n');
+function searchKB(q){
+  if(!kb.docs||!kb.docs.length)return'';
+  const w=q.toLowerCase().split(/\s+/).filter(x=>x.length>3);
+  let best=[];
+  for(const d of kb.docs){for(const c of(d.chunks||[])){
+    const s=w.filter(x=>c.toLowerCase().includes(x)).length;
+    if(s>0)best.push({s,text:c,name:d.name});
+  }}
+  best.sort((a,b)=>b.s-a.s);
+  return best.slice(0,3).map(b=>'['+b.name+']: '+b.text).join('\n\n');
 }
 
 // ======================== API ========================
-function apiKey() { try { return localStorage.getItem('alf_key') || ''; } catch(e) { return ''; } }
-
-async function callAlfred(userMsg) {
-  const key = apiKey();
-  if (!key) return 'Senhor, preciso da API key configurada em Configurações para funcionar plenamente.';
-
-  const kbCtx = searchKB(userMsg);
-  const sys = buildSysPrompt() + (kbCtx ? '\n\nCONHECIMENTO RELEVANTE:\n' + kbCtx : '');
-
-  const modeHints = {
-    decisao: '[MODO DECISÃO ATIVO — use obrigatoriamente o formato completo de 7 componentes]\n\n',
-    relacao: '[MODO RELAÇÃO ATIVO — use obrigatoriamente o formato Alfred de relacionamento com Julia]\n\n',
-    analista: '[MODO ANALISTA ATIVO — use obrigatoriamente o formato Fato/Interpretação/Risco/Oportunidade/Ação]\n\n',
-    professor: '[MODO PROFESSOR ATIVO — use obrigatoriamente o formato didático de 5 componentes]\n\n',
-    radar: '[MODO RADAR ATIVO — use obrigatoriamente o formato de radar diário com 6 componentes]\n\n'
-  };
-  const hint = modeHints[currentMode] || '';
-
-  const messages = [
-    ...hist.slice(-8).map(m => ({ role: m.role, content: m.content })),
-    { role: 'user', content: hint + userMsg }
-  ];
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 900, system: sys, messages })
+async function callAlfred(userMsg,maxTok,customSys){
+  const key=apiKey();
+  if(!key)return'Senhor, configure a API key em Configurações para eu funcionar plenamente.';
+  const kbCtx=searchKB(userMsg);
+  const sys=(customSys||buildSys())+(kbCtx?'\n\nCONHECIMENTO RELEVANTE:\n'+kbCtx:'');
+  const hints={decisao:'[MODO DECISÃO — use formato completo 7 componentes]\n\n',relacao:'[MODO RELAÇÃO — análise Alfred de relacionamento]\n\n',analista:'[MODO ANALISTA — formato Fato/Interpretação/Risco/Oportunidade/Ação]\n\n',professor:'[MODO PROFESSOR — formato didático 5 componentes]\n\n',radar:'[MODO RADAR — formato radar diário 6 componentes]\n\n'};
+  const hint=hints[currentMode]||'';
+  const msgs=[...hist.slice(-8).map(m=>({role:m.role,content:m.content})),{role:'user',content:hint+userMsg}];
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTok||850,system:sys,messages:msgs})
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); return 'Senhor, erro ' + res.status + ': ' + (e.error?.message || 'Tente novamente.'); }
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || 'Senhor, não consegui processar.';
-    hist.push({ role: 'user', content: userMsg });
-    hist.push({ role: 'assistant', content: reply });
+    if(!res.ok){const e=await res.json().catch(()=>({}));return'Senhor, erro '+res.status+': '+(e.error?.message||'Tente novamente.');}
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Senhor, não consegui processar.';
+    hist.push({role:'user',content:userMsg});
+    hist.push({role:'assistant',content:reply});
     saveHist();
-    autoExtract(userMsg, reply);
+    autoExtract(userMsg,reply);
     return reply;
-  } catch(e) { return 'Senhor, erro de conexão: ' + e.message; }
+  }catch(e){return'Senhor, erro de conexão: '+(e.message||'Verifique a internet.');}
 }
 
-function autoExtract(msg, reply) {
-  const m = msg.toLowerCase();
-  if (m.match(/^(me lembra|lembrete|cria tarefa)\s/i)) {
-    const t = msg.replace(/^(me lembra|lembrete|cria tarefa)\s*/i, '').trim();
-    if (t.length > 2) addMemItem('tarefas', t);
-  }
-  if (m.match(/^(registra|anota|salva|guarda)\s/i)) {
-    const t = msg.replace(/^(registra|anota|salva|guarda)\s*/i, '').trim();
-    if (t.length > 2) addMemItem('notas', t);
-  }
-  if (m.includes('relacionamento') || m.includes('julia')) {
-    const snippet = reply.slice(0, 200);
-    if (snippet.length > 50) addMemItem('relacionamento', snippet, true);
-  }
-  if (sets.trackPers && hist.length > 0 && hist.length % 16 === 0) schedulePersonalityAnalysis();
+function autoExtract(msg,reply){
+  const m=msg.toLowerCase();
+  if(m.match(/^(me lembra|lembrete|cria tarefa)\s/i)){const t=msg.replace(/^(me lembra|lembrete|cria tarefa)\s*/i,'').trim();if(t.length>2)addItem('tarefas',t);}
+  if(m.match(/^(registra|anota|salva|guarda)\s/i)){const t=msg.replace(/^(registra|anota|salva|guarda)\s*/i,'').trim();if(t.length>2)addItem('notas',t);}
+  if((m.includes('julia')||m.includes('relacionamento'))&&reply.length>50)addItem('relacionamento',reply.slice(0,180),true);
+  if(sets.trackPers&&hist.length>0&&hist.length%16===0)runPersonalityCheck();
+  renderMem();
+  updateDash();
 }
 
-async function schedulePersonalityAnalysis() {
-  const key = apiKey();
-  if (!key) return;
-  const sample = hist.slice(-16).filter(m => m.role === 'user').map(m => m.content).join('\n');
-  if (sample.length < 80) return;
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 150,
-        system: 'Analise as mensagens do usuário e identifique 1 padrão de comportamento, comunicação ou tomada de decisão em 1-2 frases. Responda apenas o insight, sem introdução, sem "senhor".',
-        messages: [{ role: 'user', content: sample }] })
-    });
-    const data = await res.json();
-    const ins = data.content?.[0]?.text;
-    if (ins && ins.length > 10) addMemItem('insights', ins);
-  } catch(e) {}
+async function runPersonalityCheck(){
+  const key=apiKey();if(!key)return;
+  const sample=hist.slice(-16).filter(m=>m.role==='user').map(m=>m.content).join('\n');
+  if(sample.length<80)return;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:120,
+        system:'Analise as mensagens e identifique 1 padrão de comportamento ou comunicação em 1-2 frases. Responda apenas o insight, sem "senhor", sem introdução.',
+        messages:[{role:'user',content:sample}]})});
+    const data=await res.json();
+    const ins=data.content?.[0]?.text;
+    if(ins&&ins.length>10)addItem('insights',ins,true);
+  }catch(e){}
 }
 
-// ======================== COMMAND DETECTION ========================
-const APPS = [
-  { keys: ['instagram'], name: 'Instagram', url: 'https://instagram.com', native: 'instagram://' },
-  { keys: ['whatsapp', 'zap'], name: 'WhatsApp', url: 'https://web.whatsapp.com', native: 'whatsapp://' },
-  { keys: ['youtube'], name: 'YouTube', url: 'https://youtube.com', native: 'youtube://' },
-  { keys: ['spotify'], name: 'Spotify', url: 'https://open.spotify.com', native: 'spotify://' },
-  { keys: ['google maps', 'maps', 'mapa'], name: 'Google Maps', url: 'https://maps.google.com', native: 'maps://' },
-  { keys: ['linkedin'], name: 'LinkedIn', url: 'https://linkedin.com', native: 'linkedin://' },
-  { keys: ['calculadora'], name: 'Calculadora', url: '', native: '' },
-];
+// ======================== ACTIVE SESSION (ESCUTA) ========================
+let sessionActive=false;
+let sessionTr=[];
+let sessionTimer=null;
+let sessionSeconds=0;
+let proTimer=null;
+let lastProAt=0;
+let lastSpTime=0;
+let spToggle=false;
+let sessionRec=null;
+let sessionBuf='';
 
-function detectCmd(text) {
-  const t = text.toLowerCase();
-  if (t.match(/\b(abra|abrir|abre)\b/)) {
-    for (const app of APPS) {
-      for (const k of app.keys) {
-        if (t.includes(k)) return { type: 'open_app', ...app };
+function toggleSession(){if(sessionActive)stopSession();else startSession();}
+
+function startSession(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Senhor, reconhecimento de voz não suportado. Use Safari (iPhone) ou Chrome (Android).');return;}
+  sessionActive=true;sessionTr=[];sessionSeconds=0;lastSpTime=0;spToggle=false;
+  document.getElementById('esc-orb').className='esc-orb rec-on';
+  document.getElementById('esc-status').textContent='🔴 ALFRED OUVINDO';
+  document.getElementById('esc-status').className='esc-status active';
+  document.getElementById('esc-timer').style.display='block';
+  document.getElementById('esc-start-btn').style.display='none';
+  document.getElementById('esc-stop-btn').style.display='block';
+  document.getElementById('esc-tr-zone').style.display='block';
+  document.getElementById('live-dot').className='live-dot rec';
+  document.getElementById('pro-cards').innerHTML='';
+  sessionTimer=setInterval(()=>{sessionSeconds++;const m=Math.floor(sessionSeconds/60);const s=sessionSeconds%60;document.getElementById('esc-timer').textContent=(m<10?'0'+m:m)+':'+(s<10?'0'+s:s);},1000);
+  lastProAt=Date.now();
+  if(sets.proactive)proTimer=setInterval(()=>runProactive(),45000);
+  speak('Senhor, modo de escuta ativa iniciado. Estou analisando o contexto.');
+  setupSessionRec();
+  swp('escuta');
+}
+
+function stopSession(){
+  if(!sessionActive&&!sessionTimer)return;
+  sessionActive=false;
+  clearInterval(sessionTimer);clearInterval(proTimer);
+  sessionTimer=null;proTimer=null;
+  if(sessionRec)try{sessionRec.abort();}catch(e){}sessionRec=null;
+  document.getElementById('esc-orb').className='esc-orb';
+  document.getElementById('esc-status').textContent='Alfred em espera';
+  document.getElementById('esc-status').className='esc-status';
+  document.getElementById('esc-timer').style.display='none';
+  document.getElementById('esc-start-btn').style.display='block';
+  document.getElementById('esc-stop-btn').style.display='none';
+  document.getElementById('live-dot').className='live-dot';
+  if(sessionTr.length>0)genSummary();
+  else speak('Senhor, sessão encerrada sem transcrição.');
+}
+
+function setupSessionRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return;
+  sessionRec=new SR();
+  sessionRec.lang='pt-BR';sessionRec.continuous=false;sessionRec.interimResults=true;
+  sessionRec.onresult=e=>{
+    let f='',i='';
+    for(let j=e.resultIndex;j<e.results.length;j++){const t=e.results[j][0].transcript;if(e.results[j].isFinal)f+=t;else i+=t;}
+    const cur=f||i;
+    if(cur){
+      sessionBuf+=cur+' ';
+      if(f){
+        const ch=detectCh();
+        const entry={text:sessionBuf.trim(),ch,t:Date.now()};
+        sessionBuf='';
+        sessionTr.push(entry);
+        addEscEntry(entry);
+        if(Date.now()-lastProAt>45000&&sets.proactive)runProactive();
       }
     }
+  };
+  sessionRec.onerror=e=>{if(e.error!=='no-speech'&&e.error!=='aborted')console.warn('Session rec error:',e.error);};
+  sessionRec.onend=()=>{if(sessionActive)setTimeout(()=>{try{sessionRec.start();}catch(e){}},300);};
+  try{sessionRec.start();}catch(e){stopSession();}
+}
+
+function detectCh(){
+  const now=Date.now();
+  const gap=now-lastSpTime;
+  if(lastSpTime>0&&gap>2200)spToggle=!spToggle;
+  lastSpTime=now;
+  return spToggle?'OUTRO':'SENHOR';
+}
+
+function addEscEntry(entry){
+  const el=document.getElementById('esc-entries');
+  if(el.querySelector('.em'))el.innerHTML='';
+  const div=document.createElement('div');
+  div.className='esc-entry';
+  div.innerHTML=`<span class="esc-ch ${entry.ch==='SENHOR'?'me':'ot'}">${entry.ch}</span><div class="esc-tx">${entry.text}</div>`;
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+}
+
+async function runProactive(){
+  lastProAt=Date.now();
+  const key=apiKey();if(!key)return;
+  const recent=sessionTr.slice(-12);
+  if(recent.length<3)return;
+  const txt=recent.map(e=>'['+e.ch+']: '+e.text).join('\n');
+  const PRO_SYS=`Você é Alfred OS em modo análise silenciosa de conversa.
+REGRA ABSOLUTA: chame de "senhor".
+HIPÓTESES APENAS: use "pode indicar", "há sinais de", "com base no contexto".
+NUNCA afirme que alguém mentiu.
+Se identificar algo útil: responda "Senhor, [insight 1-2 frases]. [ação específica]"
+Se nada relevante: responda apenas "---"
+Seja cirúrgico — só intervenha quando genuinamente útil.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:120,system:PRO_SYS,
+        messages:[{role:'user',content:'Contexto:\n'+txt}]})});
+    const data=await res.json();
+    const ins=data.content?.[0]?.text||'';
+    if(ins&&ins!=='---'&&!ins.includes('---')&&ins.length>10){
+      showProCard(ins);
+      if(sets.autoSpeak)speak(ins);
+    }
+  }catch(e){}
+}
+
+function showProCard(text){
+  const c=document.getElementById('pro-cards');
+  const div=document.createElement('div');
+  div.className='pro-card';
+  div.innerHTML=`<div class="pro-card-lbl">⚡ ALFRED SUGERE</div><div class="pro-card-txt">${text}</div><button class="pro-close" onclick="this.parentElement.remove()">✕</button>`;
+  c.prepend(div);
+  setTimeout(()=>{if(div.parentElement)div.remove();},30000);
+}
+
+let currentSummaryText='';
+async function genSummary(){
+  const key=apiKey();
+  document.getElementById('sum-text').textContent='Senhor, gerando resumo da sessão...';
+  document.getElementById('sum-modal').style.display='flex';
+  currentSummaryText='';
+  if(!key){
+    const simple='Sessão de '+Math.floor(sessionSeconds/60)+'min com '+sessionTr.length+' entradas transcritas.';
+    document.getElementById('sum-text').textContent=simple;
+    currentSummaryText=simple;return;
   }
-  if (t.match(/calcula|calcule|quanto (é|da|dá)|(\d+)\s*(mais|menos|vezes|dividido)/)) {
-    return { type: 'calc', raw: text };
+  const txt=sessionTr.map(e=>'['+e.ch+']: '+e.text).join('\n');
+  const SUM_SYS=`Você é Alfred OS gerando resumo estratégico de sessão.
+SEMPRE "senhor". Linguagem de hipótese para terceiros.
+NUNCA afirme que alguém mentiu. Use "pode indicar", "há sinais de".
+Formato EXATO:
+📋 RESUMO DA SESSÃO:
+[o que foi discutido]
+
+🧠 POSSÍVEIS INTENÇÕES (hipóteses — não certeza):
+[interpretações prováveis de cada parte]
+
+⚡ RISCOS IDENTIFICADOS:
+[pontos de atenção]
+
+✅ MELHOR PRÓXIMA AÇÃO DO SENHOR:
+[o que fazer agora]
+
+💬 FRASE RECOMENDADA (se aplicável):
+[algo concreto para falar ou enviar]
+
+📊 NÍVEL DE CONFIANÇA: [baixo/médio/alto]
+[justificativa breve]`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,system:SUM_SYS,
+        messages:[{role:'user',content:'Transcrição:\n\n'+txt}]})});
+    const data=await res.json();
+    currentSummaryText=data.content?.[0]?.text||'Erro ao gerar resumo.';
+    document.getElementById('sum-text').textContent=currentSummaryText;
+  }catch(e){
+    currentSummaryText='Senhor, erro ao gerar resumo. Sessão: '+sessionTr.length+' entradas.';
+    document.getElementById('sum-text').textContent=currentSummaryText;
   }
+}
+
+function saveSummary(){
+  if(currentSummaryText&&currentSummaryText.length>10){
+    addItem('decisoes',currentSummaryText.slice(0,300),true);
+    alert('Senhor, resumo salvo em Decisões.');
+  }
+}
+
+function closeSummary(){document.getElementById('sum-modal').style.display='none';}
+
+// ======================== COMMAND DETECTION ========================
+const APPS=[
+  {keys:['instagram'],name:'Instagram',url:'https://instagram.com',nat:'instagram://'},
+  {keys:['whatsapp','zap'],name:'WhatsApp',url:'https://web.whatsapp.com',nat:'whatsapp://'},
+  {keys:['youtube'],name:'YouTube',url:'https://youtube.com',nat:'youtube://'},
+  {keys:['spotify'],name:'Spotify',url:'https://open.spotify.com',nat:'spotify://'},
+  {keys:['maps','mapa'],name:'Mapas',url:'https://maps.google.com',nat:'maps://'},
+  {keys:['linkedin'],name:'LinkedIn',url:'https://linkedin.com',nat:'linkedin://'},
+  {keys:['calendário','calendario','agenda'],name:'Calendário',url:'https://calendar.google.com',nat:'calshow://'},
+  {keys:['atalhos','shortcuts'],name:'Atalhos',url:'shortcuts://',nat:'shortcuts://'},
+];
+
+function detectCmd(text){
+  const t=text.toLowerCase();
+  if(t.match(/\b(abra|abrir|abre)\b/)){
+    for(const a of APPS)for(const k of a.keys)if(t.includes(k))return{type:'open_app',...a};
+  }
+  if(t.match(/calcula|calcule|quanto (é|da|dá)|(\d+)\s*(mais|menos|vezes|dividido)/))return{type:'calc',raw:text};
   return null;
 }
 
-function execCmd(cmd, text) {
-  if (!cmd) return false;
-  if (cmd.type === 'open_app') {
-    if (cmd.name === 'Calculadora') {
-      const res = doCalc(text);
-      if (res !== null) { addMsg('Resultado: ' + res, 'alfred'); speak('Senhor, o resultado é ' + res); return true; }
-      return false;
-    }
-    if (sets.confirmApps) {
-      requestConf('📱', 'Abrir ' + cmd.name + '?', 'Confirma para o Alfred abrir o aplicativo.', () => {
-        window.location.href = cmd.native;
-        setTimeout(() => window.open(cmd.url, '_blank'), 2000);
-      });
-    } else {
-      window.location.href = cmd.native;
-      setTimeout(() => window.open(cmd.url, '_blank'), 2000);
-    }
+function execCmd(cmd,text){
+  if(!cmd)return false;
+  if(cmd.type==='open_app'){
+    if(sets.confirmApps){
+      requestConf('📱','Abrir '+cmd.name+'?','Alfred vai abrir o aplicativo agora.',()=>{openAppDirect(cmd.nat,cmd.url);});
+    }else openAppDirect(cmd.nat,cmd.url);
     return true;
   }
-  if (cmd.type === 'calc') {
-    const res = doCalc(text);
-    if (res !== null) { addMsg('Senhor, o resultado é ' + res, 'alfred'); speak('Senhor, o resultado é ' + res); return true; }
+  if(cmd.type==='calc'){
+    const r=doCalc(text);
+    if(r!==null){addMsg('Senhor, o resultado é '+r,'a');speak('Senhor, o resultado é '+r);return true;}
   }
   return false;
 }
 
-function doCalc(text) {
-  try {
-    let expr = text.toLowerCase()
-      .replace(/mais/g, '+').replace(/menos/g, '-')
-      .replace(/vezes|multiplicado por/g, '*').replace(/dividido por/g, '/')
-      .replace(/[^\d\+\-\*\/\.\s\(\)]/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!/\d/.test(expr)) return null;
-    const r = Function('"use strict";return (' + expr + ')')();
-    return isNaN(r) || !isFinite(r) ? null : (Number.isInteger(r) ? r : parseFloat(r.toFixed(4)));
-  } catch(e) { return null; }
+function openAppDirect(nat,url){
+  window.location.href=nat;
+  setTimeout(()=>{try{window.open(url,'_blank');}catch(e){}},2000);
+}
+
+function openApp(name,nat,url){
+  if(sets.confirmApps){requestConf('📱','Abrir '+name+'?','Alfred vai abrir o aplicativo.',()=>openAppDirect(nat,url));}
+  else openAppDirect(nat,url);
+}
+
+function doCalc(text){
+  try{
+    let e=text.toLowerCase().replace(/mais/g,'+').replace(/menos/g,'-').replace(/vezes|multiplicado por/g,'*').replace(/dividido por/g,'/').replace(/[^\d\+\-\*\/\.\s\(\)]/g,' ').replace(/\s+/g,' ').trim();
+    if(!/\d/.test(e))return null;
+    const r=Function('"use strict";return ('+e+')')();
+    return isNaN(r)||!isFinite(r)?null:(Number.isInteger(r)?r:parseFloat(r.toFixed(4)));
+  }catch(e){return null;}
+}
+
+// ======================== iOS INTEGRATIONS ========================
+function pad2(n){return String(n).padStart(2,'0');}
+function fmtICS(d){return d.getFullYear().toString()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00';}
+
+function genCalEvent(){
+  const title=document.getElementById('cal-title').value.trim()||'Evento Alfred OS';
+  const date=document.getElementById('cal-date').value;
+  const time=document.getElementById('cal-time').value||'09:00';
+  if(!date){alert('Senhor, selecione a data do evento.');return;}
+  const[y,mo,d]=date.split('-').map(Number);
+  const[h,m]=time.split(':').map(Number);
+  const start=new Date(y,mo-1,d,h,m);
+  const end=new Date(y,mo-1,d,h,m+30);
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alfred OS//PT-BR','CALSCALE:GREGORIAN','BEGIN:VEVENT','DTSTART;TZID=America/Sao_Paulo:'+fmtICS(start),'DTEND;TZID=America/Sao_Paulo:'+fmtICS(end),'SUMMARY:'+title,'DESCRIPTION:Alfred OS — '+title,'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+title,'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  dlFile(ics,title.slice(0,20)+'.ics','text/calendar');
+  speak('Senhor, arquivo de calendário gerado. Abra para adicionar ao iPhone.');
+}
+
+function genAlarmEvent(){
+  const label=document.getElementById('alarm-label').value.trim()||'Alarme Alfred';
+  const time=document.getElementById('alarm-time').value||'07:30';
+  const today=new Date();
+  const[h,m]=time.split(':').map(Number);
+  const dt=new Date(today.getFullYear(),today.getMonth(),today.getDate(),h,m);
+  if(dt<=today)dt.setDate(dt.getDate()+1);
+  const dtEnd=new Date(dt.getTime()+1800000);
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alfred OS//PT-BR','BEGIN:VEVENT','DTSTART;TZID=America/Sao_Paulo:'+fmtICS(dt),'DTEND;TZID=America/Sao_Paulo:'+fmtICS(dtEnd),'RRULE:FREQ=DAILY','SUMMARY:⏰ '+label,'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:⏰ '+label,'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  dlFile(ics,'alarme-'+time.replace(':','')+'.ics','text/calendar');
+  speak('Senhor, arquivo de alarme gerado. Abra para importar no Calendário.');
+}
+
+function openClockApp(){window.location.href='clock-alarm://';setTimeout(()=>{speak('Senhor, abra o app Relógio manualmente e toque em + para criar o alarme.');},1500);}
+
+function genReminder(){
+  const title=document.getElementById('rem-title').value.trim()||'Lembrete Alfred';
+  const date=document.getElementById('rem-date').value;
+  const time=document.getElementById('rem-time').value||'09:00';
+  if(!date){alert('Senhor, selecione a data do lembrete.');return;}
+  const[y,mo,d]=date.split('-').map(Number);
+  const[h,m]=time.split(':').map(Number);
+  const dt=new Date(y,mo-1,d,h,m);
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alfred OS//PT-BR','BEGIN:VTODO','DTSTART;TZID=America/Sao_Paulo:'+fmtICS(dt),'DUE;TZID=America/Sao_Paulo:'+fmtICS(dt),'SUMMARY:'+title,'DESCRIPTION:Alfred OS — '+title,'STATUS:NEEDS-ACTION','BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+title,'END:VALARM','END:VTODO','END:VCALENDAR'].join('\r\n');
+  dlFile(ics,'lembrete.ics','text/calendar');
+  speak('Senhor, arquivo de lembrete gerado.');
+}
+
+function runShortcut(){
+  const n=document.getElementById('shortcut-name').value.trim();
+  if(!n){alert('Senhor, insira o nome do atalho.');return;}
+  window.location.href='shortcuts://run-shortcut?name='+encodeURIComponent(n);
+}
+
+function dlFile(content,name,type){
+  const b=new Blob([content],{type});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(u);
 }
 
 // ======================== CONFIRM ========================
-let pendingConf = null;
-function requestConf(ico, ti, de, fn) {
-  pendingConf = fn;
-  document.getElementById('ci').textContent = ico;
-  document.getElementById('ct').textContent = ti;
-  document.getElementById('cd').textContent = de;
-  document.getElementById('conf-ov').style.display = 'flex';
+let pendConf=null;
+function requestConf(ico,ti,de,fn){
+  pendConf=fn;
+  document.getElementById('ci').textContent=ico;
+  document.getElementById('ct').textContent=ti;
+  document.getElementById('cd').textContent=de;
+  document.getElementById('conf-ov').style.display='flex';
 }
-function doConf() { document.getElementById('conf-ov').style.display = 'none'; if (pendingConf) { pendingConf(); pendingConf = null; } }
-function cancelConf() { document.getElementById('conf-ov').style.display = 'none'; pendingConf = null; }
+function doConf(){document.getElementById('conf-ov').style.display='none';if(pendConf){pendConf();pendConf=null;}}
+function cancelConf(){document.getElementById('conf-ov').style.display='none';pendConf=null;speak('Senhor, ação cancelada.');}
 
 // ======================== VOICE ========================
-let isListening = false, isSpeaking = false, isThinking = false;
-let recognition = null, speechBuf = '', silTimer = null;
-let selectedVoice = null;
-let voiceRate = 0.9;
-const SIL = 1600;
+let isListening=false,isSpeaking=false,isThinking=false;
+let recognition=null,spBuf='',silT=null;
+let selVoice=null,vRate=0.9;
+const SIL=1500;
 
-function setupRec() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return null;
-  const r = new SR();
-  r.lang = 'pt-BR'; r.continuous = false; r.interimResults = true;
-  r.onresult = e => {
-    let f = '', i = '';
-    for (let j = e.resultIndex; j < e.results.length; j++) {
-      const t = e.results[j][0].transcript;
-      if (e.results[j].isFinal) f += t; else i += t;
-    }
-    const cur = f || i;
-    if (cur) {
-      speechBuf += cur + ' ';
-      setStatus('Ouvindo: ' + speechBuf.trim().slice(-50) + '...');
-      clearTimeout(silTimer);
-      silTimer = setTimeout(() => {
-        const msg = speechBuf.trim();
-        speechBuf = '';
-        if (msg.length > 1) handleInput(msg);
-      }, SIL);
-    }
+function setupRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return null;
+  const r=new SR();
+  r.lang='pt-BR';r.continuous=false;r.interimResults=true;
+  r.onresult=e=>{
+    let f='',i='';
+    for(let j=e.resultIndex;j<e.results.length;j++){const t=e.results[j][0].transcript;if(e.results[j].isFinal)f+=t;else i+=t;}
+    const cur=f||i;
+    if(cur){spBuf+=cur+' ';setStat('Ouvindo: '+spBuf.trim().slice(-50)+'...');clearTimeout(silT);silT=setTimeout(()=>{const msg=spBuf.trim();spBuf='';if(msg.length>1)handleInput(msg);},SIL);}
   };
-  r.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') setStatus('Erro: ' + e.error); };
-  r.onend = () => { if (isListening && !isSpeaking && !isThinking) setTimeout(() => { try { r.start(); } catch(e) {} }, 200); };
+  r.onerror=e=>{if(e.error!=='no-speech'&&e.error!=='aborted')setStat('Erro: '+e.error);};
+  r.onend=()=>{if(isListening&&!isSpeaking&&!isThinking)setTimeout(()=>{try{r.start();}catch(e){}},200);};
   return r;
 }
 
-function toggleListen() {
-  if (isThinking) return;
-  if (isSpeaking) { speechSynthesis.cancel(); isSpeaking = false; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { alert('Reconhecimento de voz não suportado. Use Safari (iPhone) ou Chrome (Android).'); return; }
-  if (isListening) {
-    isListening = false;
-    if (recognition) try { recognition.abort(); } catch(e) {}
-    speechBuf = ''; clearTimeout(silTimer);
-    setOrb('idle'); setStatus('Aguardando o senhor'); setWaves('');
-  } else {
-    isListening = true;
-    recognition = setupRec();
-    if (recognition) { try { recognition.start(); } catch(e) { isListening = false; setOrb('idle'); return; } }
-    setOrb('listening'); setStatus('Alfred ouvindo...'); setWaves('listening');
+function toggleListen(){
+  if(isThinking)return;
+  if(isSpeaking){speechSynthesis.cancel();isSpeaking=false;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Senhor, use Safari (iPhone) ou Chrome (Android) para reconhecimento de voz.');return;}
+  if(isListening){
+    isListening=false;if(recognition)try{recognition.abort();}catch(e){}
+    spBuf='';clearTimeout(silT);setOrb('I');setStat('Aguardando o senhor');setWv('');
+  }else{
+    isListening=true;recognition=setupRec();
+    if(recognition){try{recognition.start();}catch(e){isListening=false;setOrb('I');return;}}
+    setOrb('L');setStat('Alfred ouvindo...');setWv('listening');
   }
 }
 
-function speak(text) {
-  if (!sets.autoSpeak) return;
-  speechSynthesis.cancel();
-  const cleanText = text.replace(/[🔍🧠⚡✅🕊️🔥🎯📌🔎📋🔀📊⏭️💡📚❓📅🚨📈]/g, '');
-  const u = new SpeechSynthesisUtterance(cleanText);
-  u.lang = 'pt-BR'; u.rate = voiceRate; u.pitch = 0.88;
-  if (selectedVoice) u.voice = selectedVoice;
-  isSpeaking = true; setOrb('speaking'); setWaves('speaking');
-  u.onend = () => {
-    isSpeaking = false;
-    if (sets.autoListen && isListening) { setOrb('listening'); setWaves('listening'); }
-    else { setOrb('idle'); setWaves(''); }
-  };
-  u.onerror = () => { isSpeaking = false; setOrb('idle'); setWaves(''); };
-  speechSynthesis.speak(u);
+function speak(text){
+  if(!sets.autoSpeak)return;
+  try{
+    speechSynthesis.cancel();
+    const clean=text.replace(/[🔍🧠⚡✅🕊️🔥🎯📌🔎📋🔀📊⏭️💡📚❓📅🚨📈]/g,'');
+    const u=new SpeechSynthesisUtterance(clean);
+    u.lang='pt-BR';u.rate=vRate;u.pitch=0.88;
+    if(selVoice)u.voice=selVoice;
+    isSpeaking=true;setOrb('S');setWv('sp');
+    u.onend=()=>{isSpeaking=false;if(sets.autoListen&&isListening){setOrb('L');setWv('listening');}else{setOrb('I');setWv('');}};
+    u.onerror=()=>{isSpeaking=false;setOrb('I');setWv('');};
+    speechSynthesis.speak(u);
+  }catch(e){isSpeaking=false;}
 }
 
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  const sel = document.getElementById('voice-s');
-  const pt = voices.filter(v => v.lang.startsWith('pt'));
-  sel.innerHTML = '<option value="">Auto pt-BR</option>' + pt.map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
-  const saved = ld('voiceName', '');
-  if (saved) { sel.value = saved; selectedVoice = voices.find(v => v.name === saved) || null; }
-  if (!selectedVoice) selectedVoice = voices.find(v => v.lang === 'pt-BR') || pt[0] || null;
+function loadVoices(){
+  try{
+    const vs=speechSynthesis.getVoices();
+    const sel=document.getElementById('voice-s');
+    const pt=vs.filter(v=>v.lang.startsWith('pt'));
+    sel.innerHTML='<option value="">Auto pt-BR</option>'+pt.map(v=>`<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
+    const sv2=ld('voiceName','');
+    if(sv2){sel.value=sv2;selVoice=vs.find(v=>v.name===sv2)||null;}
+    if(!selVoice)selVoice=vs.find(v=>v.lang==='pt-BR')||pt[0]||null;
+  }catch(e){}
 }
 
 // ======================== INPUT HANDLING ========================
-async function handleInput(msg) {
-  if (!msg.trim()) return;
-  speechBuf = ''; clearTimeout(silTimer);
-  addMsg(msg, 'user');
-  const cmd = detectCmd(msg);
-  if (cmd && execCmd(cmd, msg)) return;
-  setOrb('thinking'); isThinking = true; setStatus('Alfred processando...'); setWaves('thinking');
-  const reply = await callAlfred(msg);
-  isThinking = false;
-  addMsg(reply, 'alfred');
-  if (sets.autoSpeak) speak(reply);
-  else { setOrb(isListening ? 'listening' : 'idle'); setWaves(isListening ? 'listening' : ''); }
+async function handleInput(msg){
+  if(!msg||!msg.trim())return;
+  spBuf='';clearTimeout(silT);
+  addMsg(msg,'u');
+  const cmd=detectCmd(msg);
+  if(cmd&&execCmd(cmd,msg))return;
+  setOrb('T');isThinking=true;setStat('Alfred processando...');setWv('th');
+  const reply=await callAlfred(msg);
+  isThinking=false;
+  addMsg(reply,'a');
+  if(sets.autoSpeak){speak(reply);}
+  else{setOrb(isListening?'L':'I');setWv(isListening?'listening':'');}
 }
 
-function sendTxt() {
-  const inp = document.getElementById('txt-inp');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  inp.value = '';
-  handleInput(msg);
+function sendTxt(){
+  const inp=document.getElementById('ti');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';handleInput(msg);
 }
 
-document.getElementById('txt-inp').addEventListener('keydown', e => { if (e.key === 'Enter') sendTxt(); });
+document.getElementById('ti').addEventListener('keydown',e=>{if(e.key==='Enter')sendTxt();});
 
-// ======================== RELATIONSHIP ANALYSIS ========================
-async function analyzeRel() {
-  const conv = document.getElementById('rel-inp').value.trim();
-  if (!conv) { alert('Senhor, cole uma conversa ou situação para analisar.'); return; }
-  const key = apiKey();
-  if (!key) { alert('Senhor, configure a API key em Configurações.'); return; }
-  const btn = document.querySelector('.rel-btn');
-  const res = document.getElementById('rel-res');
-  btn.textContent = '🔍 Alfred analisando...'; btn.disabled = true;
-  res.style.display = 'none';
+// ======================== RELATIONSHIP ========================
+async function analyzeRel(){
+  const conv=document.getElementById('rel-inp').value.trim();
+  if(!conv){alert('Senhor, cole uma conversa ou situação para analisar.');return;}
+  const key=apiKey();if(!key){alert('Senhor, configure a API key em Configurações.');return;}
+  const btn=document.querySelector('.rel-btn');
+  const res=document.getElementById('rel-res');
+  btn.textContent='🔍 Alfred analisando...';btn.disabled=true;res.style.display='none';
+  const REL_SYS=`Você é Alfred OS analisando situação de relacionamento.
+SEMPRE "senhor". HIPÓTESES — nunca certeza sobre terceiros. NUNCA afirme que alguém mentiu.
+Use: "pode indicar", "há sinais de", "com base no contexto".
 
-  const SYS = `Você é Alfred OS, analisando uma situação de relacionamento do senhor com Julia.
-Julia: apego evitativo. "Intensa só na cabeça, deixo muito pouco sair." 6 meses (jan 2026).
-Vocabulário dela: mb, nuuu, blzinha, hehehe, sim sim, vrdd, sla, fazer oq.
+Julia: evitativa. "Intensa só na cabeça." Vocabulário: mb, nuuu, blzinha, hehehe, sim sim, sla.
 Marcos: "você é o cara certo pra isso" (jun 2026). "Vamos conseguir" (jul 2026).
-Fecha com pressão. Abre com leveza e humor. Pai influencia disposição.
+Fecha com pressão. Abre com leveza e humor.
 
-SEMPRE chame de "senhor". Analise com esta estrutura EXATA:
-
+Estrutura EXATA:
 🔍 LEITURA:
-[o que está acontecendo de verdade nessa conversa]
+[o que está acontecendo de verdade]
 
-🧠 ELA ESTÁ SENTINDO:
-[estado emocional real da Julia neste momento]
+🧠 ELA PODE ESTAR SENTINDO (hipótese):
+[estado emocional provável — use hipótese]
 
 ⚡ RISCO DE ERRAR:
-[o que acontece se o senhor responder mal]
+[consequência de responder mal]
 
 ✅ MELHOR RESPOSTA (no estilo do senhor):
-[resposta pronta — preserve o jeito dele falar, informal e autêntico]
+[resposta pronta para copiar]
 
 🕊️ VERSÃO CALMA:
-[alternativa mais suave e acolhedora]
+[alternativa suave]
 
 🔥 VERSÃO FIRME:
-[alternativa mais assertiva e direta]
+[alternativa assertiva]
 
 🎯 RECOMENDAÇÃO FINAL:
-[o que o senhor deve fazer agora, em 1-2 frases]
+[o que fazer agora em 2 frases]
 
 📊 PADRÃO DETECTADO:
-[1 insight sobre o padrão de comunicação revelado nesta conversa]`;
-
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1200, system: SYS, messages: [{ role: 'user', content: 'Analise:\n\n' + conv }] })
-    });
-    const data = await r.json();
-    const text = data.content?.[0]?.text || 'Senhor, erro ao processar.';
-    res.textContent = text; res.style.display = 'block';
-    res.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    const pat = text.match(/PADRÃO DETECTADO:\n([^\n]+)/);
-    if (pat && pat[1]) addMemItem('relacionamento', 'Padrão: ' + pat[1].trim(), true);
-  } catch(e) { res.textContent = 'Senhor, erro de conexão.'; res.style.display = 'block'; }
-  btn.textContent = '🔍 Analisar com Alfred'; btn.disabled = false;
+[1 insight sobre padrão de comunicação]`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1100,system:REL_SYS,
+        messages:[{role:'user',content:'Analise:\n\n'+conv}]})});
+    const data=await r.json();
+    const text=data.content?.[0]?.text||'Senhor, erro ao processar.';
+    res.textContent=text;res.style.display='block';
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+    const pat=text.match(/PADRÃO DETECTADO:\n([^\n]+)/);
+    if(pat&&pat[1])addItem('relacionamento','Padrão: '+pat[1].trim(),true);
+  }catch(e){res.textContent='Senhor, erro de conexão.';res.style.display='block';}
+  btn.textContent='🔍 Analisar com Alfred';btn.disabled=false;
 }
 
 // ======================== RADAR ========================
-async function generateRadar() {
-  const key = apiKey();
-  if (!key) { alert('Senhor, configure a API key em Configurações.'); return; }
-  const btn = document.querySelector('.daily-generate-btn');
-  btn.textContent = '⚡ Alfred gerando radar...'; btn.disabled = true;
-  const radarEl = document.getElementById('radar-content');
-  radarEl.innerHTML = '<div class="empty-msg">Processando...</div>';
-
-  const sys = buildSysPrompt();
-  const timeOfDay = getTimeOfDay();
-  const tasks = mem.tarefas.filter(t => !t.done).slice(0, 5).map(t => t.content).join(', ') || 'nenhuma tarefa registrada';
-
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 500, system: sys,
-        messages: [{ role: 'user', content: `[MODO RADAR] Gere o radar diário do senhor. Horário atual: ${timeOfDay}. Tarefas pendentes: ${tasks}. Use o formato completo de radar com 6 componentes. Seja específico e prático.` }] })
-    });
-    const data = await r.json();
-    const text = data.content?.[0]?.text || '';
-    if (text) {
-      radarEl.innerHTML = '<div class="radar-item" style="white-space:pre-wrap;font-size:12px;color:var(--text);line-height:1.7">' + text + '</div>';
-      sv('lastRadar', { text, date: new Date().toLocaleDateString('pt-BR') });
+async function genRadar(){
+  const key=apiKey();if(!key){alert('Senhor, configure a API key em Configurações.');return;}
+  const btn=document.querySelector('.rad-gen');
+  btn.textContent='⚡ Alfred gerando radar...';btn.disabled=true;
+  document.getElementById('rad-content').innerHTML='<div class="em">Processando...</div>';
+  const h=new Date().getHours();
+  const tod=h<5?'madrugada':h<12?'manhã':h<18?'tarde':'noite';
+  const tasks=mem.tarefas.filter(t=>!t.done).slice(0,4).map(t=>t.content).join(', ')||'nenhuma';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:480,system:buildSys(),
+        messages:[{role:'user',content:'[MODO RADAR] Gere o radar diário. Horário: '+tod+'. Tarefas pendentes: '+tasks+'. Use o formato de 6 componentes.'}]})});
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'';
+    if(text){
+      document.getElementById('rad-content').innerHTML='<div style="white-space:pre-wrap;font-size:12px;color:var(--text);line-height:1.7">'+text+'</div>';
+      sv('lastRadar',{text,date:new Date().toLocaleDateString('pt-BR')});
     }
-  } catch(e) { radarEl.innerHTML = '<div class="empty-msg">Senhor, erro ao gerar radar.</div>'; }
-  btn.textContent = '⚡ Gerar Radar Diário com Alfred'; btn.disabled = false;
-}
-
-function getTimeOfDay() {
-  const h = new Date().getHours();
-  if (h < 5) return 'madrugada';
-  if (h < 12) return 'manhã';
-  if (h < 18) return 'tarde';
-  return 'noite';
-}
-
-function showAddTask() {
-  const task = prompt('Senhor, qual tarefa adicionar?');
-  if (task && task.trim()) { addMemItem('tarefas', task.trim()); updateDash(); }
+  }catch(e){document.getElementById('rad-content').innerHTML='<div class="em">Senhor, erro ao gerar radar.</div>';}
+  btn.textContent='⚡ Gerar Radar Diário';btn.disabled=false;
 }
 
 // ======================== MEMORY OPS ========================
-function addMemItem(cat, content, silent) {
-  if (!mem[cat]) mem[cat] = [];
-  mem[cat].push({ id: Date.now(), content, done: false, d: new Date().toLocaleDateString('pt-BR') });
-  if (mem[cat].length > 50) mem[cat] = mem[cat].slice(-50);
-  saveMem();
-  if (!silent) renderMem();
+function addItem(cat,content,silent){
+  if(!mem[cat])mem[cat]=[];
+  mem[cat].push({id:Date.now(),content,done:false,d:new Date().toLocaleDateString('pt-BR')});
+  if(mem[cat].length>60)mem[cat]=mem[cat].slice(-60);
+  saveMem();if(!silent){renderMem();updateDash();}
 }
+function delItem(cat,id){mem[cat]=mem[cat].filter(x=>x.id!==id);saveMem();renderMem();}
+function togTask(id){const t=mem.tarefas.find(t=>t.id===id);if(t){t.done=!t.done;saveMem();renderMem();updateDash();}}
 
-function delMemItem(cat, id) { mem[cat] = mem[cat].filter(x => x.id !== id); saveMem(); renderMem(); }
-function togTask(id) {
-  const t = mem.tarefas.find(t => t.id === id);
-  if (t) t.done = !t.done;
-  saveMem(); renderMem(); updateDash();
-}
-
-let currentCat = 'tarefas';
-function setCat(cat) {
-  currentCat = cat;
-  document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active-cat', b.dataset.cat === cat));
+let curCat='tarefas';
+function setCat(cat){
+  curCat=cat;
+  document.querySelectorAll('.ctb').forEach(b=>b.classList.toggle('ac',b.dataset.cat===cat));
   renderMem();
 }
 
-function renderMem() {
-  const el = document.getElementById('mem-body');
-  const items = mem[currentCat] || [];
-  if (!items.length) { el.innerHTML = '<div class="empty-msg">Nenhum item em ' + currentCat + '</div>'; return; }
-  if (currentCat === 'tarefas') {
-    el.innerHTML = items.slice().reverse().map(t => `
-      <div class="task-row">
-        <div class="task-chk ${t.done ? 'done' : ''}" onclick="togTask(${t.id})">${t.done ? '✓' : ''}</div>
-        <div class="task-tx" style="${t.done ? 'opacity:0.4;text-decoration:line-through' : ''}">${t.content}<br><span style="font-size:9px;opacity:0.4">${t.d}</span></div>
-        <button class="kb-dl" onclick="delMemItem('tarefas',${t.id})">✕</button>
-      </div>`).join('');
-  } else {
-    el.innerHTML = items.slice().reverse().map(i => `
-      <div class="mem-card">
-        <button class="mem-del-btn" onclick="delMemItem('${currentCat}',${i.id})">✕</button>
-        <div class="mem-ct">${i.content}</div>
-        <div class="mem-meta"><span>${currentCat}</span><span>${i.d}</span></div>
-      </div>`).join('');
+function renderMem(){
+  const el=document.getElementById('mem-body');if(!el)return;
+  const items=mem[curCat]||[];
+  if(!items.length){el.innerHTML='<div class="em">Nenhum item em '+curCat+'</div>';return;}
+  if(curCat==='tarefas'){
+    el.innerHTML=items.slice().reverse().map(t=>`<div class="tr"><div class="tc ${t.done?'dn':''}" onclick="togTask(${t.id})">${t.done?'✓':''}</div><div class="tx" style="${t.done?'opacity:0.4;text-decoration:line-through':''}">${t.content}<br><span style="font-size:9px;opacity:0.4">${t.d}</span></div><button class="kd" onclick="delItem('tarefas',${t.id})">✕</button></div>`).join('');
+  }else{
+    el.innerHTML=items.slice().reverse().map(i=>`<div class="mc"><button class="md-btn" onclick="delItem('${curCat}',${i.id})">✕</button><div class="mct">${i.content}</div><div class="mcm"><span>${curCat}</span><span>${i.d}</span></div></div>`).join('');
   }
 }
+
+function addTaskPrompt(){const t=prompt('Senhor, qual tarefa?');if(t&&t.trim()){addItem('tarefas',t.trim());updateDash();}}
 
 // ======================== KB OPS ========================
-async function uploadKB(evt) {
-  const file = evt.target.files[0]; if (!file) return;
-  evt.target.value = '';
-  if (file.size > 5 * 1024 * 1024) { alert('Senhor, arquivo maior que 5MB.'); return; }
-  setStatus('Senhor, lendo ' + file.name + '...');
-  try {
-    let text = '';
-    if (file.name.endsWith('.pdf')) text = await extractPDF(file);
-    else text = await file.text();
-    if (!text.trim()) { alert('Senhor, não consegui extrair texto.'); setStatus('Aguardando o senhor'); return; }
-    const chunks = [];
-    for (let i = 0; i < text.length; i += 500) { const c = text.slice(i, i + 500).trim(); if (c.length > 50) chunks.push(c); }
-    kb.docs.push({ id: Date.now(), name: file.name, size: Math.round(file.size / 1024) + 'KB', chunks, date: new Date().toLocaleDateString('pt-BR') });
-    saveKB(); renderKB(); setStatus('Senhor, ' + file.name + ' foi absorvido com sucesso');
-  } catch(e) { alert('Senhor, erro: ' + e.message); setStatus('Aguardando o senhor'); }
+async function uploadKB(evt){
+  const file=evt.target.files[0];if(!file)return;
+  evt.target.value='';
+  if(file.size>5*1024*1024){alert('Senhor, arquivo maior que 5MB.');return;}
+  setStat('Senhor, lendo '+file.name+'...');
+  try{
+    let text='';
+    if(file.name.endsWith('.pdf')&&!window.pdfFailed){text=await extractPDF(file);}
+    if(!text.trim())text=await file.text().catch(()=>'');
+    if(!text.trim()){alert('Senhor, não consegui extrair texto.');setStat('Aguardando o senhor');return;}
+    const chunks=[];
+    for(let i=0;i<text.length;i+=500){const c=text.slice(i,i+500).trim();if(c.length>50)chunks.push(c);}
+    if(!kb.docs)kb.docs=[];
+    kb.docs.push({id:Date.now(),name:file.name,size:Math.round(file.size/1024)+'KB',chunks,date:new Date().toLocaleDateString('pt-BR')});
+    saveKB();renderKB();setStat('Senhor, '+file.name+' foi absorvido');
+  }catch(e){alert('Senhor, erro: '+(e.message||'Arquivo inválido'));setStat('Aguardando o senhor');}
 }
 
-async function extractPDF(file) {
-  try {
-    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js indisponível');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map(x => x.str).join(' ') + '\n';
+async function extractPDF(file){
+  try{
+    if(typeof pdfjsLib==='undefined')return'';
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let text='';
+    for(let i=1;i<=Math.min(pdf.numPages,50);i++){
+      const page=await pdf.getPage(i);
+      const content=await page.getTextContent();
+      text+=content.items.map(x=>x.str).join(' ')+'\n';
     }
     return text;
-  } catch(e) { return await file.text().catch(() => ''); }
+  }catch(e){return'';}
 }
 
-function renderKB() {
-  const el = document.getElementById('kb-list');
-  if (!kb.docs.length) { el.innerHTML = '<div class="empty-msg">Senhor, nenhum documento ainda. Envie PDFs ou TXTs.</div>'; return; }
-  el.innerHTML = kb.docs.map(d => `
-    <div class="kb-item">
-      <div class="kb-ico">${d.name.endsWith('.pdf') ? '📕' : d.name.endsWith('.md') ? '📝' : '📄'}</div>
-      <div style="flex:1"><div class="kb-nm">${d.name}</div><div class="kb-mt">${d.chunks.length} fragmentos · ${d.size} · ${d.date}</div></div>
-      <button class="kb-dl" onclick="delKB(${d.id})">✕</button>
-    </div>`).join('');
+function renderKB(){
+  const el=document.getElementById('kb-list');if(!el)return;
+  if(!kb.docs||!kb.docs.length){el.innerHTML='<div class="em">Senhor, nenhum documento. Envie PDFs ou TXTs.</div>';return;}
+  el.innerHTML=kb.docs.map(d=>`<div class="ki"><div class="kb-ico">${d.name.endsWith('.pdf')?'📕':d.name.endsWith('.md')?'📝':'📄'}</div><div style="flex:1"><div class="kn">${d.name}</div><div class="km">${(d.chunks||[]).length} fragm · ${d.size} · ${d.date}</div></div><button class="kd" onclick="delKB(${d.id})">✕</button></div>`).join('');
 }
-function delKB(id) { kb.docs = kb.docs.filter(d => d.id !== id); saveKB(); renderKB(); }
+function delKB(id){kb.docs=kb.docs.filter(d=>d.id!==id);saveKB();renderKB();}
 
 // ======================== UI ========================
-function addMsg(text, role) {
-  const el = document.getElementById('transcript');
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  div.innerHTML = `<div class="msg-l">${role === 'user' ? 'SENHOR' : 'ALFRED'}</div>${text}`;
+function addMsg(text,role){
+  const el=document.getElementById('trsc');if(!el)return;
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  div.innerHTML=`<div class="ml">${role==='u'?'SENHOR':'ALFRED'}</div>${text}`;
   el.appendChild(div);
-  el.scrollTop = el.scrollHeight;
-  while (el.children.length > 8) el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+  while(el.children.length>8)el.removeChild(el.firstChild);
 }
 
-function setOrb(state) {
-  const orb = document.getElementById('orb');
-  orb.className = 'orb ' + state + (currentMode !== 'conversa' ? ' gold-mode' : '');
-  const icons = { idle: '🎙️', listening: '👂', thinking: '⚡', speaking: '🔊' };
-  const labels = { idle: 'TOQUE', listening: 'OUVINDO', thinking: 'PENSANDO', speaking: 'FALANDO' };
-  document.getElementById('o-ico').textContent = icons[state] || '🎙️';
-  document.getElementById('o-lbl').textContent = labels[state] || 'TOQUE';
+const ORB_MAP={I:{ico:'🎙️',lbl:'TOQUE',cls:''},L:{ico:'👂',lbl:'OUVINDO',cls:'L'},T:{ico:'⚡',lbl:'PENSANDO',cls:'T'},S:{ico:'🔊',lbl:'FALANDO',cls:'S'}};
+function setOrb(state){
+  const orb=document.getElementById('orb');if(!orb)return;
+  const m=ORB_MAP[state]||ORB_MAP.I;
+  orb.className='orb '+m.cls+(currentMode!=='conversa'?' gm':'');
+  const ico=document.getElementById('o-ico');const lbl=document.getElementById('o-lbl');
+  if(ico)ico.textContent=m.ico;if(lbl)lbl.textContent=m.lbl;
 }
 
-function setStatus(text) { document.getElementById('alf-status').textContent = text; }
-function setWaves(mode) {
-  const el = document.getElementById('wvz');
-  el.className = 'wv-zone' + (mode ? ' show ' + mode : '');
+function setStat(text){const el=document.getElementById('a-stat');if(el)el.textContent=text;}
+function setWv(mode){const el=document.getElementById('wvz');if(!el)return;el.className='wvz'+(mode?' show '+mode:'');}
+
+const MPILLS={conversa:'m-pill c',decisao:'m-pill d',relacao:'m-pill r',professor:'m-pill p',radar:'m-pill v',analista:'m-pill'};
+const MLABELS={conversa:'CONVERSA',decisao:'DECISÃO',analista:'ANALISTA',relacao:'RELAÇÃO',professor:'PROFESSOR',radar:'RADAR'};
+
+function setMode(mode){
+  currentMode=mode;
+  document.querySelectorAll('.m-btn').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+  const pill=document.getElementById('m-pill');
+  if(pill){pill.textContent=MLABELS[mode]||mode;pill.className=MPILLS[mode]||'m-pill';}
+  if(!isThinking)setOrb(isListening?'L':'I');
 }
 
-function setMode(mode) {
-  currentMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
-  const pill = document.getElementById('mode-pill');
-  const labels = { conversa: 'CONVERSA', decisao: 'DECISÃO', analista: 'ANALISTA', relacao: 'RELAÇÃO', professor: 'PROFESSOR', radar: 'RADAR' };
-  const classes = { conversa: 'mode-pill active-m', decisao: 'mode-pill decisao-m', relacao: 'mode-pill relacao-m', professor: 'mode-pill professor-m', radar: 'mode-pill radar-m' };
-  pill.textContent = labels[mode] || mode;
-  pill.className = classes[mode] || 'mode-pill active-m';
-  if (!isThinking) setOrb(isListening ? 'listening' : 'idle');
+function swp(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  const panel=document.getElementById(id);if(panel)panel.classList.add('active');
+  const nb=document.getElementById('n-'+id);if(nb)nb.classList.add('on');
+  if(id==='dash')updateDash();
+  if(id==='mem')renderMem();
+  if(id==='know')renderKB();
 }
 
-function swp(id) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
-  document.getElementById(id).classList.add('active');
-  document.getElementById('n-' + id).classList.add('on');
-  if (id === 'dash') updateDash();
-  if (id === 'mem') renderMem();
-  if (id === 'know') renderKB();
+function updateDash(){
+  const h=new Date().getHours();
+  const g=h<5?'Senhor, boa madrugada':h<12?'Senhor, bom dia':h<18?'Senhor, boa tarde':'Senhor, boa noite';
+  const dg=document.getElementById('dg');if(dg)dg.textContent=g;
+  const dd=document.getElementById('dd');if(dd)dd.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const pend=mem.tarefas.filter(t=>!t.done);
+  const te=document.getElementById('dash-tasks');
+  if(te)te.innerHTML=pend.length?pend.slice(0,5).map(t=>`<div class="di"><div class="di-ico">→</div><div><div class="di-tx">${t.content}</div><div class="di-sub">${t.d}</div></div></div>`).join(''):'<div class="em">Nenhuma tarefa</div>';
+  const lr=ld('lastRadar',null);
+  const rc=document.getElementById('rad-content');
+  if(rc&&lr)rc.innerHTML='<div style="white-space:pre-wrap;font-size:12px;color:var(--text);line-height:1.7">'+lr.text+'</div>';
 }
 
-function updateDash() {
-  const h = new Date().getHours();
-  const greet = h < 5 ? 'Senhor, boa madrugada' : h < 12 ? 'Senhor, bom dia' : h < 18 ? 'Senhor, boa tarde' : 'Senhor, boa noite';
-  document.getElementById('dash-greeting').textContent = greet;
-  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-  const pending = mem.tarefas.filter(t => !t.done);
-  const taskEl = document.getElementById('dash-tasks');
-  taskEl.innerHTML = pending.length
-    ? pending.slice(0, 5).map(t => `<div class="dash-item"><div class="dash-ico">→</div><div><div class="dash-txt">${t.content}</div><div class="dash-sub-txt">${t.d}</div></div></div>`).join('')
-    : '<div class="empty-msg">Nenhuma tarefa</div>';
-
-  const decEl = document.getElementById('dash-decisions');
-  const decs = mem.decisoes.slice(-3);
-  decEl.innerHTML = decs.length
-    ? decs.reverse().map(d => `<div class="dash-item"><div class="dash-ico">⚡</div><div class="dash-txt">${d.content.slice(0,120)}</div></div>`).join('')
-    : '<div class="empty-msg">Nenhuma decisão pendente</div>';
-
-  const lastRadar = ld('lastRadar', null);
-  if (lastRadar) {
-    document.getElementById('radar-content').innerHTML = '<div class="radar-item" style="white-space:pre-wrap;font-size:12px;color:var(--text);line-height:1.7">' + lastRadar.text + '</div>';
-  }
-}
-
-// ======================== SETTINGS ========================
-function saveApiKey() { const v = document.getElementById('api-i').value.trim(); if (!v) { alert('Senhor, cole a API key.'); return; } try { localStorage.setItem('alf_key', v); } catch(e) {} document.getElementById('api-i').value = ''; alert('Senhor, API key salva com sucesso.'); }
-function saveProfile() { if (!mem.notas) mem.notas = []; const v = document.getElementById('profile-i').value.trim(); if (v) { addMemItem('notas', v, true); } alert('Senhor, perfil salvo.'); }
-function saveVoice() { const n = document.getElementById('voice-s').value; sv('voiceName', n); const vs = speechSynthesis.getVoices(); selectedVoice = n ? vs.find(v => v.name === n) : null; if (!selectedVoice) selectedVoice = vs.find(v => v.lang === 'pt-BR') || null; }
-function updRate() { voiceRate = parseFloat(document.getElementById('rate-r').value); document.getElementById('rate-l').textContent = voiceRate.toFixed(1) + 'x'; sv('voiceRate', voiceRate); }
-function saveTone() { currentTone = document.getElementById('tone-s').value; sv('tone', currentTone); }
-function togSet(k) { sets[k] = !sets[k]; const el = document.getElementById('t-' + k); if (el) el.className = 'tog ' + (sets[k] ? 'on' : ''); sv('sets', sets); }
-function exportAll() { const d = { mem, kb, hist, sets, version: '1.0', date: new Date().toISOString() }; const b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'alfred-backup-' + Date.now() + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); }
-function clearAll() { if (confirm('Senhor, apagar TODOS os dados do Alfred OS? Irreversível.')) { ['alf_mem','alf_kb','alf_hist','alf_sets','alf_key','alf_voiceName','alf_voiceRate','alf_tone','alf_seen','alf_pin','alf_credId','alf_lastRadar'].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} }); sessionStorage.clear(); location.reload(); } }
+// ======================== CONFIG ========================
+function saveApiKey(){const v=document.getElementById('api-i').value.trim();if(!v){alert('Senhor, cole a API key.');return;}try{localStorage.setItem('alf_key',v);}catch(e){alert('Erro ao salvar. Tente novamente.');}document.getElementById('api-i').value='';alert('Senhor, API key salva com sucesso.');}
+function saveProfile(){const v=document.getElementById('profile-i').value.trim();if(v){sv('profile_text',v);alert('Senhor, perfil salvo.');}}
+function saveVoice(){try{const n=document.getElementById('voice-s').value;sv('voiceName',n);const vs=speechSynthesis.getVoices();selVoice=n?vs.find(v=>v.name===n):null;if(!selVoice)selVoice=vs.find(v=>v.lang==='pt-BR')||null;}catch(e){}}
+function updRate(){try{vRate=parseFloat(document.getElementById('rate-r').value);document.getElementById('rate-l').textContent=vRate.toFixed(1)+'x';sv('voiceRate',vRate);}catch(e){}}
+function saveTone(){currentTone=document.getElementById('tone-s').value;sv('tone',currentTone);}
+function togSet(k){sets[k]=!sets[k];const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');sv('sets',sets);}
+function exportAll(){try{const d={mem,kb,hist,sets,version:'2.0',date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='alfred-backup-'+Date.now()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}catch(e){alert('Erro ao exportar: '+e.message);}}
+function clearAll(){if(confirm('Senhor, apagar TODOS os dados do Alfred OS? Irreversível.')){['alf_mem','alf_kb','alf_hist','alf_sets','alf_key','alf_voiceName','alf_voiceRate','alf_tone','alf_seen','alf_pin','alf_credId','alf_lastRadar','alf_profile_text'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});try{sessionStorage.clear();}catch(e){}location.reload();}}
 
 // ======================== INIT ========================
-function init() {
-  initAuth();
-  if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
-  setTimeout(loadVoices, 600);
-  const savedRate = ld('voiceRate', 0.9); voiceRate = savedRate;
-  document.getElementById('rate-r').value = voiceRate;
-  document.getElementById('rate-l').textContent = voiceRate.toFixed(1) + 'x';
-  const savedTone = ld('tone', 'estrategico'); currentTone = savedTone;
-  document.getElementById('tone-s').value = savedTone;
-  document.getElementById('profile-i').value = mem.notas.slice(0,1).map(n=>n.content).join('') || '';
-  Object.keys(sets).forEach(k => { const el = document.getElementById('t-' + k); if (el) el.className = 'tog ' + (sets[k] ? 'on' : ''); });
-  renderMem(); renderKB(); updateDash();
-  if (!ld('seen', false)) {
-    sv('seen', true);
-    setTimeout(() => {
-      addMsg('Senhor, Alfred OS inicializado. Estou pronto para auxiliá-lo.\n\nPosso conversar por voz (toque no orbe), analisar situações, registrar memórias, absorver documentos e orientar suas decisões.\n\nDiga "Alfred, o que você pode fazer?" para conhecer todos os recursos.', 'alfred');
-    }, 800);
-  }
-  document.addEventListener('touchstart', () => { try { const a = new (window.AudioContext || window.webkitAudioContext)(); a.resume(); a.close(); } catch(e) {} }, { once: true });
+function init(){
+  try{
+    initAuth();
+    if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=loadVoices;
+    setTimeout(loadVoices,700);
+    const sr=ld('voiceRate',0.9);vRate=sr;
+    const rr=document.getElementById('rate-r');if(rr)rr.value=vRate;
+    const rl=document.getElementById('rate-l');if(rl)rl.textContent=vRate.toFixed(1)+'x';
+    const st=ld('tone','estrategico');currentTone=st;
+    const ts=document.getElementById('tone-s');if(ts)ts.value=st;
+    const pt=ld('profile_text','');
+    const pi=document.getElementById('profile-i');if(pi)pi.value=pt;
+    Object.keys(sets).forEach(k=>{const el=document.getElementById('t-'+k);if(el)el.className='tg '+(sets[k]?'on':'');});
+    renderMem();renderKB();updateDash();
+    if(!ld('seen',false)){
+      sv('seen',true);
+      setTimeout(()=>{addMsg('Senhor, Alfred OS v2.0 inicializado.\n\nNovidades: Modo Escuta Ativa (análise contínua), Controle iPhone, criação de eventos e lembretes.\n\nToque no orbe para falar, ou escreva abaixo. Diga "Alfred, o que você pode fazer?" para saber mais.','a');},700);
+    }
+    document.addEventListener('touchstart',()=>{try{const a=new(window.AudioContext||window.webkitAudioContext)();a.resume();a.close();}catch(e){}},{once:true});
+  }catch(e){console.error('Init error:',e);}
 }
 
-document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('error',e=>{console.error('Alfred OS error:',e.message);});
+window.addEventListener('unhandledrejection',e=>{console.warn('Unhandled promise:',e.reason);});
+
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
