@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Alfred OS v9 - LLM Only</title>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --gold: #D4A020;
+      --text: #EDE8D8;
+      --bg: #06040A;
+      --bg2: #0D090F;
+      --border: rgba(212,160,32,0.15);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .config {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .config input, .config select {
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+    }
+    .config input {
+      flex: 1;
+      min-width: 200px;
+    }
+    .config select {
+      min-width: 120px;
+    }
+    .btn {
+      padding: 8px 14px;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg {
+      padding: 12px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .msg.user {
+      background: rgba(0,150,200,0.15);
+      border: 1px solid rgba(0,150,200,0.3);
+      align-self: flex-end;
+      border-radius: 18px 6px 18px 18px;
+    }
+    .msg.assistant {
+      background: rgba(212,160,32,0.1);
+      border: 1px solid rgba(212,160,32,0.3);
+      align-self: flex-start;
+      border-radius: 6px 18px 18px 18px;
+      color: #E8D87A;
+    }
+    .input-area {
+      display: flex;
+      gap: 8px;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .input-area input {
+      flex: 1;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+    }
+    #pdfUpload { display: none; }
+    .loading { opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="config">
+    <input id="apiKey" type="password" placeholder="API Key (Claude)">
+    <select id="provider">
+      <option value="claude">Claude</option>
+    </select>
+    <select id="model">
+      <option value="claude-opus-4.6">Opus</option>
+      <option value="claude-sonnet-4.6">Sonnet</option>
+      <option value="claude-haiku-4.5">Haiku</option>
+    </select>
+    <button class="btn" onclick="document.getElementById('pdfUpload').click()">📄 PDF</button>
+    <input id="pdfUpload" type="file" accept=".pdf" onchange="uploadPDF(event)">
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="input-area">
+    <input id="input" type="text" placeholder="Digite sua mensagem...">
+    <button class="btn" onclick="send()" id="sendBtn">Enviar</button>
+  </div>
+</div>
+
+<script>
+const pdfjsLib = window.pdfjsWorker;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+let db, conversationId = 'default', docs = [];
+
+// Inicializar IndexedDB
+const initDB = () => {
+  return new Promise((resolve) => {
+    const req = indexedDB.open('AlfredDB', 1);
+    req.onupgradeneeded = (e) => {
+      const dbs = e.target.result;
+      dbs.createObjectStore('memory');
+      dbs.createObjectStore('documents');
+    };
+    req.onsuccess = (e) => {
+      db = e.target.result;
+      resolve();
+    };
+  });
+};
+
+const save = (store, key, value) => {
+  return new Promise((resolve) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(value, key);
+    tx.oncomplete = resolve;
+  });
+};
+
+const load = (store, key) => {
+  return new Promise((resolve) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result);
+  });
+};
+
+// Embeddings simples
+const simpleEmbed = (text) => {
+  const words = text.toLowerCase().split(/\s+/);
+  const embed = {};
+  words.forEach(w => {
+    const clean = w.replace(/[^\w]/g, '');
+    if (clean.length > 2) embed[clean] = (embed[clean] || 0) + 1;
+  });
+  const total = Object.values(embed).reduce((a,b) => a+b, 0);
+  Object.keys(embed).forEach(k => embed[k] = embed[k] / total);
+  return embed;
+};
+
+const similarity = (a, b) => {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  let dot = 0, n1 = 0, n2 = 0;
+  keys.forEach(k => {
+    const v1 = a[k] || 0, v2 = b[k] || 0;
+    dot += v1 * v2; n1 += v1*v1; n2 += v2*v2;
+  });
+  return dot / (Math.sqrt(n1) * Math.sqrt(n2));
+};
+
+// RAG search
+const searchDocs = (query, limit = 3) => {
+  const qEmbed = simpleEmbed(query);
+  const results = [];
+  docs.forEach(doc => {
+    doc.chunks.forEach((chunk, idx) => {
+      const sim = similarity(qEmbed, doc.embeddings[idx]);
+      if (sim > 0.1) results.push({ filename: doc.filename, text: chunk, sim });
+    });
+  });
+  return results.sort((a,b) => b.sim - a.sim).slice(0, limit);
+};
+
+// Memória 3 níveis
+const getContext = async () => {
+  const history = await load('memory', 'history') || [];
+  const profile = await load('memory', 'profile') || {};
+  const projects = await load('memory', 'projects') || {};
+  return { history: history.slice(-10), profile, projects };
+};
+
+const saveHistory = async (msg) => {
+  const history = await load('memory', 'history') || [];
+  history.push(msg);
+  await save('memory', 'history', history.slice(-50));
+};
+
+// Chat
+document.getElementById('input').addEventListener('keypress', e => {
+  if (e.key === 'Enter') send();
+});
+
+const send = async () => {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg || !document.getElementById('apiKey').value) return;
+
+  input.value = '';
+  addMessage(msg, 'user');
+  document.getElementById('sendBtn').disabled = true;
+
+  try {
+    const context = await getContext();
+    const ragDocs = searchDocs(msg);
+    const ragText = ragDocs.map((d,i) => `[${i+1}] ${d.text}`).join('\n\n');
+
+    const systemPrompt = `Você é Alfred, assistente inteligente.
+Conversa natural, sem clichês.
+Nunca diga "tenho conhecimento sobre" ou "baseado no que absorvi".
+
+Contexto disponível:
+${ragText ? `PDFs:\n${ragText}\n` : ''}
+${context.profile.name ? `Perfil: ${JSON.stringify(context.profile)}` : ''}`;
+
+    const messages = [
+      ...context.history.filter(h => h.role).map(h => ({ role: h.role, content: h.content })),
+      { role: 'user', content: msg }
+    ];
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': document.getElementById('apiKey').value,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: document.getElementById('model').value,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages
+      })
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      const reply = data.content[0].text;
+      addMessage(reply, 'assistant');
+      await saveHistory({ role: 'user', content: msg });
+      await saveHistory({ role: 'assistant', content: reply });
+    } else {
+      addMessage(`Erro: ${data.error?.message || 'Desconhecido'}`, 'assistant');
+    }
+  } catch (error) {
+    addMessage(`Erro: ${error.message}`, 'assistant');
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+};
+
+const addMessage = (text, sender) => {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${sender}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+};
+
+const uploadPDF = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  addMessage(`📤 Absorvendo ${file.name}...`, 'assistant');
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+    let fullText = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const text = await page.getTextContent();
+      fullText += text.items.map(t => t.str).join(' ') + '\n';
+    }
+
+    const words = fullText.split(/\s+/);
+    const chunks = [];
+    for (let i = 0; i < words.length; i += 800) {
+      chunks.push(words.slice(i, i + 1000).join(' '));
+    }
+
+    const embeddings = chunks.map(c => simpleEmbed(c));
+    const doc = { filename: file.name, chunks, embeddings };
+    docs.push(doc);
+    await save('documents', file.name, doc);
+
+    addMessage(`✅ ${file.name} (${chunks.length} chunks)`, 'assistant');
+  } catch (error) {
+    addMessage(`❌ Erro: ${error.message}`, 'assistant');
+  }
+
+  event.target.value = '';
+};
+
+// Init
+(async () => {
+  await initDB();
+  const saved = await load('documents', 'list');
+  if (saved) docs = saved;
+})();
+</script>
+
+</body>
+</html>
