@@ -257,3 +257,83 @@ process.on('SIGINT', () => {
   memoryService.close();
   process.exit(0);
 });
+
+// ============ PLANNING API ============
+
+import planningAgent from './services/planning.js';
+
+app.post('/api/planning/create', async (req, res) => {
+  const { objective, context } = req.body;
+
+  if (!objective) {
+    return res.status(400).json({ error: 'Objetivo ausente' });
+  }
+
+  try {
+    const plan = await planningAgent.createPlan(objective, context);
+    res.json({
+      success: true,
+      plan
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/planning/:planId', (req, res) => {
+  const { planId } = req.params;
+  const plan = planningAgent.getActivePlan(planId);
+
+  if (!plan) {
+    return res.status(404).json({ error: 'Plano não encontrado' });
+  }
+
+  res.json(plan);
+});
+
+app.post('/api/planning/:planId/task/:taskId/complete', (req, res) => {
+  const { planId, taskId } = req.params;
+  const plan = planningAgent.completeTask(planId, taskId);
+
+  if (!plan) {
+    return res.status(404).json({ error: 'Plano não encontrado' });
+  }
+
+  res.json({ success: true, plan });
+});
+
+app.get('/api/planning/:planId/next', (req, res) => {
+  const { planId } = req.params;
+  const task = planningAgent.getNextTask(planId);
+
+  if (!task) {
+    return res.status(404).json({ error: 'Nenhuma tarefa pendente' });
+  }
+
+  res.json(task);
+});
+
+// ============ TOOLS API ============
+
+import toolsAgent from './services/tools.js';
+
+app.get('/api/tools', (req, res) => {
+  const tools = toolsAgent.getAvailableTools();
+  res.json(tools);
+});
+
+app.post('/api/tools/:toolName/execute', async (req, res) => {
+  const { toolName } = req.params;
+  const { params } = req.body;
+
+  if (!Array.isArray(params)) {
+    return res.status(400).json({ error: 'Params deve ser um array' });
+  }
+
+  try {
+    const result = await toolsAgent.executeTool(toolName, params);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
