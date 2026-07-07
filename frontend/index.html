@@ -3,23 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Alfred OS v8</title>
+  <title>Alfred OS - LLM Only</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --gold: #D4A020;
       --text: #EDE8D8;
-      --muted: rgba(237,232,216,0.4);
       --bg: #06040A;
       --bg2: #0D090F;
-      --bg3: #140F18;
-      --border: rgba(244,197,66,0.15);
-      --red: #FF3A4A;
-      --green: #48BB8C;
+      --border: rgba(212,160,32,0.15);
     }
-    
     body {
       background: var(--bg);
       color: var(--text);
@@ -27,375 +20,201 @@
       height: 100vh;
       overflow: hidden;
     }
-    
-    #root {
+    #app {
       height: 100vh;
       display: flex;
       flex-direction: column;
-      max-width: 480px;
-      margin: 0 auto;
     }
-    
-    .header {
-      padding: 20px 16px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(6,4,10,0.95);
-      flex-shrink: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .header-title {
-      font-size: 12px;
-      letter-spacing: 3px;
-      font-weight: 800;
-      color: var(--gold);
-    }
-    
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
-    .tabs {
-      display: flex;
-      gap: 6px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      scrollbar-width: none;
-      flex-shrink: 0;
-    }
-    
-    .tabs::-webkit-scrollbar { display: none; }
-    
-    .tab-btn {
-      padding: 6px 12px;
-      border-radius: 99px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s;
-    }
-    
-    .tab-btn.active {
-      background: rgba(244,197,66,0.1);
-      color: var(--gold);
-      border-color: rgba(244,197,66,0.3);
-    }
-    
-    .content {
-      flex: 1;
-      overflow-y: auto;
+    .config-panel {
       padding: 16px;
-      display: none;
-      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
     }
-    
-    .content.active {
-      display: flex;
+    .config-panel input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
     }
-    
     .messages {
       flex: 1;
       overflow-y: auto;
-      margin-bottom: 12px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
-    
     .msg {
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.5;
-      max-width: 90%;
+      padding: 12px;
+      border-radius: 10px;
+      max-width: 80%;
       word-wrap: break-word;
-      animation: slideIn 0.2s ease;
+      line-height: 1.5;
     }
-    
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
     .msg.user {
-      background: rgba(0,208,255,0.1);
-      border: 1px solid rgba(0,208,255,0.2);
+      background: rgba(0,150,200,0.15);
+      border: 1px solid rgba(0,150,200,0.3);
       align-self: flex-end;
-      border-radius: 16px 4px 16px 16px;
+      border-radius: 18px 6px 18px 18px;
     }
-    
-    .msg.alfred {
-      background: rgba(212,160,32,0.08);
-      border: 1px solid rgba(212,160,32,0.2);
+    .msg.assistant {
+      background: rgba(212,160,32,0.1);
+      border: 1px solid rgba(212,160,32,0.3);
       align-self: flex-start;
-      border-radius: 4px 16px 16px 16px;
+      border-radius: 6px 18px 18px 18px;
       color: #E8D87A;
     }
-    
-    .msg.loading {
-      background: rgba(212,160,32,0.08);
-      border: 1px solid rgba(212,160,32,0.2);
-      align-self: flex-start;
-      display: flex;
-      gap: 4px;
-      padding: 10px 14px;
-    }
-    
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--gold);
-      animation: bounce 1.4s infinite;
-    }
-    
-    .dot:nth-child(1) { animation-delay: 0s; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    
-    @keyframes bounce {
-      0%, 80%, 100% { opacity: 0.4; transform: translateY(0); }
-      40% { opacity: 1; transform: translateY(-6px); }
-    }
-    
-    .input-row {
+    .input-area {
       display: flex;
       gap: 8px;
-      padding-top: 8px;
+      padding: 16px;
       border-top: 1px solid var(--border);
-      flex-shrink: 0;
+      background: var(--bg2);
     }
-    
-    .input-row input {
+    input[type="text"] {
       flex: 1;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
       padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       color: var(--text);
-      font-size: 13px;
     }
-    
-    .input-row input:focus {
-      outline: none;
-      border-color: var(--gold);
-    }
-    
-    .btn {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: none;
+    button {
+      padding: 10px 16px;
       background: var(--gold);
       color: #000;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.1s;
-    }
-    
-    .btn:active {
-      opacity: 0.8;
-      transform: scale(0.95);
-    }
-    
-    .upload-zone {
-      background: rgba(244,197,66,0.05);
-      border: 2px dashed rgba(244,197,66,0.3);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 16px;
-    }
-    
-    .upload-zone:hover {
-      background: rgba(244,197,66,0.08);
-      border-color: rgba(244,197,66,0.5);
-    }
-    
-    .upload-zone input {
-      display: none;
-    }
-    
-    .doc-item {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-    
-    .doc-name {
-      color: var(--text);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .doc-count {
-      color: var(--muted);
-      font-size: 11px;
-      margin-right: 8px;
-    }
-    
-    .btn-delete {
-      background: rgba(255,58,92,0.2);
       border: none;
-      color: var(--red);
-      padding: 4px 8px;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 11px;
       font-weight: 700;
     }
-    
-    .status-panel {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 12px;
-      font-size: 12px;
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-    
-    .status-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .status-row:last-child {
-      border-bottom: none;
+    .config-label {
+      font-size: 11px;
+      color: var(--gold);
+      margin-bottom: 4px;
     }
   </style>
 </head>
 <body>
 
-<div id="root">
-  <div class="header">
-    <div class="header-title">ALFRED OS v8</div>
-    <div class="status-dot"></div>
+<div id="app">
+  <div class="config-panel">
+    <div class="config-label">⚙️ CONFIGURAÇÃO</div>
+    <input id="apiKey" type="password" placeholder="API Key (Claude/OpenAI)">
+    <select id="provider" style="width: 48%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); margin-right: 4%;">
+      <option value="claude">Claude</option>
+      <option value="openai">OpenAI</option>
+    </select>
+    <select id="model" style="width: 48%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text);">
+      <option value="claude-opus-4.6">Claude Opus</option>
+      <option value="claude-sonnet-4.6">Claude Sonnet</option>
+      <option value="gpt-4">GPT-4</option>
+    </select>
+    <input id="pdfUpload" type="file" accept=".pdf" style="display:none">
+    <button onclick="document.getElementById('pdfUpload').click()" style="width: 100%; margin-top: 8px;">📄 Upload PDF</button>
   </div>
-  
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('chat')">💬 Chat</button>
-    <button class="tab-btn" onclick="switchTab('documents')">📄 Documentos</button>
-    <button class="tab-btn" onclick="switchTab('status')">⚙️ Status</button>
-  </div>
-  
-  <!-- CHAT TAB -->
-  <div id="chat" class="content active">
-    <div class="messages" id="messages"></div>
-    <div class="input-row">
-      <input type="text" id="input" placeholder="Pergunte algo..." onkeypress="handleKeyPress(event)">
-      <button class="btn" onclick="sendMessage()">Enviar</button>
-    </div>
-  </div>
-  
-  <!-- DOCUMENTS TAB -->
-  <div id="documents" class="content">
-    <div class="upload-zone" onclick="document.getElementById('pdf-upload').click()">
-      <div style="color: var(--gold); font-weight: 700; font-size: 12px;">📤 Arrastar PDFs aqui</div>
-      <div style="color: var(--muted); font-size: 11px; margin-top: 6px;">ou clique para selecionar</div>
-      <input type="file" id="pdf-upload" multiple accept=".pdf" onchange="handlePDFUpload(event)">
-    </div>
-    <div id="doc-list"></div>
-  </div>
-  
-  <!-- STATUS TAB -->
-  <div id="status" class="content">
-    <div class="status-panel">
-      <div class="status-row">
-        <span>Backend:</span>
-        <span id="status-backend" style="color: var(--green);">Conectado</span>
-      </div>
-      <div class="status-row">
-        <span>Documentos:</span>
-        <span id="status-docs">0</span>
-      </div>
-      <div class="status-row">
-        <span>Conversas:</span>
-        <span id="status-chats">0</span>
-      </div>
-      <div class="status-row">
-        <span>Versão:</span>
-        <span>8.0.0</span>
-      </div>
-    </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <input id="input" type="text" placeholder="Escreva sua mensagem...">
+    <button id="sendBtn" onclick="send()">Enviar</button>
   </div>
 </div>
 
 <script>
 const API_URL = 'http://localhost:3000/api';
+let conversationId = null;
 
-let currentTab = 'chat';
-let isLoading = false;
+document.getElementById('input').addEventListener('keypress', e => {
+  if (e.key === 'Enter') send();
+});
 
-async function sendMessage() {
+document.getElementById('pdfUpload').addEventListener('change', uploadPDF);
+
+async function send() {
   const input = document.getElementById('input');
   const msg = input.value.trim();
-  if (!msg || isLoading) return;
+  if (!msg) return;
+
+  const apiKey = document.getElementById('apiKey').value;
+  if (!apiKey) {
+    alert('Configure sua API Key');
+    return;
+  }
 
   input.value = '';
   addMessage(msg, 'user');
-
-  isLoading = true;
-  showLoadingMessage();
+  document.getElementById('sendBtn').disabled = true;
 
   try {
-    const response = await fetch(`${API_URL}/chat/message`, {
+    const response = await fetch(`${API_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg })
+      body: JSON.stringify({
+        message: msg,
+        conversationId: conversationId || 'default',
+        apiKey,
+        provider: document.getElementById('provider').value,
+        model: document.getElementById('model').value
+      })
     });
 
     const data = await response.json();
-    removeLoadingMessage();
-    
+    conversationId = data.conversationId;
+
     if (response.ok) {
-      addMessage(data.message, 'alfred');
-      if (data.sources && data.sources.length > 0) {
-        addMessage(
-          `📚 Fontes: ${data.sources.map(s => s.filename).join(', ')}`,
-          'system'
-        );
-      }
+      addMessage(data.message, 'assistant');
     } else {
-      addMessage('Erro ao processar mensagem', 'error');
+      addMessage(`Erro: ${data.error}`, 'assistant');
     }
-  } catch (err) {
-    removeLoadingMessage();
-    addMessage(`Erro: ${err.message}`, 'error');
+  } catch (error) {
+    addMessage(`Erro: ${error.message}`, 'assistant');
   }
 
-  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
 }
 
-function handleKeyPress(e) {
-  if (e.key === 'Enter') sendMessage();
+async function uploadPDF(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const apiKey = document.getElementById('apiKey').value;
+  if (!apiKey) {
+    alert('Configure sua API Key');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const pdf = e.target.result.split(',')[1];
+
+    try {
+      const response = await fetch(`${API_URL}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdf, filename: file.name })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        addMessage(`✅ ${file.name} absorvido (${data.chunksCount} chunks)`, 'assistant');
+      } else {
+        addMessage(`Erro: ${data.error}`, 'assistant');
+      }
+    } catch (error) {
+      addMessage(`Erro: ${error.message}`, 'assistant');
+    }
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
 }
 
 function addMessage(text, sender) {
@@ -406,121 +225,6 @@ function addMessage(text, sender) {
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
-
-function showLoadingMessage() {
-  const container = document.getElementById('messages');
-  const div = document.createElement('div');
-  div.className = 'msg loading';
-  div.id = 'loading-msg';
-  div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
-
-function removeLoadingMessage() {
-  const el = document.getElementById('loading-msg');
-  if (el) el.remove();
-}
-
-async function handlePDFUpload(event) {
-  const files = event.target.files;
-
-  for (let file of files) {
-    if (file.type !== 'application/pdf') {
-      alert('Apenas PDFs são permitidos');
-      continue;
-    }
-
-    try {
-      addMessage(`📤 Absorvendo ${file.name}...`, 'system');
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const pdf = e.target.result.split(',')[1];
-
-        const response = await fetch(`${API_URL}/documents/upload`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pdf, filename: file.name })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          addMessage(
-            `✅ ${file.name} (${data.chunksCount} chunks)`,
-            'system'
-          );
-          loadDocuments();
-        } else {
-          addMessage(`❌ Erro: ${data.error}`, 'error');
-        }
-      };
-
-      reader.readAsDataURL(file);
-    } catch (err) {
-      addMessage(`❌ Erro: ${err.message}`, 'error');
-    }
-  }
-
-  event.target.value = '';
-}
-
-async function loadDocuments() {
-  try {
-    const response = await fetch(`${API_URL}/documents`);
-    const docs = await response.json();
-
-    const container = document.getElementById('doc-list');
-    container.innerHTML = '';
-
-    if (docs.length === 0) {
-      container.innerHTML = '<div style="text-align: center; color: var(--muted); padding: 20px; font-size: 12px;">Nenhum documento carregado</div>';
-      return;
-    }
-
-    docs.forEach(doc => {
-      const div = document.createElement('div');
-      div.className = 'doc-item';
-      div.innerHTML = `
-        <div class="doc-name">📄 ${doc.filename}</div>
-        <span class="doc-count">${doc.chunks_count} chunks</span>
-      `;
-      container.appendChild(div);
-    });
-  } catch (err) {
-    console.error('Erro ao carregar documentos:', err);
-  }
-}
-
-async function updateStatus() {
-  try {
-    const response = await fetch(`${API_URL}/status`);
-    const data = await response.json();
-
-    document.getElementById('status-docs').textContent = data.documents;
-    document.getElementById('status-chats').textContent = data.conversations;
-  } catch (err) {
-    document.getElementById('status-backend').textContent = 'Desconectado';
-    document.getElementById('status-backend').style.color = 'var(--red)';
-  }
-}
-
-function switchTab(tab) {
-  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-  event.target.classList.add('active');
-  currentTab = tab;
-
-  if (tab === 'documents') loadDocuments();
-  if (tab === 'status') updateStatus();
-}
-
-// Init
-loadDocuments();
-updateStatus();
-setInterval(updateStatus, 5000);
 </script>
 
 </body>
