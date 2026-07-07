@@ -417,9 +417,10 @@ ${context.profile.name ? `👤 PERFIL:\n${JSON.stringify(context.profile)}\n` : 
     });
 
     // Chamar Claude API através do backend (contorna CORS)
-    // Se rodando localmente: http://localhost:3000/api/chat
-    // Se em produção: substituir pela URL do seu backend
-    const backendUrl = 'http://localhost:3000/api/chat';
+    // Detecta automaticamente se está em localhost ou produção
+    const backendUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api/chat'
+      : window.location.origin + '/api/chat'; // Produção (Vercel/Railway)
     
     const response = await fetch(backendUrl, {
       method: 'POST',
