@@ -88,8 +88,16 @@
       font-weight: 700;
       font-size: 12px;
       white-space: nowrap;
+      transition: all 0.3s;
     }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(212,160,32,0.5);
+    }
+    .btn:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+    }
     .btn-secondary {
       background: rgba(212,160,32,0.2);
       color: var(--gold);
@@ -141,6 +149,11 @@
       font-size: 12px;
       max-width: 100%;
     }
+    .msg.error {
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.3);
+      color: #FF6B6B;
+    }
     .input-area {
       display: flex;
       gap: 8px;
@@ -158,10 +171,17 @@
       font-size: 14px;
     }
     #pdfUpload { display: none; }
-    .loading { opacity: 0.6; }
-    .error {
-      color: #FF6B6B;
-      border-color: rgba(255, 107, 107, 0.3) !important;
+    .loader {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: blink 1.4s infinite;
+    }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.3; }
+      40% { opacity: 1; }
     }
   </style>
 </head>
@@ -203,14 +223,14 @@
 const pdfjsLib = window.pdfjsWorker;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
-let db, conversationId = 'default', docs = [];
+let db, conversationId = 'default', docs = [], isSending = false;
 
 // ==================== STORAGE ====================
 const saveToStorage = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    console.warn('localStorage cheio, usando IndexedDB');
+    console.warn('localStorage cheio');
   }
 };
 
@@ -239,36 +259,15 @@ const initDB = () => {
   });
 };
 
-const saveDB = (store, key, value) => {
-  return new Promise((resolve) => {
-    if (!db) return resolve();
-    const tx = db.transaction(store, 'readwrite');
-    tx.objectStore(store).put(value, key);
-    tx.oncomplete = resolve;
-  });
-};
-
-const loadDB = (store, key) => {
-  return new Promise((resolve) => {
-    if (!db) return resolve(null);
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).get(key);
-    req.onsuccess = () => resolve(req.result);
-  });
-};
-
 // ==================== UI ====================
 const updateStatus = () => {
   const apiKey = document.getElementById('apiKey').value.trim();
   const indicator = document.getElementById('statusIndicator');
-  const input = document.getElementById('apiKey');
   
   if (apiKey.length > 20) {
     indicator.classList.add('configured');
-    input.classList.remove('error');
   } else {
     indicator.classList.remove('configured');
-    if (apiKey.length > 0) input.classList.add('error');
   }
 };
 
@@ -283,7 +282,7 @@ document.getElementById('apiKey').addEventListener('blur', () => {
 });
 
 document.getElementById('input').addEventListener('keypress', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && !isSending) {
     send();
   }
 });
@@ -325,17 +324,27 @@ const searchDocs = (query, limit = 3) => {
 };
 
 // ==================== MEMORIA ====================
-const getContext = async () => {
+const getContext = () => {
   const history = loadFromStorage('history') || [];
   const profile = loadFromStorage('profile') || {};
   const projects = loadFromStorage('projects') || {};
   return { history: history.slice(-15), profile, projects };
 };
 
-const saveHistory = async (msg) => {
+const saveHistory = (msg) => {
   const history = loadFromStorage('history') || [];
   history.push(msg);
   saveToStorage('history', history.slice(-100));
+};
+
+// ==================== MESSAGES ====================
+const addMessage = (text, sender) => {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${sender}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
 };
 
 // ==================== CHAT ====================
@@ -343,43 +352,68 @@ const send = async () => {
   const input = document.getElementById('input');
   const msg = input.value.trim();
   const apiKey = document.getElementById('apiKey').value.trim();
+  const btn = document.getElementById('sendBtn');
 
-  if (!msg) return;
-  if (!apiKey || apiKey.length < 20) {
-    addMessage('❌ Adicione sua API Key do Claude antes de enviar', 'system');
+  // Validação
+  if (!msg) {
+    addMessage('❌ Digite uma mensagem!', 'error');
     return;
   }
 
+  if (!apiKey || apiKey.length < 20) {
+    addMessage('❌ API Key inválida! Deve ter pelo menos 20 caracteres. Cole uma nova do console.anthropic.com', 'error');
+    return;
+  }
+
+  if (isSending) {
+    return;
+  }
+
+  // Limpar input
   input.value = '';
+  
+  // Adicionar mensagem do usuário
   addMessage(msg, 'user');
-  document.getElementById('sendBtn').disabled = true;
+  
+  // Feedback visual
+  isSending = true;
+  btn.disabled = true;
+  addMessage('⏳ Alfred pensando...', 'system');
 
   try {
+    // Montar contexto
     const context = await getContext();
     const ragDocs = searchDocs(msg);
-    const ragText = ragDocs.map((d,i) => `[PDF ${i+1}] ${d.text.substring(0, 200)}...`).join('\n\n');
+    const ragText = ragDocs
+      .map((d,i) => `[PDF ${i+1}] ${d.text.substring(0, 200)}...`)
+      .join('\n\n');
 
-    const systemPrompt = `Você é Alfred, um assistente pessoal inteligente e conversador.
+    const systemPrompt = `Você é Alfred, um assistente pessoal inteligente.
 
-INSTRUÇÕES CRÍTICAS:
+INSTRUÇÕES:
 - Conversa natural, sem clichês
-- NUNCA diga: "tenho conhecimento sobre", "baseado no que absorvi", "conforme solicitado"
-- Responda como uma pessoa inteligente conversando
-- Use PDFs quando disponíveis, mas de forma natural
-- Evite mensagens muito longas (máximo 3-4 parágrafos)
+- NUNCA diga: "tenho conhecimento sobre", "baseado no que absorvi"
+- Responda como uma pessoa inteligente
+- Use PDFs quando disponíveis de forma natural
+- Respostas concisas (máximo 3-4 parágrafos)
 
-${ragText ? `\n📚 CONTEXTO DE PDFs DISPONÍVEIS:\n${ragText}\n` : ''}
-${context.profile.name ? `\n👤 PERFIL:\n${JSON.stringify(context.profile)}\n` : ''}`;
+${ragText ? `📚 CONTEXTO DE PDFs:\n${ragText}\n` : ''}
+${context.profile.name ? `👤 PERFIL:\n${JSON.stringify(context.profile)}\n` : ''}`;
 
     const messages = [
       ...context.history
-        .filter(h => h.role)
+        .filter(h => h.role && h.content)
         .map(h => ({ role: h.role, content: h.content })),
       { role: 'user', content: msg }
     ];
 
-    addMessage('⏳ Alfred pensando...', 'system');
+    console.log('📤 Enviando para Claude API...', {
+      model: document.getElementById('model').value,
+      messages_count: messages.length,
+      has_api_key: apiKey.length > 0
+    });
 
+    // Chamar Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -391,41 +425,59 @@ ${context.profile.name ? `\n👤 PERFIL:\n${JSON.stringify(context.profile)}\n` 
         model: document.getElementById('model').value,
         max_tokens: 1024,
         system: systemPrompt,
-        messages
+        messages: messages
       })
     });
 
-    // Remove loading message
-    const msgContainer = document.getElementById('messages');
-    const lastMsg = msgContainer.lastChild;
+    console.log('📥 Resposta recebida:', response.status, response.statusText);
+
+    // Remover mensagem "pensando"
+    const container = document.getElementById('messages');
+    const lastMsg = container.lastChild;
     if (lastMsg && lastMsg.textContent.includes('pensando')) {
       lastMsg.remove();
     }
 
+    // Processar resposta
     const data = await response.json();
-    if (response.ok) {
-      const reply = data.content[0].text;
-      addMessage(reply, 'assistant');
-      await saveHistory({ role: 'user', content: msg });
-      await saveHistory({ role: 'assistant', content: reply });
-    } else {
-      const errorMsg = data.error?.message || 'Erro desconhecido';
-      addMessage(`❌ Erro: ${errorMsg}`, 'system');
+
+    if (!response.ok) {
+      const errorMsg = data.error?.message || JSON.stringify(data.error) || 'Erro desconhecido';
+      console.error('❌ Erro da API:', errorMsg);
+      addMessage(`❌ Erro: ${errorMsg}`, 'error');
+      return;
     }
+
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      console.error('❌ Resposta inválida:', data);
+      addMessage('❌ Resposta inválida da API', 'error');
+      return;
+    }
+
+    // Sucesso!
+    const reply = data.content[0].text;
+    console.log('✅ Resposta recebida com sucesso');
+    
+    addMessage(reply, 'assistant');
+    saveHistory({ role: 'user', content: msg });
+    saveHistory({ role: 'assistant', content: reply });
+
   } catch (error) {
-    addMessage(`❌ Erro de conexão: ${error.message}`, 'system');
+    console.error('❌ Erro de conexão:', error);
+    
+    // Remover mensagem "pensando"
+    const container = document.getElementById('messages');
+    const lastMsg = container.lastChild;
+    if (lastMsg && lastMsg.textContent.includes('pensando')) {
+      lastMsg.remove();
+    }
+    
+    addMessage(`❌ Erro: ${error.message}. Verifique a API Key e conexão.`, 'error');
+  } finally {
+    isSending = false;
+    btn.disabled = false;
+    input.focus();
   }
-
-  document.getElementById('sendBtn').disabled = false;
-};
-
-const addMessage = (text, sender) => {
-  const container = document.getElementById('messages');
-  const div = document.createElement('div');
-  div.className = `msg ${sender}`;
-  div.textContent = text;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
 };
 
 // ==================== PDFs ====================
@@ -455,39 +507,42 @@ const uploadPDF = async (event) => {
     const embeddings = chunks.map(c => simpleEmbed(c));
     const doc = { filename: file.name, chunks, embeddings };
     docs.push(doc);
-    await saveDB('documents', file.name, doc);
 
     addMessage(`✅ ${file.name} absorvido! (${chunks.length} chunks)`, 'system');
   } catch (error) {
-    addMessage(`❌ Erro ao processar PDF: ${error.message}`, 'system');
+    addMessage(`❌ Erro ao processar PDF: ${error.message}`, 'error');
   }
 
   event.target.value = '';
 };
 
 const clearData = () => {
-  if (confirm('Tem certeza? Vai limpar tudo (histórico, PDFs, API Key)')) {
+  if (confirm('Limpar tudo? (Histórico, PDFs, API Key)')) {
     localStorage.clear();
     docs = [];
     document.getElementById('apiKey').value = '';
     document.getElementById('input').value = '';
     document.getElementById('messages').innerHTML = '';
-    addMessage('🗑️ Dados limpados!', 'system');
+    addMessage('🗑️ Tudo limpado!', 'system');
     updateStatus();
   }
 };
 
 // ==================== INIT ====================
 (async () => {
-  await initDB();
+  console.log('🚀 Iniciando Alfred OS v9...');
   
-  // Recuperar API Key salva
+  await initDB();
+  console.log('✅ Database inicializado');
+  
+  // Recuperar dados salvos
   const savedApiKey = loadFromStorage('apiKey');
   const savedProvider = loadFromStorage('provider');
   const savedModel = loadFromStorage('model');
   
   if (savedApiKey) {
     document.getElementById('apiKey').value = savedApiKey;
+    console.log('✅ API Key carregada');
   }
   if (savedProvider) {
     document.getElementById('provider').value = savedProvider;
@@ -497,7 +552,11 @@ const clearData = () => {
   }
   
   updateStatus();
-  addMessage('👋 Bem-vindo ao Alfred OS v9! Cole sua API Key acima para começar.', 'system');
+  
+  addMessage('👋 Bem-vindo ao Alfred OS v9!', 'system');
+  addMessage('Cole sua API Key do Claude em console.anthropic.com para começar.', 'system');
+  
+  console.log('✅ Alfred pronto!');
 })();
 </script>
 
