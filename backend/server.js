@@ -66,7 +66,7 @@ app.post('/api/documents/upload', async (req, res) => {
 
   try {
     const buffer = Buffer.from(pdf, 'base64');
-    const result = await ragService.ingestPDF(buffer, filename);
+    const result = await ragService.ingestDocument(buffer, filename);
 
     res.json({
       success: true,

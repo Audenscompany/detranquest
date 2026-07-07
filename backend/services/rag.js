@@ -1,32 +1,30 @@
-import * as pdfjs from 'pdfjs-dist';
 import { v4 as uuid } from 'uuid';
 import memoryService from './memory.js';
-import crypto from 'crypto';
-
-pdfjs.GlobalWorkerOptions.workerSrc = 
-  'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+import documentProcessor from './document-processor.js';
 
 class RAGService {
   constructor() {
     this.CHUNK_SIZE = 1000;
     this.CHUNK_OVERLAP = 200;
     this.knowledgeBase = [];
+    this.loadInMemoryCache();
   }
 
-  // Extrair texto de PDF
-  async extractTextFromPDF(buffer) {
-    const pdf = await pdfjs.getDocument({ data: buffer }).promise;
-    let fullText = '';
-    
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      fullText += textContent.items
-        .map(item => item.str)
-        .join(' ') + '\n';
-    }
-    
-    return fullText;
+  loadInMemoryCache() {
+    // Recuperar documentos do banco
+    const docs = memoryService.getDocuments();
+    docs.forEach(doc => {
+      const embeddings = memoryService.getEmbeddingsForDocument(doc.id);
+      if (embeddings.length > 0) {
+        this.knowledgeBase.push({
+          docId: doc.id,
+          filename: doc.filename,
+          chunks: embeddings.map(e => e.text),
+          embeddings: embeddings.map(e => e.embedding),
+          chunksCount: embeddings.length
+        });
+      }
+    });
   }
 
   // Dividir texto em chunks
@@ -46,65 +44,72 @@ class RAGService {
     return chunks;
   }
 
-  // Ingerir PDF
-  async ingestPDF(buffer, filename) {
-    const docId = uuid();
-    const contentHash = crypto
-      .createHash('md5')
-      .update(buffer)
-      .digest('hex');
+  // Ingerir documento processado
+  async ingestDocument(buffer, filename) {
+    try {
+      // Processar documento
+      const processing = await documentProcessor.processDocument(buffer, filename);
 
-    // Verificar se já foi ingerido
-    const existing = memoryService.getMemory(`doc_hash_${contentHash}`);
-    if (existing) {
-      return { docId: existing, new: false };
-    }
+      if (!processing.success) {
+        throw new Error(processing.error || 'Erro ao processar documento');
+      }
 
-    // Extrair texto
-    const fullText = await this.extractTextFromPDF(buffer);
+      // Se já foi processado, retornar
+      if (!processing.new) {
+        return {
+          docId: processing.docId,
+          new: false,
+          message: processing.message
+        };
+      }
 
-    // Dividir em chunks
-    const chunks = this.chunkText(fullText);
+      const { data } = processing;
+      const docId = uuid();
 
-    // Gerar embeddings simples (por agora, usamos frequência de palavras)
-    const embeddings = chunks.map((chunk, idx) => 
-      this.simpleEmbedding(chunk)
-    );
+      // Dividir em chunks
+      const chunks = this.chunkText(data.fullText);
 
-    // Salvar no banco
-    memoryService.trackDocument(
-      docId,
-      filename,
-      contentHash,
-      fullText,
-      chunks.length
-    );
+      // Gerar embeddings
+      const embeddings = chunks.map(chunk => this.simpleEmbedding(chunk));
 
-    chunks.forEach((chunk, idx) => {
-      memoryService.saveEmbedding(
+      // Salvar no banco
+      memoryService.trackDocument(
         docId,
-        idx,
-        chunk,
-        embeddings[idx]
+        data.filename,
+        data.hash,
+        data.fullText,
+        chunks.length
       );
-    });
 
-    // Salvar hash no cache
-    memoryService.saveMemory(
-      `doc_hash_${contentHash}`,
-      docId,
-      'document_cache'
-    );
+      chunks.forEach((chunk, idx) => {
+        memoryService.saveEmbedding(docId, idx, chunk, embeddings[idx]);
+      });
 
-    // Atualizar knowledge base em memória
-    this.knowledgeBase.push({
-      docId,
-      filename,
-      chunks,
-      embeddings
-    });
+      // Atualizar cache em memória
+      this.knowledgeBase.push({
+        docId,
+        filename: data.filename,
+        chunks,
+        embeddings,
+        chunksCount: chunks.length
+      });
 
-    return { docId, new: true, chunksCount: chunks.length };
+      // Salvar análise
+      memoryService.saveMemory(`doc_analysis_${docId}`, data.analysis, 'document_analysis');
+
+      return {
+        docId,
+        new: true,
+        chunksCount: chunks.length,
+        analysis: data.analysis,
+        message: `✅ ${data.filename} absorvido com sucesso (${chunks.length} chunks)`
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   // Embedding simples baseado em frequência de palavras
@@ -113,7 +118,11 @@ class RAGService {
     const embedding = {};
 
     words.forEach(word => {
-      embedding[word] = (embedding[word] || 0) + 1;
+      // Remover pontuação
+      const clean = word.replace(/[^\w]/g, '');
+      if (clean.length > 2) {
+        embedding[clean] = (embedding[clean] || 0) + 1;
+      }
     });
 
     // Normalizar
@@ -125,8 +134,12 @@ class RAGService {
     return embedding;
   }
 
-  // Busca semântica simples
+  // Busca semântica
   search(query, limit = 5) {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+
     const queryEmbedding = this.simpleEmbedding(query);
     const results = [];
 
@@ -137,13 +150,16 @@ class RAGService {
           doc.embeddings[idx]
         );
         
-        results.push({
-          docId: doc.docId,
-          filename: doc.filename,
-          chunkIndex: idx,
-          text: chunk,
-          similarity
-        });
+        if (similarity > 0.01) { // Filtro mínimo
+          results.push({
+            docId: doc.docId,
+            filename: doc.filename,
+            chunkIndex: idx,
+            text: chunk.substring(0, 500),
+            similarity,
+            fullText: chunk
+          });
+        }
       });
     });
 
@@ -196,7 +212,8 @@ class RAGService {
       context: reranked
         .slice(0, limit)
         .map((r, idx) => `[Fonte ${idx + 1}: ${r.filename}]\n${r.text}`)
-        .join('\n\n')
+        .join('\n\n'),
+      count: reranked.length
     };
   }
 }
