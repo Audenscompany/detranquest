@@ -1,20 +1,10 @@
 {
   "name": "alfred-os",
   "version": "9.0.0",
-  "type": "module",
-  "main": "backend/server.js",
+  "description": "Alfred OS - Personal AI Assistant",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "node --watch backend/server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "body-parser": "^1.20.2",
-    "uuid": "^9.0.0",
-    "better-sqlite3": "^9.0.0",
-    "pdfjs-dist": "^3.11.174",
-    "axios": "^1.4.0",
-    "dotenv": "^16.0.3"
+    "start-alfred": "cd backend && npm install && npm start",
+    "start": "cd backend && npm start",
+    "install-backend": "cd backend && npm install"
   }
 }
