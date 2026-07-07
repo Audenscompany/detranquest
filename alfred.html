@@ -220,8 +220,11 @@
 </div>
 
 <script>
-const pdfjsLib = window.pdfjsWorker;
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+// ⚠️ CRÍTICO: Usar window.pdfjs (não window.pdfjsWorker que não existe!)
+const pdfjsLib = window.pdfjs;
+if (pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
 
 let db, conversationId = 'default', docs = [], isSending = false;
 
@@ -484,6 +487,11 @@ ${context.profile.name ? `👤 PERFIL:\n${JSON.stringify(context.profile)}\n` : 
 const uploadPDF = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
+
+  if (!pdfjsLib || !pdfjsLib.getDocument) {
+    addMessage(`❌ PDF.js não carregou corretamente. Recarregue a página.`, 'error');
+    return;
+  }
 
   addMessage(`📤 Absorvendo ${file.name}...`, 'system');
 
