@@ -1034,6 +1034,85 @@ const API_ERRORS = {
   503:'Serviço temporariamente indisponível.'
 };
 let _apiLastErr = 0;
+
+// ======================== APEGO INTEGRACION - DOMINÍO TOTAL ========================
+// Constantes de apego e relacionamento baseadas em psicologia
+
+const APEGO_LEVELS=[
+  {n:1,title:"Observador",min:0,color:"#8888AA"},
+  {n:2,title:"Aprendiz",min:500,color:"#48BB8C"},
+  {n:3,title:"Praticante",min:1500,color:"#7C6FFF"},
+  {n:4,title:"Comunicador",min:3500,color:"#FF8C47"},
+  {n:5,title:"Mestre",min:7000,color:"#C4A24A"},
+];
+
+const APEGO_CYCLE={
+  menstrual:{name:"Menstrual",days:"Dias 1-5",color:"#FF5566",mood:"Mais introspectiva, cansada. Evitativo amplificado.",ideal:"Gestos silenciosos sem exigir resposta."},
+  folicular:{name:"Folicular",days:"Dias 6-13",color:"#48BB8C",mood:"Energia subindo, mais comunicativa.",ideal:"Momentos leves, humor, planos simples."},
+  ovulacao:{name:"Ovulação",days:"Dias 14-16",color:"#C4A24A",mood:"Pico de energia. Mais social, confiante.",ideal:"Date, presença física, planos juntos."},
+  luteal:{name:"Luteal",days:"Dias 17-22",color:"#FF8C47",mood:"Energia diminuindo. Mais introspectiva.",ideal:"Leveza. Sem planos grandes."},
+  pms:{name:"PMS",days:"Dias 23-28",color:"#CC77CC",mood:"Mais emocional, pode estar irritável.",ideal:"Espaço total. Gestos simples sem expectativa."},
+};
+
+const APEGO_STYLES={
+  evitativo:{bg:"#12103A",border:"#7C6FFF",text:"#A89EFF",label:"APEGO EVITATIVO"},
+  ansioso:{bg:"#1A1230",border:"#CC77FF",text:"#E0A0FF",label:"APEGO ANSIOSO"},
+  comunicacao:{bg:"#0D2D1A",border:"#48BB8C",text:"#7DD9B0",label:"COMUNICAÇÃO"},
+};
+
+function analyzeApegoPressao(msg) {
+  if(!msg || !msg.trim()) return 0;
+  const l = msg.toLowerCase();
+  let score = 0;
+  ["precisamos conversar","por que você","me conta tudo","ta tudo bem?","preciso saber"].forEach(p => {if(l.includes(p)) score += 3;});
+  ["me conta","como você tá","você sumiu","estou preocupado"].forEach(p => {if(l.includes(p)) score += 1.5;});
+  ["no seu tempo","sem pressão","quando quiser","tudo bem"].forEach(p => {if(l.includes(p)) score -= 2;});
+  score += (msg.match(/\?/g) || []).length * 0.8;
+  if(msg.length > 200) score += 2.5;
+  if(msg.length < 25) score -= 1;
+  return Math.max(-3, Math.min(5, score));
+}
+
+function getCoachingApego(score) {
+  if(score > 4) return {icon:"🚨",title:"Pressão Alta",color:"#FF5566",text:"Muita intensidade. O mecanismo de defesa vai ativar."};
+  if(score > 2) return {icon:"⚠️",title:"Pressão Moderada",color:"#FF8C47",text:"Tem carga emocional. Poderia ser mais leve."};
+  if(score > 0) return {icon:"⚡",title:"Neutro",color:"#8888AA",text:"Ok. Não fecha muito, não abre muito."};
+  if(score > -2) return {icon:"✅",title:"Boa Abordagem",color:"#48BB8C",text:"Leve, sem pressão. Cria segurança."};
+  return {icon:"⭐",title:"Excelente",color:"#C4A24A",text:"Perfeito. Carinho sem demandar resposta."};
+}
+
+function getApegoKnowledge() {
+  return `
+DOMÍNIO TOTAL - Psicologia do Apego e Comunicação Efetiva
+
+🧠 APEGOS BASICOS:
+• EVITATIVO: Fecha com pressão. Abre com leveza, humor, espaço.
+• ANSIOSO: Precisa de reasseguração. Funciona melhor com certeza emocional.
+• SEGURO: Equilibrado. Comunica bem, recebe bem.
+
+📱 ANALISE DE PRESSÃO:
+Mensagens com muitas perguntas, exigências de conversa, ou cobranças ativam o mecanismo de defesa.
+Melhor abordagem: leveza, humor, gestos sem esperar resposta.
+
+🌙 CICLO MENSTRUAL (Julia reference):
+• MENSTRUAL (1-5): Física/emocionalmente difícil. Máximo espaço.
+• FOLICULAR (6-13): Energia subindo. Mais responsiva.
+• OVULAÇÃO (14-16): Pico. Mais aberta, calorosa, social.
+• LUTEAL (17-22): Energia descendo. Ainda responde bem.
+• PMS (23-28): Imprevisível. Respeite o espaço total.
+
+💡 COACHING DE MENSAGENS:
+Antes de enviar algo intenso, analise: está exigindo resposta? Tem muitas perguntas? Faz pressão?
+Se sim: simplifique, deixe mais leve, dê espaço.
+
+📌 FRAMEWORKS:
+1. LEVEZA: Brincadeira, meme, teasings leves funcionam melhor que confissões.
+2. ESPAÇO: Mensagens curtas, sem expectativa, abrem mais que pressão.
+3. CONSISTÊNCIA: Gestos pequenos regulares > confissões grandes.
+4. LEITURA: "ta bem" após coisa pesada = mascarando. "sim sim" = desviando. Respeite o sinal.
+`;
+}
+
 const API_COOLDOWN = 2000;
 
 async function callAlfred(userMsg,maxTok,customSys){
@@ -1551,11 +1630,7 @@ function toggleListen(){
   }
 }
 
-// speak() function handled by _speakQueue system aboveelse{setOrb('I');setWv('');}};
-    u.onerror=()=>{isSpeaking=false;setOrb('I');setWv('');};
-    speechSynthesis.speak(u);
-  }catch(e){isSpeaking=false;}
-}
+// speak() function handled by _speakQueue system above
 
 function loadVoices(){
   try{
