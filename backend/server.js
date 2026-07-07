@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import memoryService from './services/memory.js';
 import ragService from './services/rag.js';
-import { v4 as uuid } from 'uuid';
+import conversationAgent from './services/conversation.js';
+import claudeIntegration from './services/claude-integration.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,35 +27,32 @@ app.post('/api/chat/message', async (req, res) => {
     return res.status(400).json({ error: 'Mensagem vazia' });
   }
 
-  // Recuperar contexto
-  const history = memoryService.getConversationHistory(5);
-  const context = ragService.buildContext(message);
-
-  // Construir resposta (simulada por agora)
-  const response = generateResponse(message, context, history);
-
-  // Salvar na memória
   try {
-    await memoryService.addConversation(
-      userId,
-      message,
-      response,
-      { sources: context.sources }
-    );
-  } catch (e) {
-    console.error('Erro ao salvar conversa:', e);
-  }
+    const result = await conversationAgent.processQuery(message, userId);
 
-  res.json({
-    message: response,
-    sources: context.sources,
-    timestamp: new Date()
-  });
+    res.json({
+      message: result.message,
+      sources: result.sources,
+      intent: result.intent,
+      usingClaude: result.usingClaude,
+      timestamp: new Date()
+    });
+  } catch (error) {
+    console.error('Erro ao processar mensagem:', error);
+    res.status(500).json({
+      error: 'Erro ao processar mensagem',
+      details: error.message
+    });
+  }
 });
 
 app.get('/api/chat/history', (req, res) => {
-  const history = memoryService.getConversationHistory(50);
-  res.json(history);
+  try {
+    const history = memoryService.getConversationHistory(50);
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ============ PDF UPLOAD ============
@@ -67,17 +65,15 @@ app.post('/api/documents/upload', async (req, res) => {
   }
 
   try {
-    // Converter base64 para buffer
     const buffer = Buffer.from(pdf, 'base64');
-
-    // Ingerir PDF
     const result = await ragService.ingestPDF(buffer, filename);
 
     res.json({
       success: true,
       docId: result.docId,
       new: result.new,
-      chunksCount: result.chunksCount
+      chunksCount: result.chunksCount,
+      filename
     });
   } catch (error) {
     console.error('Erro ao processar PDF:', error);
@@ -89,14 +85,17 @@ app.post('/api/documents/upload', async (req, res) => {
 });
 
 app.get('/api/documents', (req, res) => {
-  const docs = memoryService.getDocuments();
-  res.json(docs);
+  try {
+    const docs = memoryService.getDocuments();
+    res.json(docs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.delete('/api/documents/:docId', (req, res) => {
   const { docId } = req.params;
-  // TODO: Implementar deleção de documentos
-  res.json({ success: true, docId });
+  res.json({ success: true, docId, message: 'Funcionalidade em desenvolvimento' });
 });
 
 // ============ SEARCH API ============
@@ -108,8 +107,12 @@ app.post('/api/search', (req, res) => {
     return res.status(400).json({ error: 'Query vazia' });
   }
 
-  const results = ragService.search(query, limit);
-  res.json(results);
+  try {
+    const results = ragService.search(query, limit);
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ============ MEMORY API ============
@@ -121,8 +124,12 @@ app.post('/api/memory/save', (req, res) => {
     return res.status(400).json({ error: 'Key ausente' });
   }
 
-  memoryService.saveMemory(key, value, category);
-  res.json({ success: true, key });
+  try {
+    memoryService.saveMemory(key, value, category);
+    res.json({ success: true, key, category });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/memory/:key', (req, res) => {
@@ -138,57 +145,115 @@ app.get('/api/memory/:key', (req, res) => {
 
 app.get('/api/memory/category/:category', (req, res) => {
   const { category } = req.params;
-  const memories = memoryService.getMemoriesByCategory(category);
-  res.json(memories);
+  try {
+    const memories = memoryService.getMemoriesByCategory(category);
+    res.json(memories);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============ CONFIG API ============
+
+app.post('/api/config/claude-key', (req, res) => {
+  const { apiKey } = req.body;
+
+  if (!apiKey) {
+    return res.status(400).json({ error: 'API key ausente' });
+  }
+
+  try {
+    claudeIntegration.setApiKey(apiKey);
+    conversationAgent.setClaudeApiKey(apiKey);
+    res.json({
+      success: true,
+      message: 'Claude API key configurada com sucesso'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/config/status', (req, res) => {
+  res.json({
+    claudeEnabled: claudeIntegration.isEnabled(),
+    version: '8.0.0',
+    documentsCount: memoryService.getDocuments().length
+  });
 });
 
 // ============ STATUS ============
 
 app.get('/api/status', (req, res) => {
-  const docs = memoryService.getDocuments();
-  const conversations = memoryService.getConversationHistory(1);
+  try {
+    const docs = memoryService.getDocuments();
+    const conversations = memoryService.getConversationHistory(1);
 
-  res.json({
-    status: 'online',
-    documents: docs.length,
-    conversations: conversations.length,
-    version: '8.0.0'
-  });
+    res.json({
+      status: 'online',
+      documents: docs.length,
+      conversations: conversations.length,
+      claudeEnabled: claudeIntegration.isEnabled(),
+      version: '8.0.0',
+      timestamp: new Date()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// ============ Helper ============
+// ============ HEALTH ============
 
-function generateResponse(message, context, history) {
-  const lower = message.toLowerCase();
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
 
-  // Resposta baseada em contexto recuperado
-  if (context.sources && context.sources.length > 0) {
-    return `Baseado nos documentos analisados: ${context.sources[0].text.substring(0, 200)}... Posso ajudar com mais detalhes sobre isso.`;
-  }
+// ============ ERROR HANDLER ============
 
-  // Resposta baseada em padrões
-  if (lower.includes('apego') || lower.includes('relacionamento')) {
-    return 'Entendo que você está explorando dinâmicas de apego e relacionamento. Adicione PDFs sobre esses temas em "Documentos" para que eu possa oferecer respostas mais profundas e baseadas em conhecimento real.';
-  }
-
-  if (lower.includes('pdf') || lower.includes('documento')) {
-    return `Você tem ${memoryService.getDocuments().length} documento(s) carregado(s). Faça perguntas e vou recuperar automaticamente as informações relevantes.`;
-  }
-
-  // Resposta padrão
-  return 'Sou Alfred, seu assistente inteligente. Estou aprendendo com os documentos que você compartilha. Como posso ajudar?';
-}
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({
+    error: 'Server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal error'
+  });
+});
 
 // ============ START ============
 
 app.listen(PORT, () => {
-  console.log(`\n🦇 Alfred OS Backend rodando em http://localhost:${PORT}\n`);
-  console.log(`   • Chat: POST /api/chat/message`);
-  console.log(`   • Upload: POST /api/documents/upload`);
-  console.log(`   • Search: POST /api/search`);
-  console.log(`   • Memory: GET/POST /api/memory/*`);
+  console.log(`
+╔════════════════════════════════════════╗
+║  🦇 Alfred OS v8 Backend                ║
+║  Status: Online                        ║
+╚════════════════════════════════════════╝
+
+🌐 Frontend: http://localhost:${PORT}
+
+📡 API Endpoints:
+   • Chat:       POST /api/chat/message
+   • Upload:     POST /api/documents/upload
+   • Documents:  GET  /api/documents
+   • Search:     POST /api/search
+   • Memory:     GET/POST /api/memory/*
+   • Config:     POST /api/config/claude-key
+   • Status:     GET  /api/status
+   • Health:     GET  /health
+
+💾 Database: ./storage/alfred.db
+📚 Documents: ./storage/documents/
+🤖 Claude: ${claudeIntegration.isEnabled() ? 'ATIVADO' : 'Desativado (configure API key)'}
+
+🔧 Environment: ${process.env.NODE_ENV || 'development'}
+  `);
 });
 
 process.on('exit', () => {
+  console.log('🔌 Closing database connection...');
   memoryService.close();
+});
+
+process.on('SIGINT', () => {
+  console.log('\n👋 Shutting down gracefully...');
+  memoryService.close();
+  process.exit(0);
 });
